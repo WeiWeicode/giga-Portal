@@ -2,6 +2,11 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-09-26 公司測試區部署準備(權限範本、env 範本)
+- 內容:公司 CI 與憑證未就緒,先以手動架設為主(流程在 Gateway `docs/TEST-DEPLOY-RUNBOOK.md`,本專案為步驟 7)。新增 `deploy/gateway-rbac.yaml`:與本機版相同的 25 個權限代碼與 `employee` 角色,需要 AD 群組的角色(`it-app-user`、`portal-approver`、`portal-editor`)留 DN 註解待 IT 填入(Gateway CLI 沒有個別指派角色的指令);`deploy/apply-gateway-rbac.sh <test|prod> <Gateway env>` 以 Gateway 正式 compose 的 `migrate` 服務映像執行 CLI `apply`(Git Bash:`pwd -W`、`MSYS_NO_PATHCONV=1`);`deploy/test.env.example`(公司 volume `giganexus-gw_gw_www`)。沒套用權限時測試區所有人都會看到無權限頁;沒部署入口網時公司環境沒有登入頁。註冊 / 忘記密碼連結依需求方決定保留(Gateway API 未實作,會顯示錯誤)。
+- 檔案:`deploy/gateway-rbac.yaml`、`deploy/apply-gateway-rbac.sh`、`deploy/test.env.example`(新增)、`AGENT.md`、`README.md`、`docs/ARCHITECTURE.md`、`docs/PROJECT-MAP.md`
+- 驗證:`gateway-rbac.yaml` 以 yaml 解析(25 個權限、4 個角色,皆無 adGroups);`docker compose --env-file deploy/test.env.example -f deploy/docker-compose.yml --profile publish config` 解析為 `giganexus-gw_gw_www`;套用腳本的 compose 指令以假 env 執行 `config` 解析正確。**未對真實測試區執行**。
+
 ## 2026-09-26 GigaItApp 同步應用切換(FR-2.3,跨 repo)
 - 內容:需求方要求 GigaItApp 也提供右上角應用切換並上架。在 `../GigaItApp` 加入與本專案同一版本的 `GAppSwitcher`(資料取自使用者的 Gateway 登入 `/api/auth/me`,暫時推導規則相同),發佈到本機 Nginx `/it/`;紀錄見 GigaItApp `docs/DevelopmentProcess/FrontendCorrection.md` 同日。GigaItApp 仍為自有登入,單一入口與應用層守衛(I1、I3 其餘)仍屬 M3。
 - 檔案:`docs/Gherkin/auth/app-switch.feature`(「GigaItApp 也提供相同的應用切換」改 `@e2e`);程式在 GigaItApp

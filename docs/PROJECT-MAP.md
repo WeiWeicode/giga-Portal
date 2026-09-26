@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新:2026-09-26**(M1:建立 `frontend/` 框架;本機 Gateway 權限設定 `deploy/gateway-dev-rbac.yaml`;`spa-portal` 發佈到本機 Nginx)。
+> **最後更新:2026-09-26**(M1:建立 `frontend/` 框架;本機 Gateway 權限設定 `deploy/gateway-dev-rbac.yaml`;`spa-portal` 發佈到本機 Nginx;公司測試區權限範本與 env 範本)。
 > 開發新功能後,在同一個變更內更新本文件(`AGENT.md` §9.1、Gateway `AGENT.md` §10.7)。只寫結構與職責,細節連到 `docs/` 對應章節。
 > 標示「(規劃)」的目錄與檔案尚未建立,依 [ARCHITECTURE.md](ARCHITECTURE.md) §6–§7 實作後移除標示。
 
@@ -44,6 +44,9 @@ giga-Portal/
 ├─ deploy/
 │  ├─ gateway-dev-rbac.yaml       本機 Gateway 的入口網權限代碼與測試角色(暫時做法,Gateway CLI apply 格式)
 │  ├─ apply-gateway-dev-rbac.sh   套用上檔到本機 Gateway
+│  ├─ gateway-rbac.yaml           公司測試區 / 正式區的權限代碼與角色(AD 群組 DN 由 IT 填入)
+│  ├─ apply-gateway-rbac.sh       以 Gateway 正式 compose 的 migrate 映像套用上檔(Git Bash 可用)
+│  ├─ test.env.example            公司環境 Compose 變數範本(gw_www volume 名稱、版本名稱)
 │  └─ docker-compose.yml          spa-portal(發佈到 gw_www 的 portal,Nginx /;web-kit 以 additional_contexts 帶入);portal-api(M4 規劃)
 └─ backend/(規劃,M4)            portal-api(以 Gateway 後端樣本為基礎)
    ├─ src/                        server、app、config、errors、openapi(x-permissions 含前端權限)、routes/、store/

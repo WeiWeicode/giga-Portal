@@ -155,9 +155,10 @@
 | `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 經本機 Gateway(`https://localhost`);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
 | `frontend/` | `npm run typecheck` / `npm test` / `npm run build` | 型別 / Vitest / 建置 |
 | 根目錄 | `sh deploy/apply-gateway-dev-rbac.sh` | 把入口網的權限代碼與測試角色套用到本機 Gateway(`deploy/gateway-dev-rbac.yaml`;Gateway DB 重建後需再跑) |
+| 根目錄 | `sh deploy/apply-gateway-rbac.sh test <Gateway test.env>` | 公司測試區 / 正式區套用權限(`deploy/gateway-rbac.yaml`,AD 群組 DN 由 IT 填);流程見 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` |
 | `backend/`(M4 起) | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |
 | 根目錄(M4 起) | `docker compose -f deploy/docker-compose.yml up -d --build --wait portal-api` | 部署後端到本機 Gateway 網路 |
-| 根目錄 | `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal` | 發佈前端到 `/`(`... run --rm spa-portal rollback portal` 回滾) |
+| 根目錄 | `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal` | 發佈前端到 `/`(`... run --rm spa-portal rollback portal` 回滾);公司環境加 `--env-file <portal.env>`(範本 `deploy/test.env.example`,volume 名稱不同) |
 
 ---
 

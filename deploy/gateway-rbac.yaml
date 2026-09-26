@@ -1,0 +1,77 @@
+# 測試區 / 正式區 Gateway 的員工入口網權限(Gateway CLI `apply` 格式;docs/TEST-DEPLOY-RUNBOOK 見 Gateway repo)
+#
+# 與 gateway-dev-rbac.yaml 的差別:沒有本機模擬 AD 群組;需要 AD 群組的角色由 IT 依公司 GN-* 群組填入 DN(Gateway P-08)。
+# 測試區與正式區設定不互通(Gateway PRD Q3),兩區各自套用:
+#   sh deploy/apply-gateway-rbac.sh test <主機受保護目錄>/test.env
+# 暫時做法:Gateway G2(權限 kind / parent_code)與 portal-api(x-permissions 自動註冊)上線後,權限改由 portal-api 宣告,
+#           角色與指派改由 IT 在 GigaItApp 設定(PRD §5.2、§9)。權限代碼以 PRD §6.5 為準,與 gateway-dev-rbac.yaml 保持一致。
+# 注意:Gateway CLI 沒有個別指派角色的指令,需要 AD 群組(adGroups)或公司(companies)才會有成員;
+#       套用會遞增所有使用者的權限版本(已登入者下一次呼叫 API 時由 web-kit 自動換發,不需重新登入)。
+permissions:
+  # 應用(kind=app,Gateway PRD §8.3.3)
+  - { code: portal.app.access, name: 員工入口網使用權限 }
+  - { code: it.app.access, name: IT 管理系統使用權限 }
+  # 選單 / Tab / 按鈕
+  - { code: portal.home.read, name: 入口網首頁 }
+  - { code: portal.profile.read, name: 個人資料 }
+  - { code: portal.profile.edit, name: 編輯緊急聯絡人 }
+  - { code: portal.leave.read, name: 我的假期 }
+  - { code: portal.leave-history.read, name: 請假紀錄 }
+  - { code: portal.leave.apply, name: 請假申請 }
+  - { code: portal.attendance.read, name: 出勤紀錄 }
+  - { code: portal.attendance.punch, name: 線上打卡 }
+  - { code: portal.form.read, name: 表單下載 }
+  - { code: portal.resource.read, name: 行政資源 }
+  - { code: portal.resource.edit, name: 維護行政資源 }
+  - { code: portal.onboarding.read, name: 新人導覽 }
+  - { code: portal.onboarding.edit, name: 維護新人導覽 }
+  - { code: portal.directory.read, name: 分機表、聯絡窗口 }
+  - { code: portal.gui-number.read, name: 集團統編資訊 }
+  - { code: portal.news.read, name: 公告 }
+  - { code: portal.news.publish, name: 發布公告 }
+  - { code: portal.calendar.read, name: 行事曆 }
+  - { code: portal.links.read, name: 集團系統 }
+  - { code: portal.talk.read, name: 3691 全民開講 }
+  # BPM 簽核:BPM 提供 API 後改由 BPM 的 OpenAPI 宣告(PRD Q8)
+  - { code: bpm.approval.read, name: 待我簽核 }
+  - { code: bpm.approval.approve, name: 簽核核准 }
+  - { code: bpm.approval.reject, name: 簽核退回 }
+
+roles:
+  - code: employee
+    name: 員工
+    permissions:
+      - portal.app.access
+      - portal.home.read
+      - portal.profile.read
+      - portal.profile.edit
+      - portal.leave.read
+      - portal.leave-history.read
+      - portal.leave.apply
+      - portal.attendance.read
+      - portal.attendance.punch
+      - portal.form.read
+      - portal.resource.read
+      - portal.onboarding.read
+      - portal.directory.read
+      - portal.gui-number.read
+      - portal.news.read
+      - portal.calendar.read
+      - portal.links.read
+      - portal.talk.read
+  # 以下角色需填入公司 AD 群組 DN 才有成員(DN 含逗號,必須用區塊清單並加引號);未填時角色存在但沒有人
+  - code: it-app-user
+    name: IT 管理系統使用者
+    permissions: [it.app.access]
+    # adGroups:
+    #   - 'CN=<IT 人員群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
+  - code: portal-approver
+    name: 入口網簽核主管
+    permissions: [bpm.approval.read, bpm.approval.approve, bpm.approval.reject]
+    # adGroups:
+    #   - 'CN=<主管群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
+  - code: portal-editor
+    name: 入口網內容維護(人資 / 行政)
+    permissions: [portal.news.publish, portal.resource.edit, portal.onboarding.edit]
+    # adGroups:
+    #   - 'CN=<人資行政群組>,OU=Groups,DC=gsc,DC=com,DC=tw'

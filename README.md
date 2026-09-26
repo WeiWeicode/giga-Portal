@@ -15,3 +15,4 @@
 - 上位規範與跨專案規則:`../giga-api-gateway-bff/`(`AGENT.md` §10、`docs/`)
 - 狀態:**M1 進行中**:`frontend/` 框架已建立並發佈到本機 Nginx(`https://localhost/`);portal-api 自 M4 開始
 - 本機開發:`cd frontend && npm install && npm run dev`(http://localhost:5179/,需本機 Gateway 與兄弟目錄 `../giga-api-gateway-bff`);權限代碼 `sh deploy/apply-gateway-dev-rbac.sh`;發佈 `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal`
+- 公司測試區:依 `../giga-api-gateway-bff/docs/TEST-DEPLOY-RUNBOOK.md` 步驟 7(Gateway 之後部署;入口網是唯一的登入頁)
