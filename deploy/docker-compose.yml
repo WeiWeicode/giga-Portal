@@ -1,0 +1,27 @@
+# 員工入口網部署(與 Gateway 同一台主機)
+#   docker compose -f deploy/docker-compose.yml run --rm --build spa-portal                   # 前端:發佈到 gw_www 的 portal(Nginx /,取代範例入口網)
+#   docker compose -f deploy/docker-compose.yml run --rm spa-portal rollback portal           # 前端回滾到上一版
+#   RELEASE_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/docker-compose.yml ...  # 指定版本名稱(未指定時為建置時間)
+# portal-api(M4)上線時在此加入,加入 Gateway 的 Docker 網路(別名 portal-api:51271)。
+name: giganexus-portal
+
+services:
+  spa-portal:
+    image: giganexus/spa-portal:${IMAGE_TAG:-dev}
+    build:
+      context: ../frontend
+      # Gateway web-kit 原始碼(尚未發佈到 Registry,ARCHITECTURE §8);GATEWAY_DIR 可覆寫兄弟 repo 位置
+      additional_contexts:
+        webkit: ${GATEWAY_DIR:-../../giga-api-gateway-bff}/web-kit/src
+      args:
+        RELEASE_SHA: ${RELEASE_SHA:-}
+    profiles: ["publish"]
+    restart: "no"
+    volumes:
+      - gw_www:/srv/www
+    command: ["publish", "portal"]
+
+volumes:
+  gw_www:
+    external: true
+    name: ${GW_WWW_VOLUME:-giganexus-gw-dev_gw_www}

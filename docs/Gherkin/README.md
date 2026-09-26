@@ -1,7 +1,7 @@
 # 員工入口網 — Gherkin 行為規格
 
-> 以 Gherkin(繁體中文關鍵字,`# language: zh-TW`)描述員工入口網的驗收行為,對應 [PRD.md](../PRD.md) **v0.1.1**。
-> 寫法沿用 Gateway 專案 `docs/Gherkin/README.md`;場景以**可觀察的行為**(HTTP 狀態、`code`、畫面)描述。目前尚無程式碼,**所有場景皆為 `@wip`**,實作後改為 `@auto` / `@manual` / `@e2e`。
+> 以 Gherkin(繁體中文關鍵字,`# language: zh-TW`)描述員工入口網的驗收行為,對應 [PRD.md](../PRD.md) **v0.1.2**。
+> 寫法沿用 Gateway 專案 `docs/Gherkin/README.md`;場景以**可觀察的行為**(HTTP 狀態、`code`、畫面)描述。標籤標在場景上:已驗證的為 `@auto` / `@manual` / `@e2e`,尚未實作或依賴未完成的 Gateway 功能者為 `@wip`(M1 的驗證紀錄見 `../DevelopmentProcess/NewFeatures.md`)。
 
 ## 檔案一覽
 

@@ -5,7 +5,7 @@
 | 文件 | 內容 |
 | --- | --- |
 | [AGENT.md](AGENT.md) | AI 協作準則(含從 GigaItApp 複製框架的規則) |
-| [docs/PRD.md](docs/PRD.md) | 產品需求(v0.1.1 草案):決策、功能、配合修改、待決事項 |
+| [docs/PRD.md](docs/PRD.md) | 產品需求(v0.1.2 草案):決策、功能、配合修改、待決事項、進度 |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架構、請求與權限流程、風格切換、部署 |
 | [docs/API.md](docs/API.md) | portal-api 端點(草案)與使用的 BFF API |
 | [docs/UI-GUIDE.md](docs/UI-GUIDE.md) | 綠能色盤、玻璃 / 扁平、版面 |
@@ -13,4 +13,5 @@
 | [docs/Gherkin/](docs/Gherkin/README.md) | 驗收場景 |
 
 - 上位規範與跨專案規則:`../giga-api-gateway-bff/`(`AGENT.md` §10、`docs/`)
-- 狀態:**規劃中(尚無程式碼)**;下一步為里程碑 M1(入口網框架)
+- 狀態:**M1 進行中**:`frontend/` 框架已建立並發佈到本機 Nginx(`https://localhost/`);portal-api 自 M4 開始
+- 本機開發:`cd frontend && npm install && npm run dev`(http://localhost:5179/,需本機 Gateway 與兄弟目錄 `../giga-api-gateway-bff`);權限代碼 `sh deploy/apply-gateway-dev-rbac.sh`;發佈 `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal`

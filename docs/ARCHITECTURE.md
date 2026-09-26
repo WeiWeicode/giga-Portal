@@ -1,7 +1,7 @@
 # 員工入口網 — 架構與技術文件
 
-> 對應 [PRD.md](PRD.md) v0.1.1;上位規範為 Gateway PRD v0.7(`../../giga-api-gateway-bff/docs/PRD.md`)。
-> **狀態:規劃中**,本文件描述目標架構;實作後以程式為準並回頭更新本文件。
+> 對應 [PRD.md](PRD.md) v0.1.2;上位規範為 Gateway PRD v0.7(`../../giga-api-gateway-bff/docs/PRD.md`)。
+> **狀態:M1 前端已實作**(§5、§6 已依程式更新),前端已可發佈到本機 Nginx(§9);portal-api(§7)仍為規劃。
 
 ---
 
@@ -82,7 +82,8 @@ sequenceDiagram
 
 1. 頂列「應用切換」讀 `me.apps`(BFF 已依 `app` 權限過濾)。
 2. 點選其他應用 → 整頁導向 `basePath`(例 `/it/`),Cookie 同網域共用,不需再登入。
-3. 目標應用啟動時執行自己的應用層守衛;GigaItApp 沒有 `it.app.access` → `location.replace('/')` 並帶提示參數,入口網顯示提示。
+3. 目標應用啟動時執行自己的應用層守衛;GigaItApp 沒有 `it.app.access` → `location.replace('/?denied=it')`,入口網顯示「您沒有IT 管理系統的使用權限」後移除參數(參數名稱為本專案提議,需同步到 Gateway FRONTEND-GUIDE §7.4 與 GigaItApp I3)。
+4. **暫時做法**:Gateway G3 未實作前 `me` 沒有 `apps`,入口網以 `permissions` 中的 `{system}.app.access` 對照 `composables/apps.ts` 的 `TEMP_APPS` 推導,應用切換下拉底部標示;`me.apps` 出現後自動改用。
 
 ## 4. 權限模型
 
@@ -113,19 +114,27 @@ flowchart LR
 | 風格 | `<html data-style>` | `glass` / `flat` | `glass`;不支援 `backdrop-filter` 或 `prefers-reduced-transparency` 時 `flat` |
 
 - `tokens.css` 定義基礎色(綠能色盤)與四組組合的面板、邊框、陰影、模糊、背景 token;元件只讀 token。
-- 偏好存瀏覽器(`localStorage`,只存 `theme` / `style` 兩個值,讀寫包 try/catch);之後存 portal-api 個人設定(PRD Q6)。
-- 啟動時在 `index.html` 內嵌小段程式先套用屬性,避免閃爍。
+- 偏好存瀏覽器(`localStorage` 的 `portal.theme` / `portal.style`,讀寫包 try/catch);之後存 portal-api 個人設定(PRD Q6)。
+- 啟動時 `index.html` 先載入 `public/theme-init.js` 套用屬性,避免閃爍;因 Gateway CSP(`default-src 'self'`)不允許 inline script,所以是獨立檔案。
 
-## 6. 前端架構(規劃)
+## 6. 前端架構
 
 | 目錄 | 內容 |
 | --- | --- |
-| `src/ui/` | G* 全域元件、`styles/tokens.css`(綠能 × 玻璃 / 扁平)、圖表色盤;自 GigaItApp 複製 |
-| `src/layouts/` | `AppLayout`(側欄兩層選單、頂列:搜尋、風格、明暗、通知、**應用切換**、帳號)、`TabbedPage`、`AuthLayout`(登入 / 註冊 / 忘記密碼) |
-| `src/pages/` | `auth/`(Login、Register、ResetPassword、ChangePassword)、`home/`、`personal/`、`approval/`、`resources/`、`group/`、`NoAccess`、`403`、`404` |
-| `src/composables/` | `useMe`(me 快取與重新取得)、`usePermission`(選單 / Tab 過濾)、`useTheme`(明暗 + 風格)、`usePaged`、`useAsync` |
-| `src/api/` | `gateway.ts`(web-kit 包裝:`/api/*`)、`portal.ts`(`/api/portal/*`)、型別、顯示格式 |
-| `src/router.ts` | 兩層選單 → TabbedPage → Tab 子路由;全域守衛:me → 應用層 → 頁面權限 |
+| `src/ui/` | G* 全域元件(新增 GHero、GAppSwitcher、GStyleToggle、GAlert)、`styles/tokens.css`(綠能 × 玻璃 / 扁平)、圖表色盤;自 GigaItApp 複製 |
+| `src/layouts/` | `AppLayout`(側欄兩層選單、頂列:風格 / 明暗、**應用切換**、帳號)、`TabbedPage`、`AuthLayout`(登入 / 註冊 / 忘記密碼 / 維護 / 無權限)、`ChangePasswordModal` |
+| `src/pages/` | `auth/`(Login 含首次登入設定密碼、Register 含啟用連結、ResetPassword 含重設連結)、`home/Home`、`Placeholder`(M4 / M5 功能頁)、`NoAccess`、`Unavailable`、`Forbidden`、`NotFound` |
+| `src/composables/` | `session`(me 快取、5 分鐘更新)、`apps`(應用切換與守衛)、`menu`(選單過濾)、`redirect`、`theme` / `themeRules`、`usePaged`、`useAsync` |
+| `src/api/` | `gateway.ts`(web-kit 包裝:登入、密碼、註冊、`describeError`)、`portal.ts`(規劃,`/api/portal/*`)、顯示格式 |
+| `src/router.ts` | 兩層選單(`MENU_GROUPS` + 路由 meta `group`)→ TabbedPage → Tab 子路由;全域守衛如下 |
+
+全域守衛(`router.ts`):
+
+1. `meta.public`(登入、註冊、忘記密碼、維護頁)→ 放行。
+2. `ensureMe()`:BFF 無法連線 → `/unavailable`(維護頁,可重試);未登入 → `/login?redirect=`。
+3. 應用層:沒有 `portal` 應用 → `/no-access`(無權限頁本身 `meta.noAppGuard`,不會迴圈)。
+4. 頁面:路由鏈上任一 `meta.permission`(menu / tab)沒有 → `/403`;首頁沒有權限時改到第一個可見功能。
+5. 登入後導回:`safeRedirect()` 只接受同網域相對路徑;不屬於入口網路由的路徑(例 `/it/`)整頁導向。
 
 ## 7. 後端架構(規劃,portal-api)
 
@@ -143,21 +152,21 @@ flowchart LR
 | --- | --- |
 | 前端 | Vue 3.5、Vite、vue-router、TypeScript、lucide(經 GIcon)、ECharts(圖表,同 GigaItApp) |
 | 後端 | Node.js 22、Fastify 5、`@fastify/swagger`、`@giganexus/backend-sdk`(vendor tgz) |
-| Gateway 共用 | `@giganexus/web-kit`(CSRF、Token 自動更新、`useAuth`;尚未發佈,先複製或等 Registry,同 GigaItApp Q8) |
-| 測試 | Vitest(前端 composables)、`node:test` / Vitest(後端)、瀏覽器操作(四種風格組合) |
+| Gateway 共用 | `@giganexus/web-kit`(CSRF、Token 自動更新、`useAuth`);尚未發佈,**以 Vite / tsconfig alias 指向 `../giga-api-gateway-bff/web-kit/src`**(同 Gateway sample-spa;可用 `WEB_KIT_DIR` 覆寫),Docker 建置時以 compose `additional_contexts`(`webkit`)帶入並設 `WEB_KIT_DIR`;Registry 上線後改為套件相依 |
+| 測試 | Vitest(前端 composables,`frontend/test/`)、`node:test` / Vitest(後端)、瀏覽器操作(四種風格組合、375px) |
 
 ## 9. 部署
 
 | 項目 | 內容 |
 | --- | --- |
-| 前端 | `deploy/docker-compose.yml` 的 `spa-portal`:建置映像 → 發佈到 `gw_www` 的 `portal`(取代 Gateway 範例 `tools/sample-spa/portal`),可回滾 |
+| 前端 | `deploy/docker-compose.yml` 的 `spa-portal`:建置映像 → 發佈到 `gw_www` 的 `portal/releases/<版本>` 並原子切換 `current`(取代 Gateway 範例 `tools/sample-spa/portal`,Nginx 設定不需改);`... run --rm spa-portal rollback portal` 回滾。版本名稱預設為建置時間(`RELEASE_SHA` 可指定),**不可為 `dev`**(Gateway 範例佔用 `releases/dev`)。本機已發佈;測試區 / 正式區(Gateway G6)於 M4 |
 | 後端 | `portal-api` 容器加入 Gateway Docker 網路,別名 `portal-api:51271`;API Key 以 Docker secret 掛載;test / prod 自動註冊為草稿,IT 發佈後生效 |
-| 本機 | 以 Gateway 本機環境(`../giga-api-gateway-bff/deploy/dev/up.sh`)為基礎;模擬的 `portal-svc`(51270)在 portal-api 上線後移除 |
+| 本機 | 以 Gateway 本機環境(`../giga-api-gateway-bff/deploy/dev/up.sh`)為基礎;入口網的權限代碼與測試角色以 `sh deploy/apply-gateway-dev-rbac.sh` 套用(Gateway 的 `deploy/dev/` 不納入版控,所以由本 repo 保存);前端 `npm run dev`(5179)經 proxy 呼叫本機 Gateway;模擬的 `portal-svc`(51270)在 portal-api 上線後移除 |
 
 ## 10. 安全檢查清單
 
-- [ ] 不在瀏覽器儲存 Token、不解析 JWT
-- [ ] `redirect` 只接受同網域相對路徑
+- [x] 不在瀏覽器儲存 Token、不解析 JWT(web-kit;localStorage 只存明暗、風格、側欄收合)
+- [x] `redirect` 只接受同網域相對路徑(`composables/redirect.ts`,含 `//`、`/\`、控制字元)
 - [ ] 所有寫入 API 宣告權限,且等於前端按鈕代碼
 - [ ] portal-api 只信任 `X-Internal-Token`,不信任請求本文中的工號 / 部門
 - [ ] 錯誤回應不含堆疊;日誌不記錄 Cookie、CSRF、密碼

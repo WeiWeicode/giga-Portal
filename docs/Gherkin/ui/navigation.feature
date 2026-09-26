@@ -1,5 +1,5 @@
 # language: zh-TW
-@M1 @wip
+@M1
 功能: 網頁框架與選單
   為了在任何裝置上都能快速找到功能
   身為 員工
@@ -7,11 +7,13 @@
 
   # PRD FR-3.1、FR-2.6、FR-6.1、FR-6.6。
 
+  @auto @manual
   場景: 兩層選單與 Tab 對應網址
     當 點選「個人服務 → 我的假期」的「請假紀錄」Tab
     那麼 網址為 "/personal/leave/history"
     而且 麵包屑顯示「個人服務 / 我的假期 / 請假紀錄」
 
+  @manual
   場景: 直接輸入沒有權限的網址顯示 403
     假如 使用者沒有 "portal.resource.edit"
     當 開啟 "/resources/admin"

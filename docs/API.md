@@ -1,7 +1,7 @@
 # 員工入口網 — API 規格
 
 > **狀態:規劃中**。portal-api 端點為設計草案,實作時以 OpenAPI(`/openapi.json`,自動註冊到 Gateway)為準並回頭更新本文件。
-> 對應 [PRD.md](PRD.md) v0.1.1;錯誤格式與內部 Token 依 Gateway BACKEND-GUIDE §4、§5.3。
+> 對應 [PRD.md](PRD.md) v0.1.2;錯誤格式與內部 Token 依 Gateway BACKEND-GUIDE §4、§5.3。
 
 ---
 
@@ -23,8 +23,16 @@
 | POST | `/api/auth/login` | 登入 | 錯誤代碼依 Gateway PRD §8.1.1(`INVALID_CREDENTIALS`、`ACCOUNT_NOT_REGISTERED`、`PASSWORD_CHANGE_REQUIRED`…) |
 | POST | `/api/auth/logout`、`/api/auth/refresh` | 登出、換發 | web-kit 處理 |
 | GET | `/api/auth/me` | 使用者、`permissions`、**`apps`**(v0.7) | 應用切換、守衛、選單過濾 |
-| POST | `/api/auth/register`、`/register/verify` | 自行註冊 | 無網域子公司 |
-| POST | `/api/auth/password/forgot`、`/reset`、`/change` | 忘記 / 重設 / 變更密碼 | |
+| POST | `/api/auth/register`、`/register/verify` | 自行註冊 | 無網域子公司;送出 `{ employeeNo, name, hireDate? }` / `{ token, password }`(**`/register` 本機 Gateway 尚未實作**,畫面會顯示 BFF 錯誤) |
+| POST | `/api/auth/password/forgot`、`/reset`、`/change` | 忘記 / 重設 / 變更密碼 | 送出 `{ employeeNo }` / `{ token, password }` / `{ currentPassword?, newPassword }`(**forgot、reset 本機 Gateway 尚未實作**;change 已實作,`PASSWORD_CHANGE_REQUIRED` 後以限定憑證呼叫不需目前密碼) |
+
+> 註冊、忘記密碼的請求欄位依 Gateway PRD §8.2.5 推定,Gateway 實作時以其規格為準並回頭更新本表。
+
+### 2.1 應用切換的導回參數(前端,提議)
+
+| 項目 | 規則 |
+| --- | --- |
+| `/?denied=<應用代碼>` | 其他應用的應用層守衛沒有權限時導回入口網並帶此參數(例 GigaItApp:`/?denied=it`);入口網顯示「您沒有{應用名稱}的使用權限」後移除參數。尚未寫入 Gateway FRONTEND-GUIDE §7.4,需與 Gateway、GigaItApp(I3)確認 |
 | GET | `/api/portal/dashboard` | 首頁聚合(BFF aggregate) | 步驟:個人資料、出勤、假期、待簽核、公告、行程;非必要步驟失敗時 `_meta.errors` |
 | GET | `/api/bpm/approvals`、POST `/api/bpm/approvals/:id/approve`、`/reject` | 待我簽核、核准 / 退回 | 權限 `bpm.approval.read` / `approve` / `reject`(需 BPM 負責人提供,PRD Q8) |
 | GET | `/api/hrm/profile`、`/api/hrm/attendance`、`/api/hrm/leaves` | 個人資料、出勤、假期 | 需 HRM 負責人提供(PRD Q8);目前本機只有模擬的 `/api/hrm/profile`、`/api/hrm/todos` |

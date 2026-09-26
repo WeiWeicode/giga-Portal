@@ -2,7 +2,7 @@
 
 > **UI 全域套用**:頁面只組合 `src/ui/` 的全域元件與設計 token,不在頁面裡各自刻按鈕、卡片、表格、表單、對話框的樣式。
 > 元件與規則沿用 GigaItApp `docs/UI-GUIDE.md`(框架複製來源),本文件只寫**差異**:綠能色盤、玻璃 / 扁平風格、應用切換、首頁版面。
-> 對應 [PRD.md](PRD.md) §6.6、§7;AI 協作規則見 [../AGENT.md](../AGENT.md) §8。**狀態:規劃中**。
+> 對應 [PRD.md](PRD.md) §6.6、§7;AI 協作規則見 [../AGENT.md](../AGENT.md) §8。**狀態:M1 已實作 token、玻璃 / 扁平、版面與應用切換**(首頁區塊元件如 GQuickTile 於 M4 實作)。
 
 ---
 
@@ -22,8 +22,9 @@
 ### 2.1 屬性與切換
 
 - `<html data-theme="light|dark" data-style="glass|flat">`;元件**只讀 token**,不判斷目前風格。
-- 頂列兩個切換按鈕:風格(玻璃 ↔ 扁平,圖示 `layers`)、明暗(`sun` / `moon`);偏好記在瀏覽器。
-- `@supports not (backdrop-filter: blur(1px))` 或 `prefers-reduced-transparency: reduce` 時強制扁平;`prefers-reduced-motion` 時關閉光暈動畫。
+- 頂列與登入頁右上角的 `GStyleToggle`:風格(玻璃 ↔ 扁平,圖示 `layers` / `square`)、明暗(`sun` / `moon`);偏好記在瀏覽器(`portal.theme`、`portal.style`)。
+- 不支援 `backdrop-filter` 或 `prefers-reduced-transparency: reduce` 時強制扁平(風格按鈕停用並說明);`prefers-reduced-motion` 時關閉動畫。
+- 判斷規則在 `composables/themeRules.ts`;`public/theme-init.js` 在載入 CSS 前先套用一次避免閃爍(Gateway CSP 不允許 inline script,所以是獨立檔案),兩處規則需一致。
 
 ### 2.2 色盤(明亮 / 黑暗)
 
@@ -35,7 +36,9 @@
 | `--c-accent-storage` | `#12b5a6` | `#3ee0cf` | 圖表第二色、資訊標籤 |
 | `--c-info` / `--c-warning` / `--c-danger` | `#2f7de1` / `#e0901a` / `#e0483e` | `#5ea2ff` / `#ffb547` / `#ff6b61` | 語意色 |
 | `--bg` | `#f3faf6` | `#08130e` | 頁面底色 |
-| `--text` / `--text-2` / `--text-3` | `#0f2a1d` / `#4b6358` / `#8aa196` | `#e3f2ea` / `#9fb8ac` / `#5f7a6d` | 文字 |
+| `--text` / `--text-2` / `--text-3` | `#0f2a1d` / `#4b6358` / `#5d7569` | `#e3f2ea` / `#9fb8ac` / `#7d978a` | 文字(`--text-3` 已調深 / 調亮以達 4.5:1) |
+| `--c-primary-text` | `#0b7a3c` | `#2fd67a` | 淺底上的主色文字(連結、選中 Tab) |
+| `--grad-primary` / `--on-primary` | `#0c8443 → #0b7a6e` / 白 | `#2fd67a → #3ee0cf` / `#04170d` | 主要按鈕底色與文字(比品牌漸層深,確保對比) |
 | `--grad-brand` | `#12a150 → #12b5a6` | `#2fd67a → #3ee0cf` | 品牌漸層、Logo |
 | `--grad-hero` | `#0b6b3a → #12a150` | `#0e3b26 → #1c7a4a` | 問候橫幅 |
 
@@ -44,14 +47,19 @@
 
 ### 2.3 風格 token(玻璃 / 扁平)
 
+沿用 GigaItApp 的 token 名稱(元件不需改),扁平只在 `tokens.css` 以 `[data-style='flat']` 覆寫:
+
 | Token | 玻璃 | 扁平 |
 | --- | --- | --- |
-| `--surface` | 明亮 `rgb(255 255 255 / 0.62)`;黑暗 `rgb(16 34 26 / 0.55)` | 明亮 `#ffffff`;黑暗 `#10221a` |
-| `--surface-blur` | `16px` | `0` |
-| `--surface-border` | 漸層細邊(`.glass-edge`) | `1px solid var(--line)` |
-| `--shadow-card` | 柔和陰影 + 綠色光暈 | `none`(浮層 `--shadow-pop` 保留) |
-| `--bg-decor` | 網格 + 三個光點(綠、青綠、琥珀) | 極淡網格 |
-| `--radius-card` | `16px` | `12px` |
+| `--glass` / `--glass-strong` / `--glass-soft` / `--glass-hover` | 半透明白 / 深綠(明亮 `rgb(255 255 255 / 0.62)`;黑暗 `rgb(16 34 26 / 0.58)`) | 實色(明亮 `#ffffff`;黑暗 `#10221a`) |
+| `--glass-blur` | `blur(16px) saturate(160%)` | `none` |
+| `--glass-highlight`(`.glass-edge` 漸層細邊) | 白 → 綠漸層 | `none`,改由 `--glass-border` 1px 實線 |
+| `--shadow-sm` / `--shadow-md` / `--shadow-glow` | 柔和陰影 + 綠色光暈 | `none`(浮層 `--shadow-pop`、`--shadow-lg` 保留) |
+| `--bg-glow-1..3`、`--bg-grid` | 三個光點(綠、青綠、琥珀)+ 網格 | 透明 + 極淡網格 |
+| `--card-glow-opacity` | `1` | `0`(GCard `glow`、GHero / 品牌面板光點不顯示) |
+| `--radius-lg` / `--radius-xl` | `16px` / `22px` | `12px` / `14px` |
+
+- 問候橫幅與品牌面板固定深綠底,文字用 `--on-hero`,光點用 `--hero-glow-1/2`(明暗相同)。
 
 - **對比**:四種組合的文字對背景至少 4.5:1(大字 3:1);新增 token 時以瀏覽器實際檢查。
 
@@ -62,10 +70,13 @@
 | 元件 | 差異 |
 | --- | --- |
 | `GCard` | 背景、邊框、陰影、模糊只讀風格 token;`glow` 在扁平時無作用 |
-| `GHero`(新增) | 問候橫幅:日期、問候語、身分資訊、快捷按鈕 slot、右側資訊卡 slot;背景 `--grad-hero` |
-| `GQuickTile`(新增) | 常用功能圖示格:圖示底色取 tone、標題、英文副標;鍵盤可聚焦 |
-| `GAppSwitcher`(新增) | 應用切換:圖示按鈕 + 下拉,項目 `{ code, name, basePath, icon }`,標示目前應用;**GigaItApp 同步同一版本** |
-| `GStyleToggle`(新增) | 玻璃 / 扁平切換按鈕(與明暗切換並列) |
+| `GHero`(新增,M1) | 問候橫幅:`eyebrow`(日期)、`title`、`meta`(身分資訊)、`actions` slot(快捷按鈕)、`aside` slot(右側資訊卡);背景 `--grad-hero` |
+| `GQuickTile`(規劃,M4) | 常用功能圖示格:圖示底色取 tone、標題、英文副標;鍵盤可聚焦 |
+| `GAppSwitcher`(新增,M1) | 應用切換:`apps`(`{ code, name, basePath, icon }`)、`current`、`derived`(暫時推導時在下拉底部標示);一個以下不顯示;整頁導向;**GigaItApp 同步同一版本** |
+| `GStyleToggle`(新增,M1) | 風格(玻璃 / 扁平)與明暗兩個切換按鈕 |
+| `GAlert`(新增,M1) | 區塊提示 `tone="info|success|warning|danger"`:表單錯誤(含 requestId)、說明文字 |
+| `GBadge` | 文字色與 `--text` 混合(明亮加深、黑暗提亮),小字也達 4.5:1 |
+| `GButton` | `primary` 用 `--grad-primary` / `--on-primary`;`danger` 用 `--grad-danger` |
 
 ## 4. 版面
 
@@ -85,7 +96,8 @@
 ```
 
 - 側欄:兩層選單,項目含中文名稱與英文副標(參考畫面);收合、浮出、≤ 960px 抽屜同 GigaItApp。
-- **應用切換**:頂列帳號左側;`me.apps` 只有一個時不顯示。
+- **應用切換**:頂列帳號左側;`me.apps` 只有一個時不顯示。Gateway 尚未提供 `apps`(G3)時暫以權限推導(`composables/apps.ts` 的 `TEMP_APPS`)。
+- 選單的名稱、英文副標、圖示、路徑與權限都定義在 `router.ts`(`MENU_GROUPS` + 路由 meta `group`);只有一個同名功能的群組(首頁)直接顯示為連結。
 - 使用者卡片:頭像、姓名、工號 · 分機,點擊到個人資料。
 
 ### 4.1 首頁區塊(PRD §6.4)
@@ -114,8 +126,8 @@
 
 ## 6. 新增一個頁面
 
-1. 在 PRD §6.5 登記功能、Tab、按鈕與權限代碼;在 `backend/src/openapi.ts` 的 `x-permissions` 宣告(`kind`、`parent`、`sort`)。
-2. `router.ts`:功能頁用 `TabbedPage`,`meta` 填 `permission`、`title`、`subtitle`(英文副標)、`icon`、`tabs`。
+1. 在 PRD §6.5 登記功能、Tab、按鈕與權限代碼;portal-api 上線前登記到 `deploy/gateway-dev-rbac.yaml` 並執行 `sh deploy/apply-gateway-dev-rbac.sh`,上線後改在 `backend/src/openapi.ts` 的 `x-permissions` 宣告(`kind`、`parent`、`sort`)。
+2. `router.ts`:功能頁用 `page()`(TabbedPage),`meta` 填 `group`、`permission`、`title`、`subtitle`(英文副標)、`icon`、`milestone`,Tab 的 `permission` 填 tab 代碼。
 3. 資料:單筆 `useAsync`、清單 `usePaged`、首屏以外 `<GLazy>`;錯誤 `<GEmpty tone="danger">` + 重試。
 4. **四種風格組合** × 1440px / 375px 都用瀏覽器看過;更新 Gherkin 與修正紀錄。
 

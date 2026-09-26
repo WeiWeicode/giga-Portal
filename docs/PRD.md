@@ -2,7 +2,7 @@
 
 > 集團員工每天的第一個畫面:登入、個人資訊、待辦與簽核、常用功能、公告與行程;並作為各應用(員工入口網、IT 管理系統…)的**單一入口與應用切換點**。
 > 選單、Tab、按鈕依**角色、部門、職位**控管;權限資料以 **Gateway BFF 為唯一來源**,由 IT 管理系統(GigaItApp)設定。
-> 本文件以 **BDD** 撰寫:每項需求附驗收場景(`docs/Gherkin/`,規劃中)。
+> 本文件以 **BDD** 撰寫:每項需求附驗收場景(`docs/Gherkin/`)。
 
 ---
 
@@ -11,18 +11,19 @@
 | 項目 | 內容 |
 | --- | --- |
 | 產品名稱 | GigaNexus 員工入口網(giga-Portal) |
-| 文件版本 | **v0.1.1(草案)** |
+| 文件版本 | **v0.1.2(草案)** |
 | 建立日期 | 2026-09-26 |
 | 技術棧 | 與 GigaItApp 相同,**複製其框架後分離**:Vue 3 + Vite(前端)/ Node.js 22 + Fastify 5 + TypeScript(後端 `portal-api`,以 Gateway 後端樣本 `samples/node-backend` 為基礎) |
 | 上位規範 | Gateway PRD **v0.7**(§7.2.1 子路徑、§8.2 登入、§8.3.1 指派規則、§8.3.2 UI 權限分類、§8.3.3 應用登記與切換、§8.7 管理 API)、DATABASE §3.2、FRONTEND-GUIDE v0.2(§7 登入與權限、§7.4 應用切換、§7.5 選單 / Tab / 按鈕)、BACKEND-GUIDE v0.4(§3.3 port 51271、§4 內部 Token、§6.1 `x-permissions`、§7.5 自動註冊);跨專案規則見 Gateway `AGENT.md` §10 |
 | 相關文件 | [ARCHITECTURE.md](ARCHITECTURE.md)、[API.md](API.md)、[UI-GUIDE.md](UI-GUIDE.md)、[PROJECT-MAP.md](PROJECT-MAP.md)、[Gherkin/](Gherkin/README.md)、[../AGENT.md](../AGENT.md) |
 | 相關專案 | `../giga-api-gateway-bff/`(登入、RBAC、路由)、`../GigaItApp/`(權限設定畫面;本案同時修改,見 §9) |
-| 狀態 | 草案:架構與權限模型已定(§1.2);Gateway 規格已改版為 v0.7(尚未實作);本 repo 尚無程式碼,待決事項見 §12 |
+| 狀態 | 草案:架構與權限模型已定(§1.2);Gateway 規格已改版為 v0.7(尚未實作);**M1 前端框架已完成並發佈到本機 Nginx**(進度見 §11),portal-api 自 M4;待決事項見 §12 |
 
 ### 1.1 修訂紀錄
 
 | 版本 | 日期 | 變更內容 |
 | --- | --- | --- |
+| v0.1.2 | 2026-09-26 | M1 實作狀態:前端框架完成並發佈本機 Nginx(§11 進度);應用切換暫以 app 權限推導(Gateway G3 前);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`;GigaItApp 已先加入應用切換(I3 部分);Q9 依 D1 標為已決定 |
 | v0.1.1 | 2026-09-26 | Q1(職位以**職級**為主)、Q2(部門**含下層**,部門樹由 BPM 同步)、Q4(`portal-api` 51271)、Q7(Gateway 本機帳號為緊急帳號)定案;Gateway 規格改版 v0.7(G1–G4、G7 已寫入規格);GigaItApp 改用單一入口後以使用者身分直接呼叫 BFF 管理 API,不再需要服務帳號;建立 AGENT.md 與 docs 文件組 |
 | v0.1 | 2026-09-26 | 初稿:產品範圍、單一入口與應用切換、Gateway 統一權限模型(角色 / 部門 / 職位 → 應用 / 選單 / Tab / 按鈕)、淺綠科技風格與「玻璃 / 扁平」切換、Gateway 與 GigaItApp 的配合修改 |
 
@@ -318,6 +319,14 @@ flowchart LR
 | M4 | 首頁(聚合路由,模擬資料標示)、portal-api 公告與行政資源;上架測試區(G6、G7) | M1 |
 | M5 | 各功能頁串接真實 HRM / BPM API | 各系統負責人 |
 
+**進度(2026-09-26)**
+
+| 里程碑 | 狀態 |
+| --- | --- |
+| M1 | 前端框架完成並發佈到**本機** Nginx(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
+| M3 | GigaItApp 已先加入頂列應用切換(I3 的一部分,讀使用者的 Gateway 登入);I1、I2、I3 應用層守衛、G5 未開始 |
+| 其他 | 未開始 |
+
 不在第一版:LINE 綁定、通知中心設定、常用功能自訂排序(v0.2)、表單與同仁搜尋(Q8)。
 
 ---
@@ -346,6 +355,6 @@ flowchart LR
 | Q6 | 風格偏好存放位置 | 第一版瀏覽器;之後存 portal-api 個人設定,跨裝置同步 | 待決 |
 | Q7 | GigaItApp 既有自有帳號如何退場、緊急管理帳號 | 改單一入口後停用;以 Gateway 本機帳號 + 個別指派 `gw-it-admin` 作為緊急帳號 | **已決定**:照建議 |
 | Q8 | 首頁與搜尋的真實資料來源(出勤、假期、加班、教育訓練、行程、同仁目錄) | 第一版模擬並標示;逐一向 HRM / BPM 負責人確認 API | 待決 |
-| Q9 | 登入、註冊、忘記密碼頁由入口網實作(取代 Gateway 範例)是否確認? | 是(FRONTEND-GUIDE §7.1) | 待確認 |
+| Q9 | 登入、註冊、忘記密碼頁由入口網實作(取代 Gateway 範例)是否確認? | 是(FRONTEND-GUIDE §7.1) | **已決定**:同 D1(2026-09-26);M1 已實作 |
 | Q10 | 參考畫面的「設計系統(Canvas UI Kit)」是否上線 | 只在 dev 與 `portal.uikit.read` 顯示 | 待決 |
 | Q11 | 應用切換是否要涵蓋舊單一入口(PortalSolar)與外部系統 | 第一版只列新系統;舊系統放「集團系統」外部連結 | 待決 |

@@ -19,8 +19,8 @@
 | 權限 | **Gateway BFF 是唯一來源**:應用 / 選單 / Tab / 按鈕權限依角色、部門(含下層)、職級(職稱選配)由 BFF 計算,**由 GigaItApp 設定**(Gateway PRD §8.3.1–§8.3.3);按鈕權限代碼 = 其呼叫的 API 權限代碼 |
 | 開發專案名稱 | `giga-Portal`(`backend/package.json` 的 `gateway.project`,自動註冊時寫入 `x-gateway.project`) |
 | 風格 | 淺綠 / 科技綠(綠能:太陽能、儲能);使用者可切換**玻璃 / 扁平**與**明亮 / 黑暗**(PRD §6.6、UI-GUIDE) |
-| 狀態 | **規劃中,只有文件**;需求見 `docs/PRD.md`,里程碑 M1 起開始寫程式 |
-| 目錄(規劃) | `frontend/`(Vue 3 + Vite)、`backend/`(portal-api,Fastify)、`deploy/`(compose)、`docs/`;各目錄職責見 `docs/PROJECT-MAP.md` |
+| 狀態 | **M1 進行中**:`frontend/` 框架已建立(登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、應用切換、玻璃 / 扁平 × 明亮 / 黑暗);`backend/`(portal-api)自 M4 開始;需求見 `docs/PRD.md` |
+| 目錄 | `frontend/`(Vue 3 + Vite,已建立)、`deploy/`(`spa-portal` 發佈、本機 Gateway 權限設定)、`docs/`;`backend/`(portal-api,Fastify)自 M4 建立;各目錄職責見 `docs/PROJECT-MAP.md` |
 
 ### 0.1 工作區與相依
 
@@ -148,14 +148,15 @@
 | 原始碼根目錄 | `backend/src/`、`frontend/src/`;建置只取 `src/` |
 | 集中測試 | `backend/test/`、`frontend/test/`(Vitest,composables 與權限過濾邏輯) |
 
-### 常用指令(規劃,M1 建立後更新)
+### 常用指令
 
 | 位置 | 指令 | 說明 |
 | --- | --- | --- |
-| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 經本機 Gateway(`https://localhost`) |
+| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 經本機 Gateway(`https://localhost`);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
 | `frontend/` | `npm run typecheck` / `npm test` / `npm run build` | 型別 / Vitest / 建置 |
-| `backend/` | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |
-| 根目錄 | `docker compose -f deploy/docker-compose.yml up -d --build --wait portal-api` | 部署後端到本機 Gateway 網路 |
+| 根目錄 | `sh deploy/apply-gateway-dev-rbac.sh` | 把入口網的權限代碼與測試角色套用到本機 Gateway(`deploy/gateway-dev-rbac.yaml`;Gateway DB 重建後需再跑) |
+| `backend/`(M4 起) | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |
+| 根目錄(M4 起) | `docker compose -f deploy/docker-compose.yml up -d --build --wait portal-api` | 部署後端到本機 Gateway 網路 |
 | 根目錄 | `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal` | 發佈前端到 `/`(`... run --rm spa-portal rollback portal` 回滾) |
 
 ---
