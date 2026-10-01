@@ -2,6 +2,11 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-10-01 移除本機 Gateway 用的權限檔;前端開發改 proxy 到測試區
+- 內容:需求方決定不再使用家中開發環境(配合 giga-api-gateway-bff `0c9b5b8`)。刪除 `deploy/gateway-dev-rbac.yaml`、`deploy/apply-gateway-dev-rbac.sh`;`frontend/vite.config.ts` 的 `/api` proxy 預設改為測試區 `https://giganexus-test.gigasolar.com.tw`(公司憑證,改回驗證憑證;`GATEWAY_TARGET` 可改);AGENT.md、README、ARCHITECTURE、PROJECT-MAP、UI-GUIDE、PRD、Gherkin README 的本機 Gateway 說明改為測試區(測試帳號改為假工號自行註冊的本機帳號)。修正紀錄與 PRD 修訂紀錄為歷史,不修改
+- 檔案:`deploy/gateway-dev-rbac.yaml`、`deploy/apply-gateway-dev-rbac.sh`(刪除)、`deploy/gateway-rbac.yaml`、`deploy/apply-gateway-rbac.sh`、`frontend/vite.config.ts`、`frontend/Dockerfile`、`AGENT.md`、`README.md`、`docs/ARCHITECTURE.md`、`docs/PROJECT-MAP.md`、`docs/UI-GUIDE.md`、`docs/PRD.md`、`docs/Gherkin/README.md`
+- 驗證:`npm run dev` 後 `curl http://localhost:5179/api/auth/me` 經 proxy 取得測試區 401 JSON(憑證驗證通過);`npm run typecheck`、`npm test`(29 項)通過
+
 ## 2026-10-01 註冊頁無 Email 者一併設定密碼、權限分類 kind / parent / sort
 - 內容:配合 giga-api-gateway-bff `e2a1326`(W3-5.8a 自行註冊、P2-3a 權限分類)。① 註冊頁填了到職日時顯示「設定密碼 / 確認密碼」,與 `hireDate` 一起送出 `password`(Gateway 比對 LOS 到職日後直接啟用;有 Email 者仍寄驗證連結),密碼政策錯誤逐條顯示。② `deploy/gateway-rbac.yaml`(及本機版)25 個權限補上 `kind` / `parent` / `sort`(依 `router.ts` 選單順序:`portal.app.access` → 14 個選單 → Tab / 按鈕;`bpm.approval.*` 掛在入口網的簽核選單下;`it.app.access` 為另一個應用),GigaItApp 的權限樹以 `portal.app.access` 為根
 - 檔案:`frontend/src/pages/auth/Register.vue`、`frontend/src/api/gateway.ts`、`deploy/gateway-rbac.yaml`、`deploy/gateway-dev-rbac.yaml`、`docs/API.md`

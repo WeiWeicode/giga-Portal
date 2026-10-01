@@ -43,7 +43,7 @@
 | 項目 | 內容 |
 | --- | --- |
 | 使用者 | 集團所有員工(碩禾、禾迅等子公司;AD 與本機帳號) |
-| 子路徑 | `/`(Gateway PRD §7.2.1 已保留給員工入口網);取代 Gateway 範例入口網 `tools/sample-spa/portal` |
+| 子路徑 | `/`(Gateway PRD §7.2.1 已保留給員工入口網);Nginx `/` 只由本專案發佈 |
 | 前端呼叫 | 一律同網域 `/api/*` 經 BFF(使用者 Cookie);入口網自有 API 為 `/api/portal/*`(`portal-api` 經 BFF 轉入) |
 | 登入 | Gateway `/api/auth/*`;入口網提供 `/login`、`/register`、`/reset-password` 畫面 |
 | 應用切換 | 右上角帳號旁的「應用切換」,只列出使用者有權限的應用(員工入口網、IT 管理系統,之後的 MES、HRM…) |
@@ -281,7 +281,7 @@ flowchart LR
 | G3 | 應用登記與 `/api/auth/me` | `gw.app`(code、name、base_path、icon、sort、permission_code)由 CLI `apply` 維護;`/api/auth/me` 回傳 `apps`(過濾後)與 `menus`(已有欄位,改為權限樹) |
 | G4 | 管理寫入 API(PRD §8.7 / P2-3a) | 角色權限、角色指派規則的寫入 API、部門樹、權限試算(稽核、遞增 `pv`);GigaItApp 前端**以使用者身分**直接呼叫,需 `gw.admin.rbac.write` |
 | G5 | `/it/api` 改經 BFF | 登記 `itapp-api` 上游、系統代碼 `it`、對外 `/api/it/*`;Nginx 移除 `/it/api/` 直通(或過渡期並存) |
-| G6 | 入口網取代範例 | Nginx `/` 由 giga-Portal 發佈的 `portal` 提供;`tools/sample-spa/portal` 保留為範例或移除 |
+| G6 | 入口網取代範例 | Nginx `/` 由 giga-Portal 發佈的 `portal` 提供;Gateway 範例入口網已移除 |
 | G7 | 登記 | `AGENT.md` §10.2 專案登記(`giga-Portal`)、BACKEND-GUIDE §3.3 port、PRD §7.2.1 子路徑說明 |
 
 ### 9.2 GigaItApp
@@ -323,7 +323,7 @@ flowchart LR
 
 | 里程碑 | 狀態 |
 | --- | --- |
-| M1 | 前端框架完成並發佈到**本機** Nginx(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
+| M1 | 前端框架完成並發佈到 Nginx(測試區)(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
 | M3 | GigaItApp 已先加入頂列應用切換(I3 的一部分,讀使用者的 Gateway 登入);I1、I2、I3 應用層守衛、G5 未開始 |
 | 其他 | 未開始 |
 

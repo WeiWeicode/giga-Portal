@@ -1,4 +1,4 @@
-# 員工入口網 SPA 映像檔(取代 Gateway 範例入口網 tools/sample-spa/portal):內含 dist,部署時以一次性容器發佈到 Nginx 的 gw_www volume
+# 員工入口網 SPA 映像檔:內含 dist,部署時以一次性容器發佈到 Nginx 的 gw_www volume
 #   由 deploy/docker-compose.yml 的 spa-portal 建置(需 additional_contexts webkit = Gateway web-kit 原始碼)
 #   docker run --rm -v <gw_www>:/srv/www spa/portal:<版本> publish portal     # 原子切換 /srv/www/portal/current(Nginx /)
 #   docker run --rm -v <gw_www>:/srv/www spa/portal:<版本> rollback portal    # 指回上一版

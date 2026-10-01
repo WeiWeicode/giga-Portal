@@ -159,9 +159,9 @@ flowchart LR
 
 | 項目 | 內容 |
 | --- | --- |
-| 前端 | `deploy/docker-compose.yml` 的 `spa-portal`:建置映像 → 發佈到 `gw_www` 的 `portal/releases/<版本>` 並原子切換 `current`(取代 Gateway 範例 `tools/sample-spa/portal`,Nginx 設定不需改);`... run --rm spa-portal rollback portal` 回滾。版本名稱預設為建置時間(`RELEASE_SHA` 可指定),**不可為 `dev`**(Gateway 範例佔用 `releases/dev`)。本機已發佈;公司測試區在 CI 就緒前依 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` 步驟 7 手動發佈(`--env-file`,範本 `deploy/test.env.example`),權限以 `deploy/apply-gateway-rbac.sh` 套用 `deploy/gateway-rbac.yaml`;CI 與正式區(Gateway G6)於 M4 |
+| 前端 | `deploy/docker-compose.yml` 的 `spa-portal`:建置映像 → 發佈到 `gw_www` 的 `portal/releases/<版本>` 並原子切換 `current`(Nginx 設定不需改);`... run --rm spa-portal rollback portal` 回滾。版本名稱預設為建置時間(`RELEASE_SHA` 可指定),**不可為 `dev`**(Gateway 範例佔用 `releases/dev`)。本機已發佈;公司測試區在 CI 就緒前依 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` 步驟 7 手動發佈(`--env-file`,範本 `deploy/test.env.example`),權限以 `deploy/apply-gateway-rbac.sh` 套用 `deploy/gateway-rbac.yaml`;CI 與正式區(Gateway G6)於 M4 |
 | 後端 | `portal-api` 容器加入 Gateway Docker 網路,別名 `portal-api:51271`;API Key 以 Docker secret 掛載;test / prod 自動註冊為草稿,IT 發佈後生效 |
-| 本機 | 以 Gateway 本機環境(`../giga-api-gateway-bff/deploy/dev/up.sh`)為基礎;入口網的權限代碼與測試角色以 `sh deploy/apply-gateway-dev-rbac.sh` 套用(Gateway 的 `deploy/dev/` 不納入版控,所以由本 repo 保存);前端 `npm run dev`(5179)經 proxy 呼叫本機 Gateway;模擬的 `portal-svc`(51270)在 portal-api 上線後移除 |
+| 開發 | 前端 `npm run dev`(5179)經 Vite proxy 呼叫測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`);權限代碼以 `deploy/gateway-rbac.yaml` 套用到測試區 |
 
 ## 10. 安全檢查清單
 

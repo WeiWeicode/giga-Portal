@@ -3,7 +3,6 @@
 # 需要:Gateway 已依其 docs/TEST-DEPLOY-RUNBOOK.md 部署;兄弟目錄 ../giga-api-gateway-bff(或以 GATEWAY_DIR 指定)。
 # 用法(Windows 主機在 Git Bash 執行):
 #   sh deploy/apply-gateway-rbac.sh test <主機受保護目錄>/test.env
-# 本機開發改用 deploy/apply-gateway-dev-rbac.sh。
 set -eu
 ZONE="${1:?用法:sh deploy/apply-gateway-rbac.sh <test|prod> <Gateway 區域 env 檔>}"
 ENV_FILE="${2:?用法:sh deploy/apply-gateway-rbac.sh <test|prod> <Gateway 區域 env 檔>}"

@@ -126,7 +126,7 @@
 
 ## 6. 新增一個頁面
 
-1. 在 PRD §6.5 登記功能、Tab、按鈕與權限代碼;portal-api 上線前登記到 `deploy/gateway-dev-rbac.yaml` 並執行 `sh deploy/apply-gateway-dev-rbac.sh`,上線後改在 `backend/src/openapi.ts` 的 `x-permissions` 宣告(`kind`、`parent`、`sort`)。
+1. 在 PRD §6.5 登記功能、Tab、按鈕與權限代碼;portal-api 上線前登記到 `deploy/gateway-rbac.yaml` 並以 `sh deploy/apply-gateway-rbac.sh test <Gateway test.env>` 套用,上線後改在 `backend/src/openapi.ts` 的 `x-permissions` 宣告(`kind`、`parent`、`sort`)。
 2. `router.ts`:功能頁用 `page()`(TabbedPage),`meta` 填 `group`、`permission`、`title`、`subtitle`(英文副標)、`icon`、`milestone`,Tab 的 `permission` 填 tab 代碼。
 3. 資料:單筆 `useAsync`、清單 `usePaged`、首屏以外 `<GLazy>`;錯誤 `<GEmpty tone="danger">` + 重試。
 4. **四種風格組合** × 1440px / 375px 都用瀏覽器看過;更新 Gherkin 與修正紀錄。

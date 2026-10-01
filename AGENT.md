@@ -20,7 +20,7 @@
 | 開發專案名稱 | `giga-Portal`(`backend/package.json` 的 `gateway.project`,自動註冊時寫入 `x-gateway.project`) |
 | 風格 | 淺綠 / 科技綠(綠能:太陽能、儲能);使用者可切換**玻璃 / 扁平**與**明亮 / 黑暗**(PRD §6.6、UI-GUIDE) |
 | 狀態 | **M1 進行中**:`frontend/` 框架已建立(登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、應用切換、玻璃 / 扁平 × 明亮 / 黑暗);`backend/`(portal-api)自 M4 開始;需求見 `docs/PRD.md` |
-| 目錄 | `frontend/`(Vue 3 + Vite,已建立)、`deploy/`(`spa-portal` 發佈、本機 Gateway 權限設定)、`docs/`;`backend/`(portal-api,Fastify)自 M4 建立;各目錄職責見 `docs/PROJECT-MAP.md` |
+| 目錄 | `frontend/`(Vue 3 + Vite,已建立)、`deploy/`(`spa-portal` 發佈、Gateway 權限設定 `gateway-rbac.yaml`)、`docs/`;`backend/`(portal-api,Fastify)自 M4 建立;各目錄職責見 `docs/PROJECT-MAP.md` |
 
 ### 0.1 工作區與相依
 
@@ -83,7 +83,7 @@
 | --- | --- | --- | --- |
 | `GW_ENV`(portal-api) | `dev`:不自動註冊 | `test`:啟動時註冊為測試區 Gateway 草稿 | `prod`:註冊為正式區草稿 |
 | API Key | `GW_API_KEY` 或 `GW_API_KEY_FILE` | `GW_API_KEY_FILE` | **只接受** `GW_API_KEY_FILE`(Docker secret) |
-| 前端開發 | Vite proxy `/api` → 本機 Gateway(`https://localhost`) | 建置映像發佈到 `gw_www` | 同左 |
+| 前端開發 | Vite proxy `/api` → 測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`) | 建置映像發佈到 `gw_www` | 同左 |
 
 - 部署區只有這三個值;缺少必要設定時**啟動失敗**,不要加預設值繞過檢查(SDK `loadGatewayEnv`)。
 - Port `51271`(BACKEND-GUIDE §3.3 已登記,規劃中);不可自行換 port。
@@ -135,7 +135,7 @@
 | 命名 | 變數 / 函式 `camelCase`,型別 / 元件 `PascalCase`,常數 `UPPER_SNAKE_CASE`;後端檔名 `kebab-case.ts`,Vue 元件 `PascalCase.vue` |
 | 格式 | Prettier(單引號、`printWidth` 160、尾逗號) |
 | 註解語言 | 繁體中文,註明對應規格章節(例 `(PRD FR-2.4)`、`(Gateway PRD §8.3.3)`) |
-| 測試帳號 | 使用本機 Gateway 的種子帳號(虛構資料);**不可在瀏覽器輸入真實帳密** |
+| 測試帳號 | 以假工號在測試區自行註冊本機帳號(Gateway CLI `local:approve` 核准),測完刪除;**不可在瀏覽器輸入他人的真實帳密** |
 
 ### 9.1 專案地圖與設計原則
 
@@ -152,12 +152,11 @@
 
 | 位置 | 指令 | 說明 |
 | --- | --- | --- |
-| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 經本機 Gateway(`https://localhost`);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
+| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 到測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`,`GATEWAY_TARGET` 可改);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
 | `frontend/` | `npm run typecheck` / `npm test` / `npm run build` | 型別 / Vitest / 建置 |
-| 根目錄 | `sh deploy/apply-gateway-dev-rbac.sh` | 把入口網的權限代碼與測試角色套用到本機 Gateway(`deploy/gateway-dev-rbac.yaml`;Gateway DB 重建後需再跑) |
 | 根目錄 | `sh deploy/apply-gateway-rbac.sh test <Gateway test.env>` | 公司測試區 / 正式區套用權限(`deploy/gateway-rbac.yaml`,AD 群組 DN 由 IT 填);流程見 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` |
 | `backend/`(M4 起) | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |
-| 根目錄(M4 起) | `docker compose -f deploy/docker-compose.yml up -d --build --wait portal-api` | 部署後端到本機 Gateway 網路 |
+| 根目錄(M4 起) | `docker compose -f deploy/docker-compose.yml up -d --build --wait portal-api` | 部署後端到 Gateway 的 Docker 網路(測試區由 CI 執行) |
 | 根目錄 | `docker compose -f deploy/docker-compose.yml run --rm --build spa-portal` | 發佈前端到 `/`(`... run --rm spa-portal rollback portal` 回滾);公司環境加 `--env-file <portal.env>`(範本 `deploy/test.env.example`,volume 名稱不同) |
 
 ---

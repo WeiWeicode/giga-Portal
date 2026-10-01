@@ -1,11 +1,11 @@
 # 測試區 / 正式區 Gateway 的員工入口網權限(Gateway CLI `apply` 格式;docs/TEST-DEPLOY-RUNBOOK 見 Gateway repo)
 #
-# 與 gateway-dev-rbac.yaml 的差別:沒有本機模擬 AD 群組;需要 AD 群組的角色由 IT 依公司 GN-* 群組填入 DN(Gateway P-08)。
+# 需要 AD 群組的角色由 IT 依公司 GN-* 群組填入 DN(Gateway P-08)。
 # 測試區與正式區設定不互通(Gateway PRD Q3),兩區各自套用:
 #   sh deploy/apply-gateway-rbac.sh test <主機受保護目錄>/test.env
 # 權限分類 kind / parent / sort(Gateway PRD §8.3.2,2026-10-01 起支援)依 frontend/src/router.ts 的選單順序,供 GigaItApp 以樹狀設定。
 # 暫時做法:portal-api(x-permissions 自動註冊)上線後,權限改由 portal-api 宣告,角色與指派改由 IT 在 GigaItApp 設定(PRD §5.2、§9)。
-# 權限代碼以 PRD §6.5 為準,與 gateway-dev-rbac.yaml 保持一致。
+# 權限代碼以 PRD §6.5 為準。
 # 注意:Gateway CLI 沒有個別指派角色的指令,需要 AD 群組(adGroups)或公司(companies)才會有成員;
 #       套用會遞增所有使用者的權限版本(已登入者下一次呼叫 API 時由 web-kit 自動換發,不需重新登入)。
 permissions:

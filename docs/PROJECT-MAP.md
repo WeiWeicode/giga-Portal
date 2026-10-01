@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新:2026-09-26**(M1:建立 `frontend/` 框架;本機 Gateway 權限設定 `deploy/gateway-dev-rbac.yaml`;`spa-portal` 發佈到本機 Nginx;公司測試區權限範本與 env 範本)。
+> **最後更新:2026-10-01**(移除本機 Gateway 用的 `gateway-dev-rbac.yaml` 與套用腳本;前端開發改 proxy 到測試區;權限補上 kind / parent / sort)。
 > 開發新功能後,在同一個變更內更新本文件(`AGENT.md` §9.1、Gateway `AGENT.md` §10.7)。只寫結構與職責,細節連到 `docs/` 對應章節。
 > 標示「(規劃)」的目錄與檔案尚未建立,依 [ARCHITECTURE.md](ARCHITECTURE.md) §6–§7 實作後移除標示。
 
@@ -42,8 +42,6 @@ giga-Portal/
 │  │  └─ components.d.ts          全域元件型別(新增 G* 元件時同步)
 │  └─ test/                       Vitest:redirect、apps、menu、theme、greeting(測試名稱 = Gherkin 場景名稱)
 ├─ deploy/
-│  ├─ gateway-dev-rbac.yaml       本機 Gateway 的入口網權限代碼與測試角色(暫時做法,Gateway CLI apply 格式)
-│  ├─ apply-gateway-dev-rbac.sh   套用上檔到本機 Gateway
 │  ├─ gateway-rbac.yaml           公司測試區 / 正式區的權限代碼與角色(AD 群組 DN 由 IT 填入)
 │  ├─ apply-gateway-rbac.sh       以 Gateway 正式 compose 的 migrate 映像套用上檔(Git Bash 可用)
 │  ├─ test.env.example            公司環境 Compose 變數範本(gw_www volume 名稱、版本名稱)
@@ -74,13 +72,13 @@ giga-Portal/
 | 風格切換 | `GStyleToggle` → `composables/theme` → `<html data-theme data-style>` → `tokens.css` |
 | 首頁 | `pages/home/Home.vue`(M1:只用 me);M4 起 `/api/portal/dashboard`(BFF 聚合) |
 | portal-api 資料(M4) | 頁面 → `api/portal.ts`(規劃)→ BFF(權限)→ portal-api `routes/` → `store/` |
-| 權限設定 | 不在本專案:GigaItApp → BFF 管理 API(Gateway PRD §8.7);本機暫用 `deploy/gateway-dev-rbac.yaml` |
+| 權限設定 | 不在本專案:GigaItApp → BFF 管理 API(Gateway PRD §8.7);portal-api 上線前暫用 `deploy/gateway-rbac.yaml` |
 
 ## 4. 要改什麼 → 看哪裡
 
 | 要做的事 | 位置 |
 | --- | --- |
-| 新增頁面 / 選單 / Tab / 按鈕 | PRD §6.5 登記權限 → `deploy/gateway-dev-rbac.yaml`(portal-api 上線後改 `backend/src/openapi.ts` 的 `x-permissions`)→ `frontend/src/router.ts` → `pages/`;步驟見 [UI-GUIDE.md](UI-GUIDE.md) §6 |
+| 新增頁面 / 選單 / Tab / 按鈕 | PRD §6.5 登記權限 → `deploy/gateway-rbac.yaml`(portal-api 上線後改 `backend/src/openapi.ts` 的 `x-permissions`)→ `frontend/src/router.ts` → `pages/`;步驟見 [UI-GUIDE.md](UI-GUIDE.md) §6 |
 | 顏色 / 風格 | `frontend/src/ui/styles/tokens.css`(明暗 × 玻璃 / 扁平四組) |
 | 應用切換 | `frontend/src/ui/components/GAppSwitcher.vue`(與 GigaItApp 同步)、`composables/apps.ts` |
 | 登入 / 註冊 / 密碼頁 | `frontend/src/pages/auth/`、`api/gateway.ts` |
@@ -104,4 +102,4 @@ giga-Portal/
 | UI 套件為複製 | 與 GigaItApp 各有一份 `ui/`;Registry 上線後抽成共用套件(PRD Q5) |
 | web-kit 以 alias 引用兄弟 repo | 依賴工作區目錄結構;Registry 上線後改為套件相依(ARCHITECTURE §8) |
 | 應用清單暫時推導 | `composables/apps.ts` 的 `TEMP_APPS`:Gateway G3(`me.apps`)上線後移除 |
-| 權限代碼暫存本 repo | `deploy/gateway-dev-rbac.yaml`:Gateway G2 與 portal-api 自動註冊上線後移除 |
+| 權限代碼暫存本 repo | `deploy/gateway-rbac.yaml`:portal-api 自動註冊上線後改由 `x-permissions` 宣告 |
