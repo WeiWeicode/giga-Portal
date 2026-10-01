@@ -31,8 +31,8 @@ export async function changePassword(newPassword: string, currentPassword?: stri
   return me;
 }
 
-/** 自行註冊申請(工號 + 姓名;無 Email 者另填到職日)(Gateway PRD §8.2.5) */
-export const register = (body: { employeeNo: string; name: string; hireDate?: string }) =>
+/** 自行註冊申請(工號 + 姓名;無 Email 者另填到職日與密碼,比對通過直接啟用)(Gateway PRD §8.2.4–§8.2.5) */
+export const register = (body: { employeeNo: string; name: string; hireDate?: string; password?: string }) =>
   http.post<{ code: string; message: string }>('/api/auth/register', body, PUBLIC);
 
 /** 以驗證 / 啟用連結的 token 設定密碼並啟用帳號 */

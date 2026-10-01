@@ -2,6 +2,11 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-10-01 註冊頁無 Email 者一併設定密碼、權限分類 kind / parent / sort
+- 內容:配合 giga-api-gateway-bff `e2a1326`(W3-5.8a 自行註冊、P2-3a 權限分類)。① 註冊頁填了到職日時顯示「設定密碼 / 確認密碼」,與 `hireDate` 一起送出 `password`(Gateway 比對 LOS 到職日後直接啟用;有 Email 者仍寄驗證連結),密碼政策錯誤逐條顯示。② `deploy/gateway-rbac.yaml`(及本機版)25 個權限補上 `kind` / `parent` / `sort`(依 `router.ts` 選單順序:`portal.app.access` → 14 個選單 → Tab / 按鈕;`bpm.approval.*` 掛在入口網的簽核選單下;`it.app.access` 為另一個應用),GigaItApp 的權限樹以 `portal.app.access` 為根
+- 檔案:`frontend/src/pages/auth/Register.vue`、`frontend/src/api/gateway.ts`、`deploy/gateway-rbac.yaml`、`deploy/gateway-dev-rbac.yaml`、`docs/API.md`
+- 驗證:`npm run typecheck`、`npm test`(29 項)、`npm run build` 通過;`gateway-rbac.yaml` 已在測試區 bff-1 容器以 CLI `apply` 套用(roles 4、pvBumped),`gw.permission` 統計 app 2 / menu 15 / tab 1 / button 7,除兩個 app 外皆有 parent。註冊頁畫面未以瀏覽器操作驗證(需部署後以無 Email 的真實員工測試)
+
 ## 2026-09-26 公司測試區部署準備(權限範本、env 範本)
 - 內容:公司 CI 與憑證未就緒,先以手動架設為主(流程在 Gateway `docs/TEST-DEPLOY-RUNBOOK.md`,本專案為步驟 7)。新增 `deploy/gateway-rbac.yaml`:與本機版相同的 25 個權限代碼與 `employee` 角色,需要 AD 群組的角色(`it-app-user`、`portal-approver`、`portal-editor`)留 DN 註解待 IT 填入(Gateway CLI 沒有個別指派角色的指令);`deploy/apply-gateway-rbac.sh <test|prod> <Gateway env>` 以 Gateway 正式 compose 的 `migrate` 服務映像執行 CLI `apply`(Git Bash:`pwd -W`、`MSYS_NO_PATHCONV=1`);`deploy/test.env.example`(公司 volume `giganexus-gw_gw_www`)。沒套用權限時測試區所有人都會看到無權限頁;沒部署入口網時公司環境沒有登入頁。註冊 / 忘記密碼連結依需求方決定保留(Gateway API 未實作,會顯示錯誤)。
 - 檔案:`deploy/gateway-rbac.yaml`、`deploy/apply-gateway-rbac.sh`、`deploy/test.env.example`(新增)、`AGENT.md`、`README.md`、`docs/ARCHITECTURE.md`、`docs/PROJECT-MAP.md`

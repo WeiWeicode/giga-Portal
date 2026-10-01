@@ -23,8 +23,8 @@
 | POST | `/api/auth/login` | 登入 | 錯誤代碼依 Gateway PRD §8.1.1(`INVALID_CREDENTIALS`、`ACCOUNT_NOT_REGISTERED`、`PASSWORD_CHANGE_REQUIRED`…) |
 | POST | `/api/auth/logout`、`/api/auth/refresh` | 登出、換發 | web-kit 處理 |
 | GET | `/api/auth/me` | 使用者、`permissions`、**`apps`**(v0.7) | 應用切換、守衛、選單過濾 |
-| POST | `/api/auth/register`、`/register/verify` | 自行註冊 | 無網域子公司;送出 `{ employeeNo, name, hireDate? }` / `{ token, password }`(**`/register` 本機 Gateway 尚未實作**,畫面會顯示 BFF 錯誤) |
-| POST | `/api/auth/password/forgot`、`/reset`、`/change` | 忘記 / 重設 / 變更密碼 | 送出 `{ employeeNo }` / `{ token, password }` / `{ currentPassword?, newPassword }`(**forgot、reset 本機 Gateway 尚未實作**;change 已實作,`PASSWORD_CHANGE_REQUIRED` 後以限定憑證呼叫不需目前密碼) |
+| POST | `/api/auth/register`、`/register/verify` | 自行註冊 | 無網域子公司;送出 `{ employeeNo, name, hireDate?, password? }`(填到職日時一併設定密碼,比對通過直接啟用)/ `{ token, password }` |
+| POST | `/api/auth/password/forgot`、`/reset`、`/change` | 忘記 / 重設 / 變更密碼 | 送出 `{ employeeNo }` / `{ token, password }` / `{ currentPassword?, newPassword }`(`PASSWORD_CHANGE_REQUIRED` 後以限定憑證呼叫 change 不需目前密碼;forgot 不論帳號是否存在一律回 202) |
 
 > 註冊、忘記密碼的請求欄位依 Gateway PRD §8.2.5 推定,Gateway 實作時以其規格為準並回頭更新本表。
 

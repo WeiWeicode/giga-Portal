@@ -9,33 +9,33 @@
 # 權限代碼以 PRD §6.5 為準;新增代碼時三處一起改:PRD §6.5 → 本檔 → frontend/src/router.ts(或 v-can)。
 permissions:
   # 應用(kind=app,Gateway PRD §8.3.3)
-  - { code: portal.app.access, name: 員工入口網使用權限 }
-  - { code: it.app.access, name: IT 管理系統使用權限 }
+  - { code: portal.app.access, name: 員工入口網使用權限, kind: app, sort: 10 }
+  - { code: it.app.access, name: IT 管理系統使用權限, kind: app, sort: 20 }
   # 選單 / Tab / 按鈕
-  - { code: portal.home.read, name: 入口網首頁 }
-  - { code: portal.profile.read, name: 個人資料 }
-  - { code: portal.profile.edit, name: 編輯緊急聯絡人 }
-  - { code: portal.leave.read, name: 我的假期 }
-  - { code: portal.leave-history.read, name: 請假紀錄 }
-  - { code: portal.leave.apply, name: 請假申請 }
-  - { code: portal.attendance.read, name: 出勤紀錄 }
-  - { code: portal.attendance.punch, name: 線上打卡 }
-  - { code: portal.form.read, name: 表單下載 }
-  - { code: portal.resource.read, name: 行政資源 }
-  - { code: portal.resource.edit, name: 維護行政資源 }
-  - { code: portal.onboarding.read, name: 新人導覽 }
-  - { code: portal.onboarding.edit, name: 維護新人導覽 }
-  - { code: portal.directory.read, name: 分機表、聯絡窗口 }
-  - { code: portal.gui-number.read, name: 集團統編資訊 }
-  - { code: portal.news.read, name: 公告 }
-  - { code: portal.news.publish, name: 發布公告 }
-  - { code: portal.calendar.read, name: 行事曆 }
-  - { code: portal.links.read, name: 集團系統 }
-  - { code: portal.talk.read, name: 3691 全民開講 }
+  - { code: portal.home.read, name: 入口網首頁, kind: menu, parent: portal.app.access, sort: 10 }
+  - { code: portal.profile.read, name: 個人資料, kind: menu, parent: portal.app.access, sort: 20 }
+  - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.read, sort: 10 }
+  - { code: portal.leave.read, name: 我的假期, kind: menu, parent: portal.app.access, sort: 30 }
+  - { code: portal.leave-history.read, name: 請假紀錄, kind: tab, parent: portal.leave.read, sort: 10 }
+  - { code: portal.leave.apply, name: 請假申請, kind: button, parent: portal.leave.read, sort: 20 }
+  - { code: portal.attendance.read, name: 出勤紀錄, kind: menu, parent: portal.app.access, sort: 40 }
+  - { code: portal.attendance.punch, name: 線上打卡, kind: button, parent: portal.attendance.read, sort: 10 }
+  - { code: portal.form.read, name: 表單下載, kind: menu, parent: portal.app.access, sort: 60 }
+  - { code: portal.resource.read, name: 行政資源, kind: menu, parent: portal.app.access, sort: 70 }
+  - { code: portal.resource.edit, name: 維護行政資源, kind: menu, parent: portal.resource.read, sort: 10 }
+  - { code: portal.onboarding.read, name: 新人導覽, kind: menu, parent: portal.app.access, sort: 80 }
+  - { code: portal.onboarding.edit, name: 維護新人導覽, kind: button, parent: portal.onboarding.read, sort: 10 }
+  - { code: portal.directory.read, name: 分機表、聯絡窗口, kind: menu, parent: portal.app.access, sort: 90 }
+  - { code: portal.gui-number.read, name: 集團統編資訊, kind: menu, parent: portal.app.access, sort: 100 }
+  - { code: portal.news.read, name: 公告, kind: menu, parent: portal.app.access, sort: 110 }
+  - { code: portal.news.publish, name: 發布公告, kind: button, parent: portal.news.read, sort: 10 }
+  - { code: portal.calendar.read, name: 行事曆, kind: menu, parent: portal.app.access, sort: 120 }
+  - { code: portal.links.read, name: 集團系統, kind: menu, parent: portal.app.access, sort: 130 }
+  - { code: portal.talk.read, name: 3691 全民開講, kind: menu, parent: portal.app.access, sort: 140 }
   # BPM 簽核:BPM 提供 API 後改由 BPM 的 OpenAPI 宣告(PRD Q8)
-  - { code: bpm.approval.read, name: 待我簽核 }
-  - { code: bpm.approval.approve, name: 簽核核准 }
-  - { code: bpm.approval.reject, name: 簽核退回 }
+  - { code: bpm.approval.read, name: 待我簽核, kind: menu, parent: portal.app.access, sort: 50 }
+  - { code: bpm.approval.approve, name: 簽核核准, kind: button, parent: bpm.approval.read, sort: 10 }
+  - { code: bpm.approval.reject, name: 簽核退回, kind: button, parent: bpm.approval.read, sort: 20 }
 
 roles:
   # 所有登入者的預設角色(Gateway PRD §8.3.3:employee 擁有 portal.app.access 與基本選單)
