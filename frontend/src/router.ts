@@ -39,6 +39,8 @@ export const MENU_GROUPS: readonly MenuGroupDef[] = [
   { key: 'approval', title: '表單與簽核', subtitle: 'Forms & Approvals', icon: 'file-check' },
   { key: 'resources', title: '行政資源', subtitle: 'Resources', icon: 'folder' },
   { key: 'group', title: '集團與公告', subtitle: 'Group & News', icon: 'megaphone' },
+  { key: 'manager', title: '主管專區', subtitle: 'Manager Menu', icon: 'user-check' },
+  { key: 'esh', title: 'ESH證照管理', subtitle: 'License of ESH', icon: 'shield' },
 ];
 
 const Placeholder = () => import('./pages/Placeholder.vue');
@@ -523,6 +525,251 @@ const appPages: RouteRecordRaw[] = [
     },
     [
       { label: '討論看板', path: '', icon: 'message', component: () => import('./pages/group/TalkPage.vue') },
+    ],
+  ),
+  // 主管專區 (Manager Menu)
+  page(
+    'manager/rights',
+    {
+      title: '主管權限說明',
+      subtitle: 'Manager Rights',
+      icon: 'shield',
+      group: 'manager',
+      milestone: 'M5',
+      description: '課級/理級/處級/總經理室各級別主管職責、核決權限與福利配置說明',
+    },
+    [
+      { label: '課級主管 (Level 1)', path: '', icon: 'user', component: () => import('./pages/manager/rights/ManagerRightLevel1Tab.vue') },
+      { label: '理級主管 (Level 2)', path: 'level2', icon: 'user-check', component: () => import('./pages/manager/rights/ManagerRightLevel2Tab.vue') },
+      { label: '處級主管 (Level 3)', path: 'level3', icon: 'award', component: () => import('./pages/manager/rights/ManagerRightLevel3Tab.vue') },
+      { label: '副總/總經理室 (Level 4)', path: 'level4', icon: 'shield', component: () => import('./pages/manager/rights/ManagerRightLevel4Tab.vue') },
+    ],
+  ),
+  page(
+    'manager/shift',
+    {
+      title: '部門班表匯入',
+      subtitle: 'Shift Schedule',
+      icon: 'calendar',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部門各班別排班 Excel 批次上傳、解析預覽與班別代碼對照',
+    },
+    [
+      { label: '班表上傳與預覽', path: '', icon: 'upload', component: () => import('./pages/manager/shift/ManagerShiftUploadPage.vue') },
+    ],
+  ),
+  page(
+    'manager/boss-trace',
+    {
+      title: '主管工時追蹤',
+      subtitle: 'Senior Manager Trace',
+      icon: 'clock',
+      group: 'manager',
+      milestone: 'M5',
+      description: '理級以上高階主管工時、出差天數與健康工時追蹤',
+    },
+    [
+      { label: '工時與健康追蹤', path: '', icon: 'clock', component: () => import('./pages/manager/bossTrace/ManagerBossTracePage.vue') },
+    ],
+  ),
+  page(
+    'manager/attendance',
+    {
+      title: '部屬出勤分析',
+      subtitle: 'Attendance Analytics',
+      icon: 'activity',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部門同仁刷卡時間分佈、連續異常缺卡警示與輔導面談紀錄',
+    },
+    [
+      { label: '部屬刷卡分析', path: '', icon: 'clock', component: () => import('./pages/manager/attendance/ManagerAttendanceTimeTab.vue') },
+      { label: '異常出勤追蹤', path: 'abnormal', icon: 'alert-triangle', component: () => import('./pages/manager/attendance/ManagerAttendanceAbnormalTab.vue') },
+    ],
+  ),
+  page(
+    'manager/leave-balance',
+    {
+      title: '休假餘額控管',
+      subtitle: 'Leave Balance Control',
+      icon: 'palm',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部屬特休/補休屆期排行榜與一鍵排休提醒',
+    },
+    [
+      { label: '特補休屆期排行', path: '', icon: 'palm', component: () => import('./pages/manager/leaveBalance/ManagerLeaveBalancePage.vue') },
+    ],
+  ),
+  page(
+    'manager/promotion-map',
+    {
+      title: '職等晉升地圖',
+      subtitle: 'Promotion Roadmap',
+      icon: 'trend-up',
+      group: 'manager',
+      milestone: 'M5',
+      description: '研發/技術/管理各職系職等晉升必備年資、考績與證照條件地圖',
+    },
+    [
+      { label: '晉升條件地圖', path: '', icon: 'trend-up', component: () => import('./pages/manager/promotion/ManagerPromotionMapPage.vue') },
+    ],
+  ),
+  page(
+    'manager/training-plan',
+    {
+      title: '部門訓練計畫',
+      subtitle: 'Training Plan',
+      icon: 'book-open',
+      group: 'manager',
+      milestone: 'M5',
+      description: '年度部門內部與外訓開課規劃、預算與結訓達成率',
+    },
+    [
+      { label: '年度訓練開課計畫', path: '', icon: 'book-open', component: () => import('./pages/manager/training/ManagerTrainingPlanPage.vue') },
+    ],
+  ),
+  page(
+    'manager/safety-courses',
+    {
+      title: '工安課程達成率',
+      subtitle: 'Safety Courses Status',
+      icon: 'award',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部門全員 12 門法規必修工安課程完訓名冊與進度檢驗',
+    },
+    [
+      { label: '部屬完訓達成名冊', path: '', icon: 'award', component: () => import('./pages/manager/safetyCourses/ManagerSafetyCoursesPage.vue') },
+    ],
+  ),
+  page(
+    'manager/property',
+    {
+      title: '部門財產清冊',
+      subtitle: 'Department Property',
+      icon: 'box',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部門名下保管之固定資產清冊、保管人及折舊現值',
+    },
+    [
+      { label: '固定資產保管清冊', path: '', icon: 'box', component: () => import('./pages/manager/property/ManagerDeptPropertyPage.vue') },
+    ],
+  ),
+  page(
+    'manager/budget',
+    {
+      title: '部門預算執行',
+      subtitle: 'Department Budget',
+      icon: 'pie-chart',
+      group: 'manager',
+      milestone: 'M5',
+      description: '部門各會計科目預算執行率長條圖、動支實績與可用餘額',
+    },
+    [
+      { label: '預算執行率長條圖', path: '', icon: 'pie-chart', component: () => import('./pages/manager/budget/ManagerDeptBudgetPage.vue') },
+    ],
+  ),
+  page(
+    'manager/budget-apply',
+    {
+      title: '新年度預算編列',
+      subtitle: 'Budget Application',
+      icon: 'plus-circle',
+      group: 'manager',
+      milestone: 'M5',
+      description: '新年度資本支出 (CAPEX) 與營業費用 (OPEX) 提案編列與審批',
+    },
+    [
+      { label: '預算提案與動支申請', path: '', icon: 'plus-circle', component: () => import('./pages/manager/budgetApply/ManagerBudgetApplyPage.vue') },
+    ],
+  ),
+  // ESH 證照管理 (License of ESH)
+  page(
+    'esh/management',
+    {
+      title: '證照管理',
+      subtitle: 'License Management',
+      icon: 'award',
+      group: 'esh',
+      milestone: 'M5',
+      description: '全廠勞安、環保與法定機械設備證照持有清冊與 90 天到期預警',
+    },
+    [
+      { label: '全廠持照清冊與預警', path: '', icon: 'award', component: () => import('./pages/esh/management/EhsManagementPage.vue') },
+    ],
+  ),
+  page(
+    'esh/items',
+    {
+      title: '證照項目設定',
+      subtitle: 'License Item Setup',
+      icon: 'settings',
+      group: 'esh',
+      milestone: 'M5',
+      description: '法定機械/安衛/環保證照代碼庫、主管機關與法定回訓週期維護',
+    },
+    [
+      { label: '法定證照代碼維護', path: '', icon: 'settings', component: () => import('./pages/esh/itemEdit/EhsItemEditPage.vue') },
+    ],
+  ),
+  page(
+    'esh/needs',
+    {
+      title: '工作站法定需求',
+      subtitle: 'License Requirements',
+      icon: 'layers',
+      group: 'esh',
+      milestone: 'M5',
+      description: '各廠區高風險工作站點法定應配置證照人數與人力缺口',
+    },
+    [
+      { label: '站點持照配置與缺口', path: '', icon: 'layers', component: () => import('./pages/esh/licenseNeed/EhsLicenseNeedPage.vue') },
+    ],
+  ),
+  page(
+    'esh/personal',
+    {
+      title: '人員證照登記',
+      subtitle: 'Personal License Registry',
+      icon: 'id-card',
+      group: 'esh',
+      milestone: 'M5',
+      description: '同仁新取得專業證書登錄、審核與電子掃描檔案庫',
+    },
+    [
+      { label: '同仁證照登錄審核', path: '', icon: 'id-card', component: () => import('./pages/esh/personalLicense/EhsPersonalLicensePage.vue') },
+    ],
+  ),
+  page(
+    'esh/managers',
+    {
+      title: '環安窗口設定',
+      subtitle: 'EHS Manager Setup',
+      icon: 'users',
+      group: 'esh',
+      milestone: 'M5',
+      description: '各廠區各部門法定專責人、緊急應變窗口與公務通報名冊',
+    },
+    [
+      { label: '廠區窗口與擔當名冊', path: '', icon: 'users', component: () => import('./pages/esh/managerSetup/EhsManagerSetupPage.vue') },
+    ],
+  ),
+  page(
+    'esh/chemicals',
+    {
+      title: '危害性化學品資訊',
+      subtitle: 'Hazardous Chemicals',
+      icon: 'alert-triangle',
+      group: 'esh',
+      milestone: 'M5',
+      description: '列管與一般化學品清單、CAS No.、SDS 安全資料表下載與防護',
+    },
+    [
+      { label: '列管化學品', path: '', icon: 'shield', component: () => import('./pages/esh/chemicals/EhsChemicalRegulatedTab.vue') },
+      { label: '一般非列管化學品', path: 'unregulated', icon: 'box', component: () => import('./pages/esh/chemicals/EhsChemicalUnregulatedTab.vue') },
     ],
   ),
   // 不列在選單的管理頁(按鈕權限進入)
