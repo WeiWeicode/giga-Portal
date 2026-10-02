@@ -5,7 +5,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --include=dev --prefer-offline --no-audit --no-fund
 COPY . .
 # Gateway web-kit 尚未發佈到 Registry:由 build context「webkit」帶入,vite.config.ts 以 WEB_KIT_DIR 指向(ARCHITECTURE §8)
 COPY --from=webkit . /web-kit/src
