@@ -47,3 +47,37 @@ export default {
 };
 
 export { confirm, toast } from './feedback';
+
+// Export all components for direct import in script setup
+export { default as GAlert } from './components/GAlert.vue';
+export { default as GAppSwitcher } from './components/GAppSwitcher.vue';
+export { default as GAvatar } from './components/GAvatar.vue';
+export { default as GBadge } from './components/GBadge.vue';
+export { default as GButton } from './components/GButton.vue';
+export { default as GCard } from './components/GCard.vue';
+export { default as GCheckbox } from './components/GCheckbox.vue';
+export { default as GEmpty } from './components/GEmpty.vue';
+export { default as GFeedbackHost } from './components/GFeedbackHost.vue';
+export { default as GHero } from './components/GHero.vue';
+export { default as GIcon } from './components/GIcon.vue';
+export { default as GInput } from './components/GInput.vue';
+export { default as GLazy } from './components/GLazy.vue';
+export { default as GLogo } from './components/GLogo.vue';
+export { default as GModal } from './components/GModal.vue';
+export { default as GPageHeader } from './components/GPageHeader.vue';
+export { default as GProgress } from './components/GProgress.vue';
+export { default as GSegmented } from './components/GSegmented.vue';
+export { default as GSelect } from './components/GSelect.vue';
+export { default as GSkeleton } from './components/GSkeleton.vue';
+export { default as GStatCard } from './components/GStatCard.vue';
+export { default as GStyleToggle } from './components/GStyleToggle.vue';
+export { default as GSwitch } from './components/GSwitch.vue';
+export { default as GTable } from './components/GTable.vue';
+export { default as GTabs } from './components/GTabs.vue';
+
+export { default as GAreaChart } from './charts/GAreaChart.vue';
+export { default as GBarList } from './charts/GBarList.vue';
+export { default as GDonut } from './charts/GDonut.vue';
+export { default as GRing } from './charts/GRing.vue';
+export { default as GSparkline } from './charts/GSparkline.vue';
+
