@@ -35,7 +35,7 @@ declare module 'vue-router' {
 
 export const MENU_GROUPS: readonly MenuGroupDef[] = [
   { key: 'home', title: '首頁', subtitle: 'Home', icon: 'home' },
-  { key: 'personal', title: '個人服務', subtitle: 'Personal', icon: 'user' },
+  { key: 'personal', title: '個人資訊', subtitle: 'Personal Information', icon: 'user' },
   { key: 'approval', title: '表單與簽核', subtitle: 'Forms & Approvals', icon: 'file-check' },
   { key: 'resources', title: '行政資源', subtitle: 'Resources', icon: 'folder' },
   { key: 'group', title: '集團與公告', subtitle: 'Group & News', icon: 'megaphone' },
@@ -43,20 +43,25 @@ export const MENU_GROUPS: readonly MenuGroupDef[] = [
 
 const Placeholder = () => import('./pages/Placeholder.vue');
 
+type TabDef = TabItem & {
+  path: string;
+  component?: RouteComponent | (() => Promise<{ default: RouteComponent }>);
+};
+
 /** 功能頁(TabbedPage);tabs 省略時只有一個內容頁 */
-function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; group: string }, tabs: (TabItem & { path: string })[] = []): RouteRecordRaw {
+function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; group?: string }, tabs: TabDef[] = []): RouteRecordRaw {
   const base = `/${path}`;
   const children: RouteRecordRaw[] = tabs.length
     ? tabs.map((t) => ({
         path: t.path,
-        component: Placeholder,
+        component: t.component ?? Placeholder,
         meta: { tab: t.label, ...(t.permission ? { permission: t.permission } : {}) },
       }))
     : [{ path: '', component: Placeholder }];
   return {
     path,
     component: TabbedPage,
-    meta: { ...meta, tabs: tabs.map(({ path: p, ...t }) => ({ ...t, to: p ? `${base}/${p}` : base })) },
+    meta: { ...meta, tabs: tabs.map(({ path: p, component: _c, ...t }) => ({ ...t, to: p ? `${base}/${p}` : base })) },
     children,
   };
 }
@@ -67,31 +72,145 @@ const appPages: RouteRecordRaw[] = [
     component: () => import('./pages/home/Home.vue'),
     meta: { title: '首頁', subtitle: 'Home', icon: 'home', group: 'home', permission: 'portal.home.read', milestone: 'M4' },
   },
-  // 個人服務
+  // 個人資訊 (對齊 old_PortalSolar)
   page(
     'personal/profile',
     {
-      title: '個人資料',
-      subtitle: 'Profile',
+      title: '個人基本資料',
+      subtitle: 'Personal Data',
       icon: 'id-card',
       group: 'personal',
       permission: 'portal.profile.read',
       milestone: 'M5',
-      description: '基本資料、職務與緊急聯絡人',
+      description: '個人基本資料、勞退新制、健保眷屬、所得稅扶養、勞健保級距與通勤調查',
     },
     [
-      { label: '基本資料', path: '', icon: 'user' },
-      { label: '職務', path: 'job', icon: 'building' },
-      { label: '緊急聯絡人', path: 'emergency', icon: 'phone' },
+      { label: '基本資料', path: '', icon: 'user', component: () => import('./pages/personal/profile/ProfileBasicTab.vue') },
+      { label: '勞退新制資料', path: 'pension', icon: 'shield', component: () => import('./pages/personal/profile/ProfilePensionTab.vue') },
+      { label: '健保眷屬加退保異動', path: 'health-family', icon: 'users', component: () => import('./pages/personal/profile/ProfileHealthFamilyTab.vue') },
+      { label: '所得稅扶養眷屬異動', path: 'tax-dependents', icon: 'file-check', component: () => import('./pages/personal/profile/ProfileTaxDependentsTab.vue') },
+      { label: '勞健保/勞退級距', path: 'insurance-bracket', icon: 'layers', component: () => import('./pages/personal/profile/ProfileInsuranceBracketTab.vue') },
+      { label: '溫室氣體盤查員工通勤調查', path: 'commute', icon: 'leaf', component: () => import('./pages/personal/profile/ProfileCommuteTab.vue') },
     ],
   ),
+  page(
+    'personal/query',
+    {
+      title: '自助查詢',
+      subtitle: 'Self-help inquiry',
+      icon: 'search',
+      group: 'personal',
+      permission: 'portal.profile.read',
+      milestone: 'M5',
+      description: '出勤年月之刷卡、出勤、加班、請假、班表、補休、特休、勞健保與二代健保明細',
+    },
+    [
+      { label: '刷卡記錄', path: '', icon: 'clock', component: () => import('./pages/personal/query/QueryCardRecordsTab.vue') },
+      { label: '出勤記錄', path: 'attendance', icon: 'calendar', component: () => import('./pages/personal/query/QueryAttendanceTab.vue') },
+      { label: '加班紀錄', path: 'overtime', icon: 'zap', component: () => import('./pages/personal/query/QueryOvertimeTab.vue') },
+      { label: '請假紀錄', path: 'leave', icon: 'palm', component: () => import('./pages/personal/query/QueryLeaveTab.vue') },
+      { label: '班表&訂餐記錄', path: 'schedule', icon: 'grid', component: () => import('./pages/personal/query/QueryScheduleMealTab.vue') },
+      { label: '補休/榮譽假', path: 'comp-time', icon: 'check-circle', component: () => import('./pages/personal/query/QueryCompTimeTab.vue') },
+      { label: '特休', path: 'annual-leave', icon: 'sun', component: () => import('./pages/personal/query/QueryAnnualLeaveTab.vue') },
+      { label: '勞健保明細', path: 'insurance-detail', icon: 'shield', component: () => import('./pages/personal/query/QueryInsuranceDetailTab.vue') },
+      { label: '二代健保', path: 'nhi2', icon: 'file-check', component: () => import('./pages/personal/query/QueryNhi2Tab.vue') },
+    ],
+  ),
+  page('personal/salary', {
+    title: '薪資獎金',
+    subtitle: 'Salary & Bonus',
+    icon: 'audit',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/annual-gains', {
+    title: '年度所得',
+    subtitle: 'Annual Salary & Bonus',
+    icon: 'layers',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/salary-adjustment', {
+    title: '薪資異動',
+    subtitle: 'Salary Adjustment',
+    icon: 'trend-up',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/abnormal-attendance', {
+    title: '出勤異常',
+    subtitle: 'Abnormal Attendance',
+    icon: 'alert',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/abnormal-respond', {
+    title: '出勤時數異常回報',
+    subtitle: 'Abnormal Respond',
+    icon: 'alert-circle',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/ef-info', {
+    title: 'BPM 簽核資訊',
+    subtitle: 'EasyFlow Info.',
+    icon: 'workflow',
+    group: 'personal',
+    permission: 'bpm.approval.read',
+    milestone: 'M5',
+  }),
+  page('personal/release-mail', {
+    title: '郵件審核資訊',
+    subtitle: 'Release Mail Info.',
+    icon: 'mail',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/property', {
+    title: '個人資產明細',
+    subtitle: 'Personal Property Info.',
+    icon: 'boxes',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/cipher-reset', {
+    title: '薪資金鑰重置',
+    subtitle: 'Reset Security Password',
+    icon: 'key',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/annual-courses', {
+    title: '年度必上課程',
+    subtitle: 'Annual Courses',
+    icon: 'spec',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  page('personal/notes', {
+    title: '個人提醒',
+    subtitle: 'Reminder System',
+    icon: 'bell',
+    group: 'personal',
+    permission: 'portal.profile.read',
+    milestone: 'M5',
+  }),
+  // 保留原有路由以相容首頁快捷鍵與現有測試
   page(
     'personal/leave',
     {
       title: '我的假期',
       subtitle: 'Leave',
       icon: 'palm',
-      group: 'personal',
       permission: 'portal.leave.read',
       milestone: 'M5',
       description: '假期餘額與請假紀錄',
@@ -107,7 +226,6 @@ const appPages: RouteRecordRaw[] = [
       title: '出勤紀錄',
       subtitle: 'Attendance',
       icon: 'clock',
-      group: 'personal',
       permission: 'portal.attendance.read',
       milestone: 'M5',
       description: '打卡與出勤狀況',
