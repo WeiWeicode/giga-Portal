@@ -324,7 +324,7 @@ flowchart LR
 | 里程碑 | 狀態 |
 | --- | --- |
 | M1 | 前端框架完成並發佈到 Nginx(測試區)(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
-| M3 | GigaItApp 已先加入頂列應用切換(I3 的一部分,讀使用者的 Gateway 登入);I1、I2、I3 應用層守衛、G5 未開始 |
+| M3 | **2026-10-02 GigaItApp 實作 I1–I4**(單一入口、`it.*` 權限登記 BFF、應用層守衛、應用權限樹 × 角色 / 指派規則 / 試算),本機經測試區 Gateway 驗證;G5:`itapp-api` 上游與 `/api/it/*` 路由已登記(草稿),待 CI 部署後發佈,Nginx `/it/api/` 直通過渡期保留 |
 | 其他 | 未開始 |
 
 不在第一版:LINE 綁定、通知中心設定、常用功能自訂排序(v0.2)、表單與同仁搜尋(Q8)。
