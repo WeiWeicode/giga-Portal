@@ -1,7 +1,8 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-02**
-> 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (10 頁)、**表單與簽核** (3 頁)、**行政資源** (7 頁)、**集團與公告** (6 頁)、**主管專區** (11 頁，直接開放)、**ESH證照管理** (6 頁，直接開放)。
+> **最後更新: 2026-10-05**
+> 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
+> 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
 > 2. `frontend/src/ui/index.ts` 補齊所有 `G*` 全域元件與圖表具名匯出。
 > 3. CI/CD `Dockerfile` 修正為 `npm ci --include=dev`，確保容器建置包含 Vite 相關 devDependencies，測試區與生產區 pipeline 均已建置成功。
 > 4. 開發新功能後，在同一個變更內更新本文件 (`AGENT.md` §9.1)。只寫結構與職責，細節連到 `docs/` 對應章節。
@@ -41,37 +42,37 @@ giga-Portal/
 │  │  ├─ pages/                   各功能模組頁面 (對齊 old_PortalSolar):
 │  │  │  ├─ auth/                 Login、Register、ResetPassword、SetPasswordForm、AuthHeader
 │  │  │  ├─ home/                 Home.vue (員工入口首頁儀表板)
-│  │  │  ├─ personal/             【個人資訊】(10 頁)
-│  │  │  │  ├─ profile/           個人基本資料 (6 Tabs: 基本資料/勞退新制/健保眷屬/所得稅扶養/勞健保級距/通勤調查)
-│  │  │  │  ├─ query/             自助查詢 (9 Tabs: 刷卡/出勤/加班/請假/班表與訂餐/補休榮譽假/特休/勞健保明細/二代健保)
-│  │  │  │  ├─ salary/            薪資獎金 (2 Tabs: 薪資單明細 / 獎金明細)
-│  │  │  │  ├─ annualGains/       年度所得 (2 Tabs: 年度所得清冊 / 扣繳憑單)
-│  │  │  │  ├─ SalaryAdjustmentPage.vue       薪資異動 (歷年調薪紀錄、升遷職級異動)
-│  │  │  │  ├─ AbnormalAttendancePage.vue     異常出勤專區 (出勤異常檢索、未刷卡與遲到統計)
-│  │  │  │  ├─ AbnormalRespondPage.vue        異常回覆作業 (異常說明申覆、佐證送件)
-│  │  │  │  ├─ CipherResetPage.vue            忘記密碼解鎖申請 (網域/郵件/ERP 解鎖)
-│  │  │  │  ├─ ReleaseMailPage.vue            退信放行申請 (外部隔離信件放行申請)
-│  │  │  │  └─ AnnualCoursesPage.vue          年度必修課程 (年度必修通識完訓名冊)
-│  │  │  ├─ approval/             【表單與簽核】(3 頁)
-│  │  │  │  ├─ pending/           我的簽核 (3 Tabs: 待簽核/已簽核/已送出)
-│  │  │  │  ├─ ef/                電子表單 (3 Tabs: 待辦表單/未結案表單/填寫新表單)
-│  │  │  │  └─ FormsPage.vue      常用表單下載 (12 項人事/行政/總務標準表單與規約)
+│  │  │  ├─ personal/             【個人資訊】(13 頁;權限見 PRD §6.5.1)
+│  │  │  │  ├─ profile/           個人基本資料 portal.profile.read (6 Tabs: 基本資料/勞退新制/健保眷屬/所得稅扶養/勞健保級距/通勤調查)
+│  │  │  │  ├─ query/             自助查詢 portal.attendance.read (9 Tabs: 刷卡/出勤/加班/請假/班表與訂餐/補休榮譽假/特休/勞健保明細/二代健保)
+│  │  │  │  ├─ salary/            薪資獎金 portal.salary.read (2 Tabs: 薪資明細 / 獎金明細)
+│  │  │  │  ├─ annualGains/       年度所得 portal.salary.read (2 Tabs: 年度所得清冊 / 扣繳憑單)
+│  │  │  │  ├─ salaryAdjustment/  薪資異動 portal.salary.read
+│  │  │  │  ├─ abnormalAttendance/ 出勤異常 portal.attendance-abnormal.read
+│  │  │  │  ├─ abnormalRespond/   出勤時數異常回報 portal.attendance-abnormal.read
+│  │  │  │  ├─ efInfo/            BPM 簽核資訊 bpm.approval.read (2 Tabs: 待簽核 / 未結案)
+│  │  │  │  ├─ releaseMail/       郵件審核資訊 portal.release-mail.read
+│  │  │  │  ├─ property/          個人資產明細 portal.asset.read (2 Tabs: 保管資產 / 移轉歷程)
+│  │  │  │  ├─ cipherReset/       薪資金鑰重置 portal.salary.read (去留待決 PRD Q12)
+│  │  │  │  ├─ annualCourses/     年度必上課程 portal.course.read
+│  │  │  │  └─ notes/             個人提醒 portal.note.read
+│  │  │  ├─ approval/             【表單與簽核】(2 頁)
+│  │  │  │  ├─ Approval*Tab.vue   待我簽核 bpm.approval.read (3 Tabs: 待簽核/已簽核/我送出的)
+│  │  │  │  └─ FormsPage.vue      表單下載 portal.form.read
 │  │  │  ├─ resources/            【行政資源】(7 頁)
-│  │  │  │  ├─ directory/         員工通訊錄 (2 Tabs: 廠內分機快速查詢 / 部門聯絡人)
-│  │  │  │  ├─ generalAffairs/    總務業務 (5 Tabs: 服務專區/各類事務申請/公務車派車/資產借還/停車證申請)
-│  │  │  │  ├─ property/          財產作業 (2 Tabs: 個人保管資產 / 財產移轉與報廢)
-│  │  │  │  ├─ hr/                人資專區 (2 Tabs: 職務代理人設定 / 同仁福利與補助)
-│  │  │  │  ├─ NotesPage.vue      記事本 (個人備忘清單、待辦行事曆)
-│  │  │  │  ├─ GuiNumberPage.vue  公司統編與發票資訊 (集團各據點統編/稅籍資訊)
-│  │  │  │  └─ QaListPage.vue     滿意度與問題反映 (行政服務評分、常見 QA)
-│  │  │  ├─ group/                【集團與公告】(6 頁)
-│  │  │  │  ├─ calendar/          行事曆 (2 Tabs: 月曆模式 / 清單模式)
-│  │  │  │  ├─ news/              最新消息 (2 Tabs: 最新未讀公告 / 全體公告清單)
-│  │  │  │  ├─ onboarding/        新人專區 (2 Tabs: 新人指引 Tips / 通識隨堂測驗)
-│  │  │  │  ├─ JobOpeningPage.vue 人才招募 (廠內職缺推薦、內轉申請)
-│  │  │  │  ├─ LinksPage.vue      集團系統 (SSO 跳轉集團 17 個核心系統)
-│  │  │  │  └─ TalkPage.vue       3691 全民開講 (交流看板、不法侵害申訴)
-│  │  │  ├─ manager/              【主管專區】(11 頁，無權限限制直接展示)
+│  │  │  │  ├─ generalAffairs/    總務專區 portal.resource.read (5 Tabs: 服務項目/申請專區/個人資產/外送資產/湖口廠停車)
+│  │  │  │  ├─ hr/                人資專區 portal.resource.read (2 Tabs: 團體保險 / 主管職務代理人)
+│  │  │  │  ├─ jobOpening/        內部職缺 portal.resource.read
+│  │  │  │  ├─ qa/                問卷調查 portal.survey.read
+│  │  │  │  ├─ onboarding/        新人導覽 portal.onboarding.read (2 Tabs: 小叮嚀 / 驗收區)
+│  │  │  │  ├─ directory/         分機表、聯絡窗口 portal.directory.read (2 Tabs)
+│  │  │  │  └─ GuiNumberPage.vue  集團統編資訊 portal.gui-number.read
+│  │  │  ├─ group/                【集團與公告】(4 頁)
+│  │  │  │  ├─ news/              最新公告 portal.news.read (2 Tabs: 全部 / 未讀)
+│  │  │  │  ├─ calendar/          行事曆 portal.calendar.read (2 Tabs: 月曆 / 清單)
+│  │  │  │  ├─ LinksPage.vue      集團系統 portal.links.read
+│  │  │  │  └─ TalkPage.vue       3691 全民開講 portal.talk.read
+│  │  │  ├─ manager/              【主管專區】(11 頁,portal.mgr.*.read,角色 portal-manager)
 │  │  │  │  ├─ rights/            主管權限說明 (4 Tabs: 課級/理級/處級/總經理室各級職責與核決)
 │  │  │  │  ├─ shift/             部門班表匯入 (班表 Excel 批次上傳、解析預覽、班別代碼)
 │  │  │  │  ├─ bossTrace/         主管工時追蹤 (理級以上工時追蹤、出差統計、健康超時警示)

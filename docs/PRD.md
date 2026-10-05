@@ -23,6 +23,7 @@
 
 | 版本 | 日期 | 變更內容 |
 | --- | --- | --- |
+| v0.1.3 | 2026-10-05 | 對齊 old_PortalSolar 後細分權限代碼(§6.5.1):薪資與個資分開、主管專區與 ESH 每頁加上 menu 權限與 `portal-manager` / `portal-esh-admin` 角色;新增待決 Q12–Q15 |
 | v0.1.2 | 2026-09-26 | M1 實作狀態:前端框架完成並發佈本機 Nginx(§11 進度);應用切換暫以 app 權限推導(Gateway G3 前);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`;GigaItApp 已先加入應用切換(I3 部分);Q9 依 D1 標為已決定 |
 | v0.1.1 | 2026-09-26 | Q1(職位以**職級**為主)、Q2(部門**含下層**,部門樹由 BPM 同步)、Q4(`portal-api` 51271)、Q7(Gateway 本機帳號為緊急帳號)定案;Gateway 規格改版 v0.7(G1–G4、G7 已寫入規格);GigaItApp 改用單一入口後以使用者身分直接呼叫 BFF 管理 API,不再需要服務帳號;建立 AGENT.md 與 docs 文件組 |
 | v0.1 | 2026-09-26 | 初稿:產品範圍、單一入口與應用切換、Gateway 統一權限模型(角色 / 部門 / 職位 → 應用 / 選單 / Tab / 按鈕)、淺綠科技風格與「玻璃 / 扁平」切換、Gateway 與 GigaItApp 的配合修改 |
@@ -193,6 +194,25 @@ flowchart LR
 
 - 參考畫面左下的「設計系統(Canvas UI Kit)」為元件展示頁,只在 dev 與具 `portal.uikit.read` 權限時顯示(Q10)。
 
+#### 6.5.1 對齊舊單一入口後的權限代碼(v0.1.3)
+
+前端已依 `old_PortalSolar` 擴充為 7 個群組;每個功能頁都必須有 menu 權限(**主管專區、ESH 不可無權限開放**,避免舊系統「只隱藏選單、後端不設防」的問題)。代碼登記於 `deploy/gateway-rbac.yaml`,portal-api 上線後改由 `x-permissions` 宣告:
+
+| 群組 | 功能 | menu 權限 | 預設角色 |
+| --- | --- | --- | --- |
+| 個人資訊 | 個人基本資料 | `portal.profile.read` | employee |
+| | 自助查詢 | `portal.attendance.read` | employee |
+| | 薪資獎金、年度所得、薪資異動、薪資金鑰重置 | `portal.salary.read`(與個資分開授權;二次驗證待決 Q12) | employee |
+| | 出勤異常、出勤時數異常回報 | `portal.attendance-abnormal.read` | employee |
+| | BPM 簽核資訊 | `bpm.approval.read` | portal-approver |
+| | 郵件審核資訊 / 個人資產明細 / 年度必上課程 / 個人提醒 | `portal.release-mail.read` / `portal.asset.read` / `portal.course.read` / `portal.note.read` | employee |
+| 行政資源 | 問卷調查 | `portal.survey.read` | employee |
+| 主管專區 | 11 頁,每頁一碼 `portal.mgr.{rights,shift,boss-trace,attendance,leave-balance,promotion,training,safety-course,property,budget,budget-apply}.read` | 見左 | **portal-manager**(Gateway 指派規則依職級,G1);資料由後端依部門(含下層)過濾 |
+| ESH | 證照管理 / 項目 / 需求 / 人員 / 管理員 | `portal.esh.{license,item,need,personal,manager}.read` | **portal-esh-admin** |
+| | 危害性化學品清單 | `portal.esh.chemical.read` | employee |
+
+其餘頁面沿用上表(§6.5)代碼。
+
 ### 6.6 網頁框架與 UI(風格)
 
 | 編號 | 需求 | 驗收場景(規劃) |
@@ -358,3 +378,7 @@ flowchart LR
 | Q9 | 登入、註冊、忘記密碼頁由入口網實作(取代 Gateway 範例)是否確認? | 是(FRONTEND-GUIDE §7.1) | **已決定**:同 D1(2026-09-26);M1 已實作 |
 | Q10 | 參考畫面的「設計系統(Canvas UI Kit)」是否上線 | 只在 dev 與 `portal.uikit.read` 顯示 | 待決 |
 | Q11 | 應用切換是否要涵蓋舊單一入口(PortalSolar)與外部系統 | 第一版只列新系統;舊系統放「集團系統」外部連結 | 待決 |
+| Q12 | 薪資類頁面的二次驗證:延續舊「薪資金鑰」或改用 Gateway 重新驗證(step-up / OTP) | 改用 Gateway 重新驗證,「薪資金鑰重置」頁退場 | 待決 |
+| Q13 | HRM(LOS + ERP)、BPM、LearnDB、Budget、資產、ReleaseMail 的 API 由誰提供 | 本團隊建唯讀服務(唯讀帳號、參數化查詢),經 BFF 登記;禁止跨庫 JOIN | 待決 |
+| Q14 | portal-api 資料庫沿用 PortalSolar(SQL Server)或新建並移轉 | 第一版沿用 PortalSolar 既有表 + 新表 | 待決 |
+| Q15 | 舊系統未對應頁面(中華郵政、員工認股、內部拍賣、電視看板、垃圾信回報、ISO 文件)是否仍使用 | 業務單位確認,未使用則退場;同意書 7 版本合併為單一功能 | 待決 |

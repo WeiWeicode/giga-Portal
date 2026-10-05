@@ -33,6 +33,33 @@ permissions:
   - { code: portal.calendar.read, name: 行事曆, kind: menu, parent: portal.app.access, sort: 120 }
   - { code: portal.links.read, name: 集團系統, kind: menu, parent: portal.app.access, sort: 130 }
   - { code: portal.talk.read, name: 3691 全民開講, kind: menu, parent: portal.app.access, sort: 140 }
+  # 個人資訊細分(PRD §6.5 v0.1.3):薪資與個資分開授權
+  - { code: portal.salary.read, name: 薪資獎金 / 年度所得 / 薪資異動, kind: menu, parent: portal.app.access, sort: 21 }
+  - { code: portal.attendance-abnormal.read, name: 出勤異常 / 異常回報, kind: menu, parent: portal.app.access, sort: 41 }
+  - { code: portal.release-mail.read, name: 郵件審核資訊, kind: menu, parent: portal.app.access, sort: 42 }
+  - { code: portal.asset.read, name: 個人資產明細, kind: menu, parent: portal.app.access, sort: 43 }
+  - { code: portal.course.read, name: 年度必上課程, kind: menu, parent: portal.app.access, sort: 44 }
+  - { code: portal.note.read, name: 個人提醒, kind: menu, parent: portal.app.access, sort: 45 }
+  - { code: portal.survey.read, name: 問卷調查, kind: menu, parent: portal.app.access, sort: 75 }
+  # 主管專區(資料層級由後端依部門含下層過濾)
+  - { code: portal.mgr.rights.read, name: 主管權益, kind: menu, parent: portal.app.access, sort: 200 }
+  - { code: portal.mgr.shift.read, name: 班表上傳, kind: menu, parent: portal.app.access, sort: 201 }
+  - { code: portal.mgr.boss-trace.read, name: 理級以上出勤時數追蹤, kind: menu, parent: portal.app.access, sort: 202 }
+  - { code: portal.mgr.attendance.read, name: 員工出勤狀況, kind: menu, parent: portal.app.access, sort: 203 }
+  - { code: portal.mgr.leave-balance.read, name: 員工特補休剩餘時數, kind: menu, parent: portal.app.access, sort: 204 }
+  - { code: portal.mgr.promotion.read, name: 晉升地圖, kind: menu, parent: portal.app.access, sort: 205 }
+  - { code: portal.mgr.training.read, name: 年度教育訓練計畫, kind: menu, parent: portal.app.access, sort: 206 }
+  - { code: portal.mgr.safety-course.read, name: 部門工安課程達成率, kind: menu, parent: portal.app.access, sort: 207 }
+  - { code: portal.mgr.property.read, name: 部門資產明細, kind: menu, parent: portal.app.access, sort: 208 }
+  - { code: portal.mgr.budget.read, name: 部門預算, kind: menu, parent: portal.app.access, sort: 209 }
+  - { code: portal.mgr.budget-apply.read, name: 部門預算編列, kind: menu, parent: portal.app.access, sort: 210 }
+  # ESH 證照管理(化學品清單全員可讀)
+  - { code: portal.esh.license.read, name: 證照管理, kind: menu, parent: portal.app.access, sort: 300 }
+  - { code: portal.esh.item.read, name: 證照項目設定, kind: menu, parent: portal.app.access, sort: 301 }
+  - { code: portal.esh.need.read, name: 證照需求, kind: menu, parent: portal.app.access, sort: 302 }
+  - { code: portal.esh.personal.read, name: 證照人員設定, kind: menu, parent: portal.app.access, sort: 303 }
+  - { code: portal.esh.manager.read, name: 證照管理員, kind: menu, parent: portal.app.access, sort: 304 }
+  - { code: portal.esh.chemical.read, name: 危害性化學品清單, kind: menu, parent: portal.app.access, sort: 305 }
   # BPM 簽核:BPM 提供 API 後改由 BPM 的 OpenAPI 宣告(PRD Q8)
   - { code: bpm.approval.read, name: 待我簽核, kind: menu, parent: portal.app.access, sort: 50 }
   - { code: bpm.approval.approve, name: 簽核核准, kind: button, parent: bpm.approval.read, sort: 10 }
@@ -46,13 +73,20 @@ roles:
       - portal.home.read
       - portal.profile.read
       - portal.profile.edit
+      - portal.salary.read
       - portal.leave.read
       - portal.leave-history.read
       - portal.leave.apply
       - portal.attendance.read
       - portal.attendance.punch
+      - portal.attendance-abnormal.read
+      - portal.release-mail.read
+      - portal.asset.read
+      - portal.course.read
+      - portal.note.read
       - portal.form.read
       - portal.resource.read
+      - portal.survey.read
       - portal.onboarding.read
       - portal.directory.read
       - portal.gui-number.read
@@ -60,6 +94,32 @@ roles:
       - portal.calendar.read
       - portal.links.read
       - portal.talk.read
+      - portal.esh.chemical.read
+  # 主管:Gateway 指派規則(G1)依職級設定成員,不再用舊系統「JobCode + Email 非空」判定
+  - code: portal-manager
+    name: 入口網主管專區
+    permissions:
+      - portal.mgr.rights.read
+      - portal.mgr.shift.read
+      - portal.mgr.boss-trace.read
+      - portal.mgr.attendance.read
+      - portal.mgr.leave-balance.read
+      - portal.mgr.promotion.read
+      - portal.mgr.training.read
+      - portal.mgr.safety-course.read
+      - portal.mgr.property.read
+      - portal.mgr.budget.read
+      - portal.mgr.budget-apply.read
+  - code: portal-esh-admin
+    name: 入口網 ESH 證照管理
+    permissions:
+      - portal.esh.license.read
+      - portal.esh.item.read
+      - portal.esh.need.read
+      - portal.esh.personal.read
+      - portal.esh.manager.read
+    # adGroups:
+    #   - 'CN=<環安衛群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
   # 以下角色需填入公司 AD 群組 DN 才有成員(DN 含逗號,必須用區塊清單並加引號);未填時角色存在但沒有人
   - code: it-app-user
     name: IT 管理系統使用者
