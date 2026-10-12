@@ -108,7 +108,7 @@ const isStationerySubmitted = ref(false);
         <div class="form-actions">
           <GButton type="submit" variant="primary" icon="send">送出派車申請</GButton>
         </div>
-        <GAlert v-if="isCarSubmitted" tone="positive" icon="check-circle">
+        <GAlert v-if="isCarSubmitted" tone="success" icon="check-circle">
           公務車借用預約已送出！總務組將於每日 16:00 前完成車輛調派審核並發送派車簡訊。
         </GAlert>
       </form>
@@ -144,7 +144,7 @@ const isStationerySubmitted = ref(false);
         <div class="form-actions">
           <GButton variant="primary" icon="check" @click="isStationerySubmitted = true">確認請領清單</GButton>
         </div>
-        <GAlert v-if="isStationerySubmitted" tone="positive" icon="check-circle">
+        <GAlert v-if="isStationerySubmitted" tone="success" icon="check-circle">
           文具耗材申領清單已送交總務庫存組！預計於本週五下午配送至各部門座位。
         </GAlert>
       </div>

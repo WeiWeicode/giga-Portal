@@ -6,10 +6,10 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuth, type PortalMe } from '@/api/gateway';
+import { menuTitle, useAuth, type PortalMe } from '@/api/gateway';
 import { CURRENT_APP, deniedMessage, resolveApps } from '@/composables/apps';
-import { buildMenu, findActive } from '@/composables/menu';
-import { MENU_GROUPS, MENU_PAGES } from '@/router';
+import { findActive } from '@/composables/menu';
+import { portalMenus } from '@/router';
 import { toast } from '@/ui';
 import ChangePasswordModal from './ChangePasswordModal.vue';
 
@@ -18,7 +18,7 @@ const me = computed(() => auth.me.me as PortalMe | null);
 const route = useRoute();
 const router = useRouter();
 
-const menus = computed(() => buildMenu(MENU_GROUPS, MENU_PAGES, auth.can));
+const menus = computed(portalMenus);
 const apps = computed(() => resolveApps(me.value));
 /** 只有一個功能且名稱與群組相同(首頁)時,群組直接是連結 */
 const isDirect = (g: { title: string; children: { title: string }[] }) => g.children.length === 1 && g.children[0]!.title === g.title;
@@ -51,11 +51,12 @@ const crumbs = computed(() => {
   if (activeItem.value) {
     if (!isDirect(activeItem.value.group)) out.push(activeItem.value.group.title);
     out.push(activeItem.value.item.title);
-    // 不在選單的子頁(例 /resources/admin)附上自己的標題
-    const own = route.matched[1]?.meta.title;
-    if (own && own !== activeItem.value.item.title) out.push(own);
+    // 不在選單的子頁(權限與選單項目不同)附上自己的標題
+    const own = route.matched[1]?.meta;
+    if (own?.title && own.permission !== activeItem.value.item.permission) out.push(menuTitle(own.permission, own.title));
   } else if (route.meta.title) out.push(route.meta.title);
-  if (route.meta.tab) out.push(route.meta.tab);
+  // Tab 名稱以 BFF 為準(與頁籤一致)
+  if (route.meta.tab) out.push(menuTitle(route.meta.permission, route.meta.tab));
   return out;
 });
 

@@ -6,8 +6,7 @@
 import { computed } from 'vue';
 import { useAuth, type PortalMe } from '@/api/gateway';
 import { dateLabel, greetingOf } from '@/composables/greeting';
-import { buildMenu } from '@/composables/menu';
-import { MENU_GROUPS, MENU_PAGES } from '@/router';
+import { portalMenus } from '@/router';
 
 const auth = useAuth();
 const me = computed(() => auth.me.me as PortalMe | null);
@@ -17,7 +16,7 @@ const meta = computed(() => {
   const u = me.value?.user;
   return u ? [u.employeeNo, u.department, u.title].filter(Boolean).join(' · ') : '';
 });
-const groups = computed(() => buildMenu(MENU_GROUPS, MENU_PAGES, auth.can).filter((g) => g.key !== 'home'));
+const groups = computed(() => portalMenus().filter((g) => g.key !== 'home'));
 </script>
 
 <template>

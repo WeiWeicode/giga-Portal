@@ -81,7 +81,7 @@ const sentList: SentItem[] = [
                 <GButton
                   v-if="item.status !== '已結案'"
                   variant="ghost"
-                  size="small"
+                  size="sm"
                   icon="bell"
                 >
                   催簽通知

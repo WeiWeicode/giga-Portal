@@ -10,9 +10,8 @@ services:
     image: giganexus/spa-portal:${IMAGE_TAG:-dev}
     build:
       context: ../frontend
-      # Gateway web-kit 原始碼(尚未發佈到 Registry,ARCHITECTURE §8);GATEWAY_DIR 可覆寫兄弟 repo 位置
-      additional_contexts:
-        webkit: ${GATEWAY_DIR:-../../giga-api-gateway-bff}/web-kit/src
+      # @giganexus/web-kit 取自公司 GitLab npm Registry(建置 secret npm_token)
+      secrets: [npm_token]
       args:
         RELEASE_SHA: ${RELEASE_SHA:-}
     profiles: ["publish"]
@@ -20,6 +19,11 @@ services:
     volumes:
       - gw_www:/srv/www
     command: ["publish", "portal"]
+
+# 建置用:GitLab npm Registry 讀取 Token(環境變數 GITLAB_NPM_TOKEN;CI 由主機機密檔讀入)
+secrets:
+  npm_token:
+    environment: GITLAB_NPM_TOKEN
 
 volumes:
   gw_www:

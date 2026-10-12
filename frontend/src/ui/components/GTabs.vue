@@ -7,7 +7,7 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuth } from '@/api/gateway';
+import { can } from '@/api/gateway';
 
 export interface TabItem {
   label: string;
@@ -21,7 +21,6 @@ export interface TabItem {
 const props = defineProps<{ items: TabItem[]; modelValue?: string }>();
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 const route = useRoute();
-const { can } = useAuth();
 
 const visible = computed(() => props.items.filter((t) => !t.permission || can(t.permission)));
 const activeKey = computed(() => {

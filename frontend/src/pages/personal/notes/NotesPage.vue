@@ -126,13 +126,13 @@ function deleteNote(item: NoteItem) {
         <div class="note-footer">
           <GButton
             variant="ghost"
-            size="small"
+            size="sm"
             :icon="item.done ? 'refresh-cw' : 'check'"
             @click="toggleDone(item)"
           >
             {{ item.done ? '標記未完成' : '標記完成' }}
           </GButton>
-          <GButton variant="ghost" size="small" icon="trash-2" @click="deleteNote(item)">
+          <GButton variant="ghost" size="sm" icon="trash-2" @click="deleteNote(item)">
             刪除
           </GButton>
         </div>

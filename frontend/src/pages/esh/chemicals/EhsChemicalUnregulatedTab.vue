@@ -14,14 +14,14 @@ const deptOptions = [
 ]
 
 const columns = [
-  { key: 'itemCode', title: '料號 / 化學品品名' },
-  { key: 'category', title: '用途類別' },
-  { key: 'dept', title: '使用部門' },
-  { key: 'location', title: '儲存/作業位置' },
-  { key: 'ppe', title: '必備防護裝備 (PPE)' },
-  { key: 'sdsDate', title: '最新 SDS 日期' },
-  { key: 'safetyStatus', title: '安規查核' },
-  { key: 'action', title: '操作' },
+  { key: 'itemCode', label: '料號 / 化學品品名' },
+  { key: 'category', label: '用途類別' },
+  { key: 'dept', label: '使用部門' },
+  { key: 'location', label: '儲存/作業位置' },
+  { key: 'ppe', label: '必備防護裝備 (PPE)' },
+  { key: 'sdsDate', label: '最新 SDS 日期' },
+  { key: 'safetyStatus', label: '安規查核' },
+  { key: 'action', label: '操作' },
 ]
 
 const generalChemicals = ref([
@@ -129,7 +129,7 @@ const generalChemicals = ref([
 
     <!-- 一般化學品清單 -->
     <GCard>
-      <GTable :columns="columns" :data="generalChemicals">
+      <GTable :columns="columns" :rows="generalChemicals" row-key="id">
         <template #cell-itemCode="{ row }">
           <div class="font-bold text-gray-900 dark:text-gray-100">{{ row.nameZh }}</div>
           <div class="text-xs text-gray-400 font-mono">{{ row.itemCode }} · {{ row.nameEn }}</div>
@@ -152,7 +152,7 @@ const generalChemicals = ref([
           <span class="text-xs text-gray-500 font-mono">{{ row.sdsDate }}</span>
         </template>
         <template #cell-safetyStatus="{ row }">
-          <GBadge variant="success">合規檢驗</GBadge>
+          <GBadge tone="success">合規檢驗</GBadge>
         </template>
         <template #cell-action="{ row }">
           <div class="flex gap-2">

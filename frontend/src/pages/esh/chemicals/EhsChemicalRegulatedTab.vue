@@ -22,14 +22,14 @@ const plantOptions = [
 ]
 
 const columns = [
-  { key: 'casNo', title: 'CAS No. / 管制編號' },
-  { key: 'chemicalName', title: '化學品中文名稱 / 英文名' },
-  { key: 'category', title: '列管分類級別' },
-  { key: 'ghsPictogram', title: 'GHS 危害圖示' },
-  { key: 'storageLocation', title: '存放地點 / 廠區' },
-  { key: 'currentStorage', title: '現存量 / 法定上限' },
-  { key: 'sdsVersion', title: 'SDS 安全資料表' },
-  { key: 'action', title: '操作' },
+  { key: 'casNo', label: 'CAS No. / 管制編號' },
+  { key: 'chemicalName', label: '化學品中文名稱 / 英文名' },
+  { key: 'category', label: '列管分類級別' },
+  { key: 'ghsPictogram', label: 'GHS 危害圖示' },
+  { key: 'storageLocation', label: '存放地點 / 廠區' },
+  { key: 'currentStorage', label: '現存量 / 法定上限' },
+  { key: 'sdsVersion', label: 'SDS 安全資料表' },
+  { key: 'action', label: '操作' },
 ]
 
 const chemicalList = ref([
@@ -161,7 +161,7 @@ const chemicalList = ref([
 
     <!-- 化學品清冊表格 -->
     <GCard>
-      <GTable :columns="columns" :data="chemicalList">
+      <GTable :columns="columns" :rows="chemicalList" row-key="id">
         <template #cell-casNo="{ row }">
           <div class="font-mono font-bold text-gray-900 dark:text-gray-100">{{ row.casNo }}</div>
           <div class="text-xs text-gray-400 font-mono">{{ row.toxicCode }}</div>
@@ -171,7 +171,7 @@ const chemicalList = ref([
           <div class="text-xs text-gray-500 italic">{{ row.nameEn }}</div>
         </template>
         <template #cell-category="{ row }">
-          <GBadge :variant="row.category.includes('毒性') ? 'danger' : 'warning'">
+          <GBadge :tone="row.category.includes('毒性') ? 'danger' : 'warning'">
             {{ row.category }}
           </GBadge>
         </template>

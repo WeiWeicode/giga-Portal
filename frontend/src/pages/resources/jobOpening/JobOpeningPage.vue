@@ -205,7 +205,7 @@ function handleApply() {
         </div>
 
         <div v-if="applySubmitted" class="applied-alert">
-          <GAlert tone="healthy" icon="check">
+          <GAlert tone="success" icon="check">
             內部轉調意向申請已成功送出！人資專員將於 3 個工作天內主動與您聯繫並安排面談。
           </GAlert>
         </div>

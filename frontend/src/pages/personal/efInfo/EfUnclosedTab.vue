@@ -77,7 +77,7 @@ const unclosedList: UnclosedItem[] = [
                   :href="item.link"
                   target="_blank"
                   variant="secondary"
-                  size="small"
+                  size="sm"
                   icon="external"
                 >
                   流程明細

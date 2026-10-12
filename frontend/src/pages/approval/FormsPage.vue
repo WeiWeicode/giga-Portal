@@ -97,7 +97,7 @@ const filteredForms = computed(() => {
               <td>{{ f.dept }}</td>
               <td class="mono small">{{ f.updateDate }}</td>
               <td class="text-center">
-                <GButton variant="secondary" size="small" icon="download">下載表單</GButton>
+                <GButton variant="secondary" size="sm" icon="download">下載表單</GButton>
               </td>
             </tr>
           </tbody>

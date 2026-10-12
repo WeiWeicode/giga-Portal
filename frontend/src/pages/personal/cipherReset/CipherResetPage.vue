@@ -82,7 +82,7 @@ function handleSubmit() {
       </form>
     </GCard>
 
-    <GAlert v-if="isSubmitted" tone="positive" icon="check-circle">
+    <GAlert v-if="isSubmitted" tone="success" icon="check-circle">
       薪資安全金鑰已成功變更！日後於「薪資獎金」與「年度所得」頁面解鎖查詢時，請使用本次設定之新安全密碼。
     </GAlert>
 

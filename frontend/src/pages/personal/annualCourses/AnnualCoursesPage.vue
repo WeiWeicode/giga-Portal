@@ -101,7 +101,7 @@ const courses: CourseItem[] = [
                 <GButton
                   v-if="c.status === 'pending'"
                   variant="primary"
-                  size="small"
+                  size="sm"
                   icon="play"
                 >
                   開始上課

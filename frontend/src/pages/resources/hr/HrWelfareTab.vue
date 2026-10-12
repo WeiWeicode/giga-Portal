@@ -62,7 +62,7 @@ const claimSteps = [
             <h4 class="m-0">碩禾集團全員團體福利保險計劃</h4>
             <span class="faint small">承保機構：國泰人壽保險股份有限公司 ｜ 保險合約年度：2026 年度</span>
           </div>
-          <GBadge tone="healthy">公司全額負擔保費</GBadge>
+          <GBadge tone="success">公司全額負擔保費</GBadge>
         </div>
       </GCard>
 

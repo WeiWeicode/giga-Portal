@@ -95,7 +95,7 @@ const list: AbnormalItem[] = [
                 </GBadge>
               </td>
               <td class="text-center">
-                <GButton v-if="item.status === 'pending'" variant="secondary" size="small" icon="edit">
+                <GButton v-if="item.status === 'pending'" variant="secondary" size="sm" icon="edit">
                   填寫證明單
                 </GButton>
                 <span v-else class="faint small">已完成</span>

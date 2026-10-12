@@ -88,7 +88,7 @@ function openDetail(row: AnnualSummary) {
               <td class="text-right mono text-danger">$ {{ row.taxWithheld.toLocaleString() }}</td>
               <td class="text-right mono text-danger">$ {{ row.nhi2Withheld.toLocaleString() }}</td>
               <td class="text-center">
-                <GButton variant="ghost" size="small" icon="file-text" @click="openDetail(row)">月明細</GButton>
+                <GButton variant="ghost" size="sm" icon="file-text" @click="openDetail(row)">月明細</GButton>
               </td>
             </tr>
           </tbody>

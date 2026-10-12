@@ -164,7 +164,7 @@ const filteredRecords = computed(() => {
             </td>
             <td class="font-bold text-primary">{{ r.manager }}</td>
             <td>
-              <GBadge tone="healthy">{{ r.agent1 }}</GBadge>
+              <GBadge tone="success">{{ r.agent1 }}</GBadge>
             </td>
             <td class="mono small">{{ r.agent1Ext }}</td>
             <td>

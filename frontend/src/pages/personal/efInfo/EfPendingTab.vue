@@ -98,7 +98,7 @@ const pendingList: BpmItem[] = [
                   :href="item.link"
                   target="_blank"
                   variant="primary"
-                  size="small"
+                  size="sm"
                   icon="external"
                 >
                   前往簽核

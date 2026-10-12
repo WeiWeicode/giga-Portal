@@ -116,7 +116,7 @@ function saveNote() {
                 <span class="faint">{{ item.note || '無備註' }}</span>
               </td>
               <td class="text-center">
-                <GButton variant="ghost" size="small" icon="edit" @click="editNote(item)">編輯備註</GButton>
+                <GButton variant="ghost" size="sm" icon="edit" @click="editNote(item)">編輯備註</GButton>
               </td>
             </tr>
           </tbody>
