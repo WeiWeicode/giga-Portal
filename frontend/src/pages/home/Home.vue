@@ -1,16 +1,15 @@
 <script setup lang="ts">
 /**
- * 首頁儀表板框架(FRAMEWORK-PLAN P3,對齊 GigaItApp 儀表板):
+ * 首頁(版面對齊 old_PortalSolar MainFormX:兩欄卡片 — 待辦事項、個人秘書、最新消息、公告輪播、集團動態輪播):
  *   - 問候橫幅(FR-4.1,資料只取自 /api/auth/me)
- *   - 最新公告:BFF 通知中心真實資料(/api/notify/feed?app=portal,/ws/notify 即時更新)
- *   - 今日出勤、待我簽核、我的假期等卡片位:M4 以聚合路由 /api/portal/dashboard 提供(FR-4.2–4.9),目前只標示「待串接」,不顯示假資料
- *   - 功能導覽:依權限與 BFF 選單設定列出可使用的功能
+ *   - 最新消息:BFF 通知中心真實資料(/api/notify/feed?app=portal,/ws/notify 即時更新)
+ *   - 待辦事項(重要通知、帳號密碼到期、年度申報…)、個人秘書(BPM 待簽核、個人系統連結)、兩個圖片輪播:
+ *     M4 以聚合路由 /api/portal/dashboard 與 portal-api 提供(FR-4.2–4.9),目前只標示「待串接」,不顯示假資料
  */
 import { computed } from 'vue';
-import { can, useAuth, type PortalMe } from '@/api/gateway';
+import { useAuth, type PortalMe } from '@/api/gateway';
 import LatestAnnouncements from '@/components/notify/LatestAnnouncements.vue';
 import { dateLabel, greetingOf } from '@/composables/greeting';
-import { portalMenus } from '@/router';
 
 const auth = useAuth();
 const me = computed(() => auth.me.me as PortalMe | null);
@@ -20,15 +19,14 @@ const meta = computed(() => {
   const u = me.value?.user;
   return u ? [u.employeeNo, u.department, u.title].filter(Boolean).join(' · ') : '';
 });
-const groups = computed(() => portalMenus().filter((g) => g.key !== 'home'));
 
-/** 首頁資訊卡片位(M4 聚合路由前只佔位;有該功能權限才顯示) */
-const SLOTS = [
-  { key: 'attendance', title: '今日出勤', icon: 'clock', permission: 'portal.query.read', to: '/personal/query' },
-  { key: 'approval', title: '待我簽核', icon: 'inbox', permission: 'portal.approval.read', to: '/approval' },
-  { key: 'leave', title: '我的假期', icon: 'palm', permission: 'portal.query.read', to: '/personal/query/annual-leave' },
+/** 首頁卡片位(舊入口網的區塊;資料來源待串接) */
+const TODO = { title: '待辦事項', subtitle: '重要通知、帳號密碼到期、年度申報', icon: 'check-square', tone: 'primary', source: '聚合路由 /api/portal/dashboard(HRM、AD)' };
+const SECRETARY = { title: '個人秘書', subtitle: 'BPM 待簽核、個人常用系統', icon: 'inbox', tone: 'solar', source: 'BPM 待簽核數、portal-api 個人連結' };
+const SLIDES = [
+  { key: 'policy', title: '公告輪播', subtitle: '政策聲明、申訴管道、員工行為準則', icon: 'megaphone', source: 'portal-api 公告圖片' },
+  { key: 'gallery', title: '集團動態', subtitle: '廠區與工程實績照片', icon: 'image', source: 'portal-api 圖片(附件服務)' },
 ] as const;
-const slots = computed(() => SLOTS.filter((x) => can(x.permission)));
 </script>
 
 <template>
@@ -40,36 +38,23 @@ const slots = computed(() => SLOTS.filter((x) => can(x.permission)));
       </template>
     </GHero>
 
-    <div class="dash">
+    <div class="grid">
+      <GCard :title="TODO.title" :subtitle="TODO.subtitle" :icon="TODO.icon" :tone="TODO.tone">
+        <template #actions><GBadge tone="neutral" dot>待串接</GBadge></template>
+        <GEmpty compact icon="construction" title="資料串接中" :description="`將於里程碑 M4 由${TODO.source}提供(PRD FR-4.8)`" />
+      </GCard>
+      <GCard :title="SECRETARY.title" :subtitle="SECRETARY.subtitle" :icon="SECRETARY.icon" :tone="SECRETARY.tone">
+        <template #actions><GBadge tone="neutral" dot>待串接</GBadge></template>
+        <GEmpty compact icon="construction" title="資料串接中" :description="`將於里程碑 M4 由${SECRETARY.source}提供`" />
+      </GCard>
       <LatestAnnouncements />
-      <div class="slots">
-        <GCard v-for="x in slots" :key="x.key" :title="x.title" :icon="x.icon">
-          <template #actions>
-            <GBadge tone="neutral" dot>待串接</GBadge>
-          </template>
-          <GEmpty compact icon="construction" title="資料串接中" description="將於里程碑 M4 由聚合路由提供(PRD FR-4.8)">
-            <RouterLink :to="x.to" class="xs">前往{{ x.title }} <GIcon name="arrow-right" :size="13" /></RouterLink>
-          </GEmpty>
-        </GCard>
-      </div>
+      <GCard v-for="x in SLIDES" :key="x.key" :title="x.title" :subtitle="x.subtitle" :icon="x.icon">
+        <template #actions><GBadge tone="neutral" dot>待串接</GBadge></template>
+        <div class="slide">
+          <GEmpty compact icon="image" title="圖片輪播待串接" :description="`將由${x.source}提供,每 5 秒自動切換`" />
+        </div>
+      </GCard>
     </div>
-
-    <GCard title="功能導覽" subtitle="依您的權限顯示可使用的功能" icon="grid">
-      <GEmpty v-if="!groups.length" icon="lock" title="目前沒有可使用的功能" description="如需使用,請洽 IT 申請權限。" compact />
-      <div v-else class="groups">
-        <section v-for="g in groups" :key="g.key" class="group">
-          <h4><GIcon :name="g.icon" :size="16" />{{ g.title }}</h4>
-          <div class="tiles">
-            <RouterLink v-for="p in g.children" :key="p.path" :to="p.path" class="tile">
-              <span class="ic"><GIcon :name="p.icon ?? g.icon" :size="18" /></span>
-              <span class="tt"
-                >{{ p.title }}<small>{{ p.subtitle }}</small></span
-              >
-            </RouterLink>
-          </div>
-        </section>
-      </div>
-    </GCard>
   </div>
 </template>
 
@@ -77,80 +62,24 @@ const slots = computed(() => SLOTS.filter((x) => can(x.permission)));
 .home {
   --gap: 20px;
 }
-.dash {
+/* 兩欄卡片(舊入口網 col-lg-6);窄螢幕單欄 */
+.grid {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
-.slots {
-  display: grid;
-  gap: 20px;
-}
-@media (max-width: 1100px) {
-  .dash {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-.groups {
-  display: grid;
-  gap: 20px;
-}
-.group h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-}
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 10px;
-}
-.tile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border-2);
-  background: var(--glass-soft);
-  color: var(--text);
-  text-decoration: none;
-  transition:
-    background var(--dur),
-    transform var(--dur) var(--ease);
-}
-.tile:hover {
-  background: var(--glass-hover);
-  transform: translateY(-1px);
-  text-decoration: none;
-}
-.ic {
+.slide {
   display: grid;
   place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  color: var(--c-primary-text);
-  background: color-mix(in srgb, var(--c-primary) calc(var(--tone-bg-alpha) * 100%), transparent);
+  aspect-ratio: 16 / 7;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--glass-border-2);
+  background: var(--glass-soft);
 }
-.tt {
-  font-weight: 600;
-  line-height: 1.3;
-}
-.tt small {
-  display: block;
-  font-size: var(--fs-xs);
-  font-weight: 500;
-  color: var(--text-3);
-}
-@media (max-width: 480px) {
-  .tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

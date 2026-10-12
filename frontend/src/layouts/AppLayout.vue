@@ -23,8 +23,9 @@ const router = useRouter();
 
 const menus = computed(portalMenus);
 const apps = computed(() => resolveApps(me.value));
-/** 只有一個功能且名稱與群組相同(首頁)時,群組直接是連結 */
-const isDirect = (g: { title: string; children: { title: string }[] }) => g.children.length === 1 && g.children[0]!.title === g.title;
+/** 首頁大項(或只有一個功能且名稱與大項相同)直接是連結,不摺疊;BFF 的頁名可能與大項不同(例「入口網首頁」) */
+const isDirect = (g: { key: string; title: string; children: { path: string; title: string }[] }) =>
+  g.children.length === 1 && (g.key === 'home' || g.children[0]!.path === '/' || g.children[0]!.title === g.title);
 
 const COLLAPSE_KEY = 'portal.sidebar.collapsed';
 const collapsed = ref(readCollapsed());

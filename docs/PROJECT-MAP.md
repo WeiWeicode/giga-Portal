@@ -46,7 +46,7 @@ giga-Portal/
 │  │  ├─ layouts/                 AppLayout (側欄、頂列、應用切換、帳號)、TabbedPage (頁籤容器)、AuthLayout、ChangePasswordModal
 │  │  ├─ pages/                   各功能模組頁面 (對齊 old_PortalSolar):
 │  │  │  ├─ auth/                 Login、Register、ResetPassword、SetPasswordForm、AuthHeader
-│  │  │  ├─ home/                 Home.vue (首頁儀表板框架: 問候、最新公告〔真實資料〕、待串接卡片位、功能導覽)
+│  │  │  ├─ home/                 Home.vue (首頁: 問候 + 舊入口網兩欄卡片〔待辦事項、個人秘書、最新公告〔真實資料〕、公告輪播、集團動態〕;資料待串接)
 │  │  │  ├─ personal/             【個人資訊】(13 頁;權限見 PRD §6.5.1)
 │  │  │  │  ├─ profile/           個人基本資料 portal.profile.read (6 Tabs: 基本資料/勞退新制/健保眷屬/所得稅扶養/勞健保級距/通勤調查)
 │  │  │  │  ├─ query/             自助查詢 portal.query.read (9 Tabs: 刷卡/出勤/加班/請假/班表與訂餐/補休榮譽假/特休/勞健保明細/二代健保)
@@ -103,6 +103,7 @@ giga-Portal/
 ├─ deploy/
 │  ├─ gateway-rbac.yaml           測試區 / 正式區的選單目錄、menu / tab / button 代碼與角色 (首次登記;之後以 GigaItApp 選單管理為準)
 │  ├─ apply-gateway-rbac.sh       以 Gateway 正式 compose 的 migrate 映像套用上檔
+│  ├─ sql/                        一次性 SQL(2026-10-12-portal-menu-realign.sql:測試區舊選單代碼移到大項、刪除已移除代碼)
 │  ├─ test.env.example            公司環境 Compose 變數範本
 │  └─ docker-compose.yml          spa-portal (發佈到 gw_www 的 portal, Nginx /); portal-api (M4 規劃)
 └─ backend/ (規劃, M4)            portal-api (以 Gateway 後端樣本為基礎)
