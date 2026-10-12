@@ -9,10 +9,10 @@
 
   @manual
   場景: 登入成功後導回原頁
-    假如 未登入的使用者開啟 "/personal/leave"
-    那麼 導向 "/login?redirect=%2Fpersonal%2Fleave"
+    假如 未登入的使用者開啟 "/personal/query"
+    那麼 導向 "/login?redirect=%2Fpersonal%2Fquery"
     當 以工號 "S112009" 與正確密碼登入
-    那麼 回到 "/personal/leave"
+    那麼 回到 "/personal/query"
 
   @wip
   場景大綱: 依 Gateway 錯誤代碼顯示訊息

@@ -1,34 +1,52 @@
 <script setup lang="ts">
 /** 對話框:v-model:open 控制;Esc 與點背景關閉(persistent 時不關);footer slot 放按鈕 */
-import { onBeforeUnmount, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 
 const props = withDefaults(defineProps<{ title?: string; subtitle?: string; icon?: string; width?: string; persistent?: boolean; tone?: string }>(), {
   width: '520px',
   tone: 'primary',
 });
 const open = defineModel<boolean>('open', { default: false });
+/** 後開的對話框在上層(confirm、公告閱讀可能疊在其他對話框之上;Teleport 的 DOM 順序不代表開啟順序) */
+const z = ref(100);
 
 function close() {
   if (!props.persistent) open.value = false;
 }
 function onKey(e: KeyboardEvent) {
-  if (e.key === 'Escape') close();
+  // 疊在上面的對話框才處理 Esc
+  if (e.key === 'Escape' && z.value === Math.max(...openZ)) close();
 }
 watch(
   open,
   (v) => {
-    if (v) document.addEventListener('keydown', onKey);
-    else document.removeEventListener('keydown', onKey);
+    if (v) {
+      z.value = ++topZ;
+      openZ.add(z.value);
+      document.addEventListener('keydown', onKey);
+    } else {
+      openZ.delete(z.value);
+      document.removeEventListener('keydown', onKey);
+    }
   },
   { immediate: true },
 );
-onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
+onBeforeUnmount(() => {
+  openZ.delete(z.value);
+  document.removeEventListener('keydown', onKey);
+});
+</script>
+
+<script lang="ts">
+/** 所有 GModal 共用:下一個開啟的 z-index 與目前開著的 z-index */
+let topZ = 100;
+const openZ = new Set<number>();
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="open" class="g-modal-backdrop" @mousedown.self="close">
+      <div v-if="open" class="g-modal-backdrop" :style="{ zIndex: z }" @mousedown.self="close">
         <div class="g-modal glass glass-edge" :class="`tone-${tone}`" role="dialog" aria-modal="true" :aria-label="title" :style="{ width }">
           <header v-if="title" class="head">
             <span v-if="icon" class="ic"><GIcon :name="icon" :size="18" /></span>
@@ -59,7 +77,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
   backdrop-filter: blur(6px);
 }
 .g-modal {
-  max-width: 100%;
+  /* 以視窗寬度為上限:grid 置中時百分比上限不生效,窄螢幕會超出畫面 */
+  max-width: calc(100vw - 32px);
   max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;

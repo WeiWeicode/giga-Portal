@@ -99,12 +99,14 @@ flowchart LR
 | 層級 | 權限 `kind` | 本專案代碼範例 | 前端用法 |
 | --- | --- | --- | --- |
 | 應用 | `app` | `portal.app.access` | 應用層守衛 |
-| 選單(功能頁) | `menu` | `portal.leave.read` | 路由 `meta.permission`、選單過濾 |
-| Tab | `tab` | `portal.leave-history.read` | Tab `permission` |
-| 按鈕 | `button` | `portal.leave.apply` | `v-can`;= 對應寫入 API 的權限 |
+| 選單目錄(側欄大項) | `group` | `portal.group.personal` | 側欄大項名稱 / 圖示 / 順序(不可授予) |
+| 選單(功能頁) | `menu` | `portal.query.read` | 路由 `meta.permission`、選單過濾 |
+| Tab | `tab` | `portal.query.overtime`(= menu 代碼去掉 `.read` + key) | 子路由 `meta.permission`、Tab 顯示;沒權限轉到第一個可看的 Tab |
+| 按鈕 | `button` | `portal.news.publish` | `v-can`;= 對應寫入 API 的權限 |
 
 - 權限代碼在 `portal-api` 的 OpenAPI `x-permissions` 宣告(含 `kind`、`parent`、`sort`),自動註冊寫入 BFF;前端路由與按鈕以同一代碼對應(PRD FR-3.4 由測試檢查)。
-- 前端完整權限清單見 PRD §6.5;新增代碼先在 PRD 登記,再改 OpenAPI 與前端。
+- 前端完整權限清單見 PRD §6.5.1 與 `FRAMEWORK-PLAN.md` 附錄 A;新增代碼先在 PRD 登記,再改前端與 `deploy/gateway-rbac.yaml`(portal-api 上線後改 OpenAPI)。
+- 名稱、圖示、順序與頁面歸屬以 BFF 為準(`/api/auth/me` 的 `menus`,IT 在 GigaItApp「選單管理」維護),前端路由 meta 只是預設值(同 GigaItApp)。
 
 ## 5. 風格(主題)架構
 
@@ -152,7 +154,7 @@ flowchart LR
 | --- | --- |
 | 前端 | Vue 3.5、Vite、vue-router、TypeScript、lucide(經 GIcon)、ECharts(圖表,同 GigaItApp) |
 | 後端 | Node.js 22、Fastify 5、`@fastify/swagger`、`@giganexus/backend-sdk`(vendor tgz) |
-| Gateway 共用 | `@giganexus/web-kit`(CSRF、Token 自動更新、`useAuth`);尚未發佈,**以 Vite / tsconfig alias 指向 `../giga-api-gateway-bff/web-kit/src`**(同 Gateway sample-spa;可用 `WEB_KIT_DIR` 覆寫),Docker 建置時以 compose `additional_contexts`(`webkit`)帶入並設 `WEB_KIT_DIR`;Registry 上線後改為套件相依 |
+| Gateway 共用 | `@giganexus/web-kit` `^0.3.0`(CSRF、Token 自動更新、`useAuth`、`useNotifyCenter`、`installMonitor`):取自公司 GitLab npm Registry(`.npmrc`,Token 環境變數 `GITLAB_NPM_TOKEN`;Docker 建置以 BuildKit secret `npm_token`,同 GigaItApp) |
 | 測試 | Vitest(前端 composables,`frontend/test/`)、`node:test` / Vitest(後端)、瀏覽器操作(四種風格組合、375px) |
 
 ## 9. 部署

@@ -233,7 +233,7 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 
 | 位置 | 指令 | 說明 |
 | --- | --- | --- |
-| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 到測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`,`GATEWAY_TARGET` 可改);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
+| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 到測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`,`GATEWAY_TARGET` 可改);`@giganexus/web-kit` 取自 GitLab npm Registry(安裝需環境變數 `GITLAB_NPM_TOKEN`) |
 | `frontend/` | `npm run typecheck` / `npm test` / `npm run build` | 型別 / Vitest / 建置 |
 | 根目錄 | `sh deploy/apply-gateway-rbac.sh test <Gateway test.env>` | 公司測試區 / 正式區套用權限(`deploy/gateway-rbac.yaml`,AD 群組 DN 由 IT 填);流程見 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` |
 | `backend/`(M4 起) | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |

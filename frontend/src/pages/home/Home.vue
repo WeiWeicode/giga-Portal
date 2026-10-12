@@ -1,10 +1,14 @@
 <script setup lang="ts">
 /**
- * 首頁(M1 版):問候橫幅(FR-4.1,資料只取自 /api/auth/me)與依權限列出的功能導覽。
- * 今日出勤、KPI、常用功能、待我簽核、假期、公告、行程於 M4 以聚合路由 /api/portal/dashboard 實作(FR-4.2–4.9),目前不顯示任何假資料。
+ * 首頁儀表板框架(FRAMEWORK-PLAN P3,對齊 GigaItApp 儀表板):
+ *   - 問候橫幅(FR-4.1,資料只取自 /api/auth/me)
+ *   - 最新公告:BFF 通知中心真實資料(/api/notify/feed?app=portal,/ws/notify 即時更新)
+ *   - 今日出勤、待我簽核、我的假期等卡片位:M4 以聚合路由 /api/portal/dashboard 提供(FR-4.2–4.9),目前只標示「待串接」,不顯示假資料
+ *   - 功能導覽:依權限與 BFF 選單設定列出可使用的功能
  */
 import { computed } from 'vue';
-import { useAuth, type PortalMe } from '@/api/gateway';
+import { can, useAuth, type PortalMe } from '@/api/gateway';
+import LatestAnnouncements from '@/components/notify/LatestAnnouncements.vue';
 import { dateLabel, greetingOf } from '@/composables/greeting';
 import { portalMenus } from '@/router';
 
@@ -17,17 +21,38 @@ const meta = computed(() => {
   return u ? [u.employeeNo, u.department, u.title].filter(Boolean).join(' · ') : '';
 });
 const groups = computed(() => portalMenus().filter((g) => g.key !== 'home'));
+
+/** 首頁資訊卡片位(M4 聚合路由前只佔位;有該功能權限才顯示) */
+const SLOTS = [
+  { key: 'attendance', title: '今日出勤', icon: 'clock', permission: 'portal.query.read', to: '/personal/query' },
+  { key: 'approval', title: '待我簽核', icon: 'inbox', permission: 'portal.approval.read', to: '/approval' },
+  { key: 'leave', title: '我的假期', icon: 'palm', permission: 'portal.query.read', to: '/personal/query/annual-leave' },
+] as const;
+const slots = computed(() => SLOTS.filter((x) => can(x.permission)));
 </script>
 
 <template>
   <div class="stack home">
     <GHero :eyebrow="dateLabel(now)" :title="title" :meta="meta">
       <template #actions>
-        <GButton v-can="'portal.leave.apply'" variant="secondary" icon="palm" @click="$router.push('/personal/leave')">請假申請</GButton>
-        <GButton v-can="'portal.attendance.punch'" variant="secondary" icon="clock" @click="$router.push('/personal/attendance')">線上打卡</GButton>
-        <GButton v-can="'bpm.approval.read'" variant="secondary" icon="inbox" @click="$router.push('/approval')">我的待辦</GButton>
+        <GButton v-can="'portal.query.read'" variant="secondary" icon="search" @click="$router.push('/personal/query')">自助查詢</GButton>
+        <GButton v-can="'portal.approval.read'" variant="secondary" icon="inbox" @click="$router.push('/approval')">我的待辦</GButton>
       </template>
     </GHero>
+
+    <div class="dash">
+      <LatestAnnouncements />
+      <div class="slots">
+        <GCard v-for="x in slots" :key="x.key" :title="x.title" :icon="x.icon">
+          <template #actions>
+            <GBadge tone="neutral" dot>待串接</GBadge>
+          </template>
+          <GEmpty compact icon="construction" title="資料串接中" description="將於里程碑 M4 由聚合路由提供(PRD FR-4.8)">
+            <RouterLink :to="x.to" class="xs">前往{{ x.title }} <GIcon name="arrow-right" :size="13" /></RouterLink>
+          </GEmpty>
+        </GCard>
+      </div>
+    </div>
 
     <GCard title="功能導覽" subtitle="依您的權限顯示可使用的功能" icon="grid">
       <GEmpty v-if="!groups.length" icon="lock" title="目前沒有可使用的功能" description="如需使用,請洽 IT 申請權限。" compact />
@@ -45,21 +70,27 @@ const groups = computed(() => portalMenus().filter((g) => g.key !== 'home'));
         </section>
       </div>
     </GCard>
-
-    <GCard>
-      <GEmpty
-        icon="construction"
-        title="首頁資訊區塊建置中"
-        description="今日出勤、統計、常用功能、待我簽核、我的假期、公告與行程將於里程碑 M4 以聚合路由提供(模擬資料會標示「模擬」)。"
-        compact
-      />
-    </GCard>
   </div>
 </template>
 
 <style scoped>
 .home {
   --gap: 20px;
+}
+.dash {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+.slots {
+  display: grid;
+  gap: 20px;
+}
+@media (max-width: 1100px) {
+  .dash {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .groups {
   display: grid;

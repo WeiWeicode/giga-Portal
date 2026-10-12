@@ -11,7 +11,7 @@
 | 項目 | 內容 |
 | --- | --- |
 | 產品名稱 | GigaNexus 員工入口網(giga-Portal) |
-| 文件版本 | **v0.1.2(草案)** |
+| 文件版本 | **v0.1.4(草案)** |
 | 建立日期 | 2026-09-26 |
 | 技術棧 | 與 GigaItApp 相同,**複製其框架後分離**:Vue 3 + Vite(前端)/ Node.js 22 + Fastify 5 + TypeScript(後端 `portal-api`,以 Gateway 後端樣本 `samples/node-backend` 為基礎) |
 | 上位規範 | Gateway PRD **v0.7**(§7.2.1 子路徑、§8.2 登入、§8.3.1 指派規則、§8.3.2 UI 權限分類、§8.3.3 應用登記與切換、§8.7 管理 API)、DATABASE §3.2、FRONTEND-GUIDE v0.2(§7 登入與權限、§7.4 應用切換、§7.5 選單 / Tab / 按鈕)、BACKEND-GUIDE v0.4(§3.3 port 51271、§4 內部 Token、§6.1 `x-permissions`、§7.5 自動註冊);跨專案規則見 Gateway `AGENT.md` §10 |
@@ -23,6 +23,7 @@
 
 | 版本 | 日期 | 變更內容 |
 | --- | --- | --- |
+| v0.1.4 | 2026-10-12 | 框架對齊 GigaItApp(`FRAMEWORK-PLAN.md`):側欄大項改為 BFF 選單目錄 `portal.group.*`、名稱 / 排序 / 圖示以 BFF 為準;**每個 Tab 有權限代碼**;一頁一碼(§6.5.1 新增 10 個 menu 代碼);移除隱藏的 M1 頁(我的假期、出勤紀錄、行政資源維護)及其代碼;`it-admin` 可查看全部選單與 Tab;首頁加入通知鈴鐺與最新公告(BFF 通知中心) |
 | v0.1.3 | 2026-10-05 | 對齊 old_PortalSolar 後細分權限代碼(§6.5.1):薪資與個資分開、主管專區與 ESH 每頁加上 menu 權限與 `portal-manager` / `portal-esh-admin` 角色;新增待決 Q12–Q15 |
 | v0.1.2 | 2026-09-26 | M1 實作狀態:前端框架完成並發佈本機 Nginx(§11 進度);應用切換暫以 app 權限推導(Gateway G3 前);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`;GigaItApp 已先加入應用切換(I3 部分);Q9 依 D1 標為已決定 |
 | v0.1.1 | 2026-09-26 | Q1(職位以**職級**為主)、Q2(部門**含下層**,部門樹由 BPM 同步)、Q4(`portal-api` 51271)、Q7(Gateway 本機帳號為緊急帳號)定案;Gateway 規格改版 v0.7(G1–G4、G7 已寫入規格);GigaItApp 改用單一入口後以使用者身分直接呼叫 BFF 管理 API,不再需要服務帳號;建立 AGENT.md 與 docs 文件組 |
@@ -114,9 +115,10 @@ flowchart LR
 | kind | 意義 | 代碼範例 | 前端 | BFF |
 | --- | --- | --- | --- | --- |
 | `app` | 可使用某應用 | `portal.app.access`、`it.app.access` | 應用切換清單、應用層路由守衛 | 該應用自有 API 一併檢查 |
-| `menu` | 可見某選單功能(頁面) | `portal.leave.read` | 兩層選單、頁面路由守衛 | 該頁讀取 API 使用同一代碼 |
-| `tab` | 可見頁內某 Tab | `portal.leave-history.read` | Tab 顯示 | 該 Tab 讀取 API 使用同一代碼 |
-| `button` | 可按某按鈕 | `portal.leave.apply`、`bpm.approval.approve` | `v-can` 隱藏 | **對應寫入 API 的 `permission_code`**(D4) |
+| `group` | 選單目錄(側欄大項,只分組命名、不可授予) | `portal.group.personal` | 側欄大項名稱 / 圖示 / 順序 | — |
+| `menu` | 可見某選單功能(頁面) | `portal.query.read` | 兩層選單、頁面路由守衛 | `includes` 綁定該頁讀取 API |
+| `tab` | 可見頁內某 Tab | `portal.query.overtime` | Tab 顯示 | `includes` 綁定該 Tab 讀取 API |
+| `button` | 可按某按鈕 | `portal.news.publish` | `v-can` 隱藏 | **對應寫入 API 的 `permission_code`**(D4) |
 | `api` | 純 API(系統對系統等,不顯示於 UI) | `gw.admin.route.read` | — | 檢查 |
 
 - 權限代碼格式沿用 `{system}.{resource}.{action}`;`menu` / `tab` / `button` 另記 `parent_code`(掛在哪個應用 / 選單 / Tab 下)與 `sort`,讓 GigaItApp 能以**樹狀**(應用 → 選單 → Tab → 按鈕)設定。
@@ -162,17 +164,19 @@ flowchart LR
 
 | 編號 | 需求 | 資料來源(第一階段) | 驗收場景(規劃) |
 | --- | --- | --- | --- |
-| FR-4.1 | 問候橫幅:日期(含星期)、依時段問候「早安 / 午安 / 晚安,姓名」、工號 · 部門 · 職稱 · 分機;快捷按鈕(請假申請、線上打卡、我的待辦,依權限顯示) | `/api/auth/me`、HRM 個人資料 | `home/home.feature` |
+| FR-4.1 | 問候橫幅:日期(含星期)、依時段問候「早安 / 午安 / 晚安,姓名」、工號 · 部門 · 職稱 · 分機;快捷按鈕(自助查詢、我的待辦,依權限顯示;請假申請、線上打卡待 HRM API) | `/api/auth/me`、HRM 個人資料 | `home/home.feature` |
 | FR-4.2 | 今日出勤卡:上 / 下班打卡時間、打卡狀態標籤;特休剩餘、待我簽核、未讀公告數 | HRM、BPM、公告 | 同上 |
 | FR-4.3 | KPI 卡 ×4:本月出勤天數、本月加班時數、待簽核案件、教育訓練時數;含較上月變化 | HRM / BPM(模擬) | 同上 |
 | FR-4.4 | 常用功能:圖示格(請假、加班、薪資查詢、表單下載、分機查詢、統編查詢、集團系統、3691 開講),依權限顯示;使用者可自訂排序(v0.2) | 前端設定 + 權限 | 同上 |
 | FR-4.5 | 待我簽核:類別標籤、申請事由與單號、申請人、金額 / 時數;「核准」「退回」按鈕(`bpm.approval.approve` / `reject`)需確認,「全部」連到簽核頁 | BPM `/api/bpm/approvals` | `home/approval.feature` |
 | FR-4.6 | 我的假期:特休已休 / 剩餘環形圖、補休與病假進度條 | HRM | `home/home.feature` |
-| FR-4.7 | 最新公告(未讀數、分類、發布單位與日期)、近期行程(時間、地點) | `portal-api` 公告、行事曆 | 同上 |
+| FR-4.7 | 最新公告(未讀數、等級、發布單位與時間;頂列鈴鐺與即時推送,同 GigaItApp)、近期行程(時間、地點) | 公告:BFF 通知中心 `/api/notify/*`(Gateway NOTIFY-PLAN,2026-10-12 已接);行事曆:`portal-api` | 同上 |
 | FR-4.8 | 首頁以**聚合路由** `GET /api/portal/dashboard` 一次取得(Gateway 已有範例,§8.4);非必要區塊失敗時該區塊顯示「暫時無法取得」,其他區塊照常 | BFF aggregate | `home/home.feature`:部分區塊失敗 |
 | FR-4.9 | 模擬資料必須標示(區塊角落「模擬」標籤),直到對應系統提供真實 API | — | 同上 |
 
 ### 6.5 選單功能(第一版範圍)
+
+> **2026-10-12 起以 §6.5.1 與 `FRAMEWORK-PLAN.md` 附錄 A 為準**;下表為 v0.1 初版範圍,保留作為需求來源。
 
 兩層選單(群組 → 功能 → Tab);權限代碼為暫定,實作前向 IT 登記(FRONTEND-GUIDE §7.2):
 
@@ -194,24 +198,29 @@ flowchart LR
 
 - 參考畫面左下的「設計系統(Canvas UI Kit)」為元件展示頁,只在 dev 與具 `portal.uikit.read` 權限時顯示(Q10)。
 
-#### 6.5.1 對齊舊單一入口後的權限代碼(v0.1.3)
+#### 6.5.1 權限代碼(v0.1.4,對齊 GigaItApp)
 
-前端已依 `old_PortalSolar` 擴充為 7 個群組;每個功能頁都必須有 menu 權限(**主管專區、ESH 不可無權限開放**,避免舊系統「只隱藏選單、後端不設防」的問題)。代碼登記於 `deploy/gateway-rbac.yaml`,portal-api 上線後改由 `x-permissions` 宣告:
+前端依 `old_PortalSolar` 分為 7 個群組;每個功能頁都必須有 menu 權限(**主管專區、ESH 不可無權限開放**,避免舊系統「只隱藏選單、後端不設防」的問題)。代碼登記於 `deploy/gateway-rbac.yaml`,portal-api 上線後改由 `x-permissions` 宣告;完整清單(group 7、menu 44、tab 76)見 `FRAMEWORK-PLAN.md` 附錄 A。
+
+- **大項**:`portal.group.{home,personal,approval,resources,news,manager,esh}`(kind group);名稱、圖示、順序與頁面歸屬由 IT 在 GigaItApp「選單管理」調整。
+- **一頁一碼**:每個功能頁有自己的 menu 代碼(多頁共用一碼時,選單管理無法個別改名或授權)。
+- **Tab**:代碼 = menu 代碼去掉 `.read` 再加 Tab key,例 `portal.query.overtime`、`portal.mgr.rights.level2`;沒有 Tab 權限時該 Tab 隱藏,整頁沒有可看的 Tab 時側欄不顯示。
+- **按鈕**:隨各 Tab 內容一起登記(kind button,parent = Tab,`includes` = 呼叫的 API)。
 
 | 群組 | 功能 | menu 權限 | 預設角色 |
 | --- | --- | --- | --- |
-| 個人資訊 | 個人基本資料 | `portal.profile.read` | employee |
-| | 自助查詢 | `portal.attendance.read` | employee |
-| | 薪資獎金、年度所得、薪資異動、薪資金鑰重置 | `portal.salary.read`(與個資分開授權;二次驗證待決 Q12) | employee |
-| | 出勤異常、出勤時數異常回報 | `portal.attendance-abnormal.read` | employee |
-| | BPM 簽核資訊 | `bpm.approval.read` | portal-approver |
-| | 郵件審核資訊 / 個人資產明細 / 年度必上課程 / 個人提醒 | `portal.release-mail.read` / `portal.asset.read` / `portal.course.read` / `portal.note.read` | employee |
-| 行政資源 | 問卷調查 | `portal.survey.read` | employee |
+| 個人資訊 | 個人基本資料 / 自助查詢 / 薪資獎金 / 年度所得 / 薪資異動 | `portal.profile.read` / `portal.query.read` / `portal.salary.read` / `portal.annual-gains.read` / `portal.salary-adjust.read`(薪資類二次驗證待決 Q12) | employee |
+| | 出勤異常 / 出勤時數異常回報 | `portal.attendance-abnormal.read` / `portal.abnormal-respond.read` | employee |
+| | BPM 簽核資訊 | `portal.ef-info.read`(BPM API 登記後綁定 `bpm.approval.read`) | portal-approver |
+| | 郵件審核資訊 / 個人資產明細 / 薪資金鑰重置 / 年度必上課程 / 個人提醒 | `portal.release-mail.read` / `portal.asset.read` / `portal.cipher-reset.read` / `portal.course.read` / `portal.note.read` | employee |
+| 表單與簽核 | 待我簽核 / 表單下載 | `portal.approval.read`(同上綁定 BPM API)/ `portal.form.read` | portal-approver / employee |
+| 行政資源 | 總務專區 / 人資專區 / 內部職缺 / 問卷調查 / 新人導覽 / 分機表 / 集團統編 | `portal.ga.read` / `portal.hr.read` / `portal.job.read` / `portal.survey.read` / `portal.onboarding.read` / `portal.directory.read` / `portal.gui-number.read` | employee |
+| 集團與公告 | 最新公告 / 行事曆 / 集團系統 / 3691 全民開講 | `portal.news.read` / `portal.calendar.read` / `portal.links.read` / `portal.talk.read` | employee |
 | 主管專區 | 11 頁,每頁一碼 `portal.mgr.{rights,shift,boss-trace,attendance,leave-balance,promotion,training,safety-course,property,budget,budget-apply}.read` | 見左 | **portal-manager**(Gateway 指派規則依職級,G1);資料由後端依部門(含下層)過濾 |
 | ESH | 證照管理 / 項目 / 需求 / 人員 / 管理員 | `portal.esh.{license,item,need,personal,manager}.read` | **portal-esh-admin** |
 | | 危害性化學品清單 | `portal.esh.chemical.read` | employee |
 
-其餘頁面沿用上表(§6.5)代碼。
+IT 管理系統管理員(`it-admin`,GigaItApp)可查看全部 menu 與 Tab(不含按鈕),供 IT 協助排查。已移除:`portal.leave.*`、`portal.attendance.read`、`portal.attendance.punch`、`portal.resource.read`、`portal.resource.edit`(隱藏的 M1 頁)。
 
 ### 6.6 網頁框架與 UI(風格)
 
@@ -345,6 +354,7 @@ flowchart LR
 | --- | --- |
 | M1 | 前端框架完成並發佈到 Nginx(測試區)(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
 | M3 | **2026-10-02 GigaItApp 實作 I1–I4**(單一入口、`it.*` 權限登記 BFF、應用層守衛、應用權限樹 × 角色 / 指派規則 / 試算),本機經測試區 Gateway 驗證;G5:`itapp-api` 上游與 `/api/it/*` 路由已登記(草稿),待 CI 部署後發佈,Nginx `/it/api/` 直通過渡期保留 |
+| 框架對齊 | **2026-10-12**(`FRAMEWORK-PLAN.md` P1–P3):web-kit 改 npm Registry;選單目錄 / 名稱以 BFF 為準;Tab 權限;一頁一碼;`it-admin` 可查看入口網;通知鈴鐺、公告對話框與首頁最新公告(`/ws/notify?app=portal`) |
 | 其他 | 未開始 |
 
 不在第一版:LINE 綁定、通知中心設定、常用功能自訂排序(v0.2)、表單與同仁搜尋(Q8)。

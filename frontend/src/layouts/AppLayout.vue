@@ -2,11 +2,14 @@
 /**
  * 主框架(PRD FR-6.1、UI-GUIDE §4):左側兩層選單(群組 → 功能,依權限過濾)、頂列(麵包屑、風格 / 明暗、應用切換、帳號)、內容區。
  * 頁面內的第三層切換使用 Tab(TabbedPage.vue)。≤ 960px 選單改為抽屜(FR-6.6)。
+ * 通知(Gateway NOTIFY-PLAN,同 GigaItApp):NotifyHost 連 /ws/notify?app=portal,新公告以 Toast / 對話框提示;鈴鐺顯示未讀數。
  * 側欄收合時只顯示群組圖示,滑鼠移上(或鍵盤聚焦、點擊)在右側浮出該群組的功能清單。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { menuTitle, useAuth, type PortalMe } from '@/api/gateway';
+import NotifyBell from '@/components/notify/NotifyBell.vue';
+import NotifyHost from '@/components/notify/NotifyHost.vue';
 import { CURRENT_APP, deniedMessage, resolveApps } from '@/composables/apps';
 import { findActive } from '@/composables/menu';
 import { portalMenus } from '@/router';
@@ -206,6 +209,7 @@ async function doLogout() {
           <li v-for="(c, i) in crumbs" :key="i" :class="{ last: i === crumbs.length - 1 }">{{ c }}</li>
         </ol>
         <div class="spacer" />
+        <NotifyBell />
         <GStyleToggle />
         <GAppSwitcher :apps="apps.apps" :current="CURRENT_APP" :derived="apps.derived" />
         <div class="user" @keydown.esc="userMenu = false">
@@ -252,6 +256,7 @@ async function doLogout() {
         </RouterView>
       </main>
     </div>
+    <NotifyHost />
     <ChangePasswordModal v-model:open="pwdOpen" />
 
     <Teleport to="body">

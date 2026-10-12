@@ -1,138 +1,296 @@
 # 測試區 / 正式區 Gateway 的員工入口網權限(Gateway CLI `apply` 格式;docs/TEST-DEPLOY-RUNBOOK 見 Gateway repo)
 #
-# 需要 AD 群組的角色由 IT 依公司 GN-* 群組填入 DN(Gateway P-08)。
-# 測試區與正式區設定不互通(Gateway PRD Q3),兩區各自套用:
-#   sh deploy/apply-gateway-rbac.sh test <主機受保護目錄>/test.env
-# 權限分類 kind / parent / sort(Gateway PRD §8.3.2,2026-10-01 起支援)依 frontend/src/router.ts 的選單順序,供 GigaItApp 以樹狀設定。
-# 暫時做法:portal-api(x-permissions 自動註冊)上線後,權限改由 portal-api 宣告,角色與指派改由 IT 在 GigaItApp 設定(PRD §5.2、§9)。
-# 權限代碼以 PRD §6.5 為準。
-# 注意:Gateway CLI 沒有個別指派角色的指令,需要 AD 群組(adGroups)或公司(companies)才會有成員;
-#       套用會遞增所有使用者的權限版本(已登入者下一次呼叫 API 時由 web-kit 自動換發,不需重新登入)。
+#   sh deploy/apply-gateway-rbac.sh test <Gateway 區域 env 檔>      # CI rbac-test 於 develop 自動執行
+#
+# 結構同 GigaItApp deploy/gateway-rbac.yaml(docs/FRAMEWORK-PLAN.md §3、附錄 A):
+#   ① 選單目錄 portal.group.*(kind group)→ 功能頁(kind menu,一頁一碼)→ Tab(kind tab)→ 按鈕(kind button,includes = 呼叫的 API)
+#      本檔只負責首次登記:已存在的權限不覆寫名稱、上層與排序,之後在 GigaItApp「系統管理 › 選單管理」調整
+#      (2026-10-12 前登記的舊代碼上層仍是 portal.app.access,需在選單管理移到對應目錄;入口網側欄不受影響,會依前端預設歸類)
+#      功能頁與 Tab 的代碼必須與 frontend/src/router.ts 一致(Tab = 選單代碼去掉 .read + key)
+#   ② 角色:permissions 會整組取代;成員(AD 群組 / 指派規則 / 個別指派)由 IT 在 GigaItApp 設定,此處不寫 adGroups / companies
+#      IT 管理系統管理員(it-admin)可查看全部入口網選單與 Tab,登記在 GigaItApp 的 gateway-rbac.yaml(本檔需先套用)
+#   新增的排序值與前一頁相同時,入口網依前端路由順序排列(composables/menu.ts)
+# 測試區與正式區設定不互通(Gateway PRD Q3),兩區各自套用。
+# BPM 簽核 API(bpm.approval.*)由 BPM 的 OpenAPI 登記後,再於選單管理綁定到「待我簽核」「BPM 簽核資訊」(PRD Q8)。
 permissions:
-  # 應用(kind=app,Gateway PRD §8.3.3)
+  # 應用(kind=app,Gateway PRD §8.3.3);it.app.access 與 GigaItApp 相同(兩邊需一致)
   - { code: portal.app.access, name: 員工入口網使用權限, kind: app, sort: 10 }
   - { code: it.app.access, name: IT 管理系統使用權限, kind: app, sort: 20 }
-  # 選單 / Tab / 按鈕
-  - { code: portal.home.read, name: 入口網首頁, kind: menu, parent: portal.app.access, sort: 10 }
-  - { code: portal.profile.read, name: 個人資料, kind: menu, parent: portal.app.access, sort: 20 }
-  - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.read, sort: 10 }
-  - { code: portal.leave.read, name: 我的假期, kind: menu, parent: portal.app.access, sort: 30 }
-  - { code: portal.leave-history.read, name: 請假紀錄, kind: tab, parent: portal.leave.read, sort: 10 }
-  - { code: portal.leave.apply, name: 請假申請, kind: button, parent: portal.leave.read, sort: 20 }
-  - { code: portal.attendance.read, name: 出勤紀錄, kind: menu, parent: portal.app.access, sort: 40 }
-  - { code: portal.attendance.punch, name: 線上打卡, kind: button, parent: portal.attendance.read, sort: 10 }
-  - { code: portal.form.read, name: 表單下載, kind: menu, parent: portal.app.access, sort: 60 }
-  - { code: portal.resource.read, name: 行政資源, kind: menu, parent: portal.app.access, sort: 70 }
-  - { code: portal.resource.edit, name: 維護行政資源, kind: menu, parent: portal.resource.read, sort: 10 }
-  - { code: portal.onboarding.read, name: 新人導覽, kind: menu, parent: portal.app.access, sort: 80 }
-  - { code: portal.onboarding.edit, name: 維護新人導覽, kind: button, parent: portal.onboarding.read, sort: 10 }
-  - { code: portal.directory.read, name: 分機表、聯絡窗口, kind: menu, parent: portal.app.access, sort: 90 }
-  - { code: portal.gui-number.read, name: 集團統編資訊, kind: menu, parent: portal.app.access, sort: 100 }
-  - { code: portal.news.read, name: 公告, kind: menu, parent: portal.app.access, sort: 110 }
-  - { code: portal.news.publish, name: 發布公告, kind: button, parent: portal.news.read, sort: 10 }
-  - { code: portal.calendar.read, name: 行事曆, kind: menu, parent: portal.app.access, sort: 120 }
-  - { code: portal.links.read, name: 集團系統, kind: menu, parent: portal.app.access, sort: 130 }
-  - { code: portal.talk.read, name: 3691 全民開講, kind: menu, parent: portal.app.access, sort: 140 }
-  # 個人資訊細分(PRD §6.5 v0.1.3):薪資與個資分開授權
-  - { code: portal.salary.read, name: 薪資獎金 / 年度所得 / 薪資異動, kind: menu, parent: portal.app.access, sort: 21 }
-  - { code: portal.attendance-abnormal.read, name: 出勤異常 / 異常回報, kind: menu, parent: portal.app.access, sort: 41 }
-  - { code: portal.release-mail.read, name: 郵件審核資訊, kind: menu, parent: portal.app.access, sort: 42 }
-  - { code: portal.asset.read, name: 個人資產明細, kind: menu, parent: portal.app.access, sort: 43 }
-  - { code: portal.course.read, name: 年度必上課程, kind: menu, parent: portal.app.access, sort: 44 }
-  - { code: portal.note.read, name: 個人提醒, kind: menu, parent: portal.app.access, sort: 45 }
-  - { code: portal.survey.read, name: 問卷調查, kind: menu, parent: portal.app.access, sort: 75 }
-  # 主管專區(資料層級由後端依部門含下層過濾)
-  - { code: portal.mgr.rights.read, name: 主管權益, kind: menu, parent: portal.app.access, sort: 200 }
-  - { code: portal.mgr.shift.read, name: 班表上傳, kind: menu, parent: portal.app.access, sort: 201 }
-  - { code: portal.mgr.boss-trace.read, name: 理級以上出勤時數追蹤, kind: menu, parent: portal.app.access, sort: 202 }
-  - { code: portal.mgr.attendance.read, name: 員工出勤狀況, kind: menu, parent: portal.app.access, sort: 203 }
-  - { code: portal.mgr.leave-balance.read, name: 員工特補休剩餘時數, kind: menu, parent: portal.app.access, sort: 204 }
-  - { code: portal.mgr.promotion.read, name: 晉升地圖, kind: menu, parent: portal.app.access, sort: 205 }
-  - { code: portal.mgr.training.read, name: 年度教育訓練計畫, kind: menu, parent: portal.app.access, sort: 206 }
-  - { code: portal.mgr.safety-course.read, name: 部門工安課程達成率, kind: menu, parent: portal.app.access, sort: 207 }
-  - { code: portal.mgr.property.read, name: 部門資產明細, kind: menu, parent: portal.app.access, sort: 208 }
-  - { code: portal.mgr.budget.read, name: 部門預算, kind: menu, parent: portal.app.access, sort: 209 }
-  - { code: portal.mgr.budget-apply.read, name: 部門預算編列, kind: menu, parent: portal.app.access, sort: 210 }
-  # ESH 證照管理(化學品清單全員可讀)
-  - { code: portal.esh.license.read, name: 證照管理, kind: menu, parent: portal.app.access, sort: 300 }
-  - { code: portal.esh.item.read, name: 證照項目設定, kind: menu, parent: portal.app.access, sort: 301 }
-  - { code: portal.esh.need.read, name: 證照需求, kind: menu, parent: portal.app.access, sort: 302 }
-  - { code: portal.esh.personal.read, name: 證照人員設定, kind: menu, parent: portal.app.access, sort: 303 }
-  - { code: portal.esh.manager.read, name: 證照管理員, kind: menu, parent: portal.app.access, sort: 304 }
-  - { code: portal.esh.chemical.read, name: 危害性化學品清單, kind: menu, parent: portal.app.access, sort: 305 }
-  # BPM 簽核:BPM 提供 API 後改由 BPM 的 OpenAPI 宣告(PRD Q8)
-  - { code: bpm.approval.read, name: 待我簽核, kind: menu, parent: portal.app.access, sort: 50 }
-  - { code: bpm.approval.approve, name: 簽核核准, kind: button, parent: bpm.approval.read, sort: 10 }
-  - { code: bpm.approval.reject, name: 簽核退回, kind: button, parent: bpm.approval.read, sort: 20 }
+  # 選單目錄(kind group:側欄大項,只分組命名、不可授予;名稱 / 排序 / 圖示可在 GigaItApp「選單管理」修改)
+  - { code: portal.group.home, name: 首頁, kind: group, parent: portal.app.access, sort: 10, icon: home }
+  - { code: portal.group.personal, name: 個人資訊, kind: group, parent: portal.app.access, sort: 20, icon: user }
+  - { code: portal.group.approval, name: 表單與簽核, kind: group, parent: portal.app.access, sort: 30, icon: file-check }
+  - { code: portal.group.resources, name: 行政資源, kind: group, parent: portal.app.access, sort: 40, icon: folder }
+  - { code: portal.group.news, name: 集團與公告, kind: group, parent: portal.app.access, sort: 50, icon: megaphone }
+  - { code: portal.group.manager, name: 主管專區, kind: group, parent: portal.app.access, sort: 60, icon: user-check }
+  - { code: portal.group.esh, name: ESH證照管理, kind: group, parent: portal.app.access, sort: 70, icon: shield }
+  # 功能頁(kind menu,一頁一碼,FRAMEWORK-PLAN §3.2)與 Tab(kind tab,代碼 = 選單代碼去掉 .read + key;frontend/src/router.ts tabCode)
+  - { code: portal.home.read, name: 首頁, kind: menu, parent: portal.group.home, sort: 10 }
+  - { code: portal.profile.read, name: 個人基本資料, kind: menu, parent: portal.group.personal, sort: 20 }
+  - { code: portal.profile.basic, name: 基本資料, kind: tab, parent: portal.profile.read, sort: 10 }
+  - { code: portal.profile.pension, name: 勞退新制資料, kind: tab, parent: portal.profile.read, sort: 20 }
+  - { code: portal.profile.health-family, name: 健保眷屬加退保異動, kind: tab, parent: portal.profile.read, sort: 30 }
+  - { code: portal.profile.tax-dependents, name: 所得稅扶養眷屬異動, kind: tab, parent: portal.profile.read, sort: 40 }
+  - { code: portal.profile.insurance-bracket, name: 勞健保/勞退級距, kind: tab, parent: portal.profile.read, sort: 50 }
+  - { code: portal.profile.commute, name: 溫室氣體盤查員工通勤調查, kind: tab, parent: portal.profile.read, sort: 60 }
+  - { code: portal.query.read, name: 自助查詢, kind: menu, parent: portal.group.personal, sort: 20 }
+  - { code: portal.query.card, name: 刷卡記錄, kind: tab, parent: portal.query.read, sort: 10 }
+  - { code: portal.query.attendance, name: 出勤記錄, kind: tab, parent: portal.query.read, sort: 20 }
+  - { code: portal.query.overtime, name: 加班紀錄, kind: tab, parent: portal.query.read, sort: 30 }
+  - { code: portal.query.leave, name: 請假紀錄, kind: tab, parent: portal.query.read, sort: 40 }
+  - { code: portal.query.schedule, name: 班表&訂餐記錄, kind: tab, parent: portal.query.read, sort: 50 }
+  - { code: portal.query.comp-time, name: 補休/榮譽假, kind: tab, parent: portal.query.read, sort: 60 }
+  - { code: portal.query.annual-leave, name: 特休, kind: tab, parent: portal.query.read, sort: 70 }
+  - { code: portal.query.insurance-detail, name: 勞健保明細, kind: tab, parent: portal.query.read, sort: 80 }
+  - { code: portal.query.nhi2, name: 二代健保, kind: tab, parent: portal.query.read, sort: 90 }
+  - { code: portal.salary.read, name: 薪資獎金, kind: menu, parent: portal.group.personal, sort: 21 }
+  - { code: portal.salary.slip, name: 薪資明細, kind: tab, parent: portal.salary.read, sort: 10 }
+  - { code: portal.salary.bonus, name: 獎金明細, kind: tab, parent: portal.salary.read, sort: 20 }
+  - { code: portal.annual-gains.read, name: 年度所得, kind: menu, parent: portal.group.personal, sort: 21 }
+  - { code: portal.annual-gains.list, name: 年度所得清冊, kind: tab, parent: portal.annual-gains.read, sort: 10 }
+  - { code: portal.annual-gains.tax-proof, name: 扣繳憑單 / 申報證明, kind: tab, parent: portal.annual-gains.read, sort: 20 }
+  - { code: portal.salary-adjust.read, name: 薪資異動, kind: menu, parent: portal.group.personal, sort: 21 }
+  - { code: portal.salary-adjust.history, name: 調薪紀錄, kind: tab, parent: portal.salary-adjust.read, sort: 10 }
+  - { code: portal.attendance-abnormal.read, name: 出勤異常, kind: menu, parent: portal.group.personal, sort: 41 }
+  - { code: portal.attendance-abnormal.list, name: 出勤異常清單, kind: tab, parent: portal.attendance-abnormal.read, sort: 10 }
+  - { code: portal.abnormal-respond.read, name: 出勤時數異常回報, kind: menu, parent: portal.group.personal, sort: 41 }
+  - { code: portal.abnormal-respond.report, name: 異常回報, kind: tab, parent: portal.abnormal-respond.read, sort: 10 }
+  - { code: portal.ef-info.read, name: BPM 簽核資訊, kind: menu, parent: portal.group.personal, sort: 41 }
+  - { code: portal.ef-info.pending, name: 待簽核, kind: tab, parent: portal.ef-info.read, sort: 10 }
+  - { code: portal.ef-info.unclosed, name: 未結案, kind: tab, parent: portal.ef-info.read, sort: 20 }
+  - { code: portal.release-mail.read, name: 郵件審核資訊, kind: menu, parent: portal.group.personal, sort: 42 }
+  - { code: portal.release-mail.list, name: 郵件審核, kind: tab, parent: portal.release-mail.read, sort: 10 }
+  - { code: portal.asset.read, name: 個人資產明細, kind: menu, parent: portal.group.personal, sort: 43 }
+  - { code: portal.asset.current, name: 保管資產清冊, kind: tab, parent: portal.asset.read, sort: 10 }
+  - { code: portal.asset.transfer, name: 資產移轉歷程, kind: tab, parent: portal.asset.read, sort: 20 }
+  - { code: portal.cipher-reset.read, name: 薪資金鑰重置, kind: menu, parent: portal.group.personal, sort: 43 }
+  - { code: portal.cipher-reset.reset, name: 金鑰重置, kind: tab, parent: portal.cipher-reset.read, sort: 10 }
+  - { code: portal.course.read, name: 年度必上課程, kind: menu, parent: portal.group.personal, sort: 44 }
+  - { code: portal.course.required, name: 必修課程, kind: tab, parent: portal.course.read, sort: 10 }
+  - { code: portal.note.read, name: 個人提醒, kind: menu, parent: portal.group.personal, sort: 45 }
+  - { code: portal.note.list, name: 個人備忘, kind: tab, parent: portal.note.read, sort: 10 }
+  - { code: portal.approval.read, name: 待我簽核, kind: menu, parent: portal.group.approval, sort: 60 }
+  - { code: portal.approval.pending, name: 待簽核, kind: tab, parent: portal.approval.read, sort: 10 }
+  - { code: portal.approval.done, name: 已簽核, kind: tab, parent: portal.approval.read, sort: 20 }
+  - { code: portal.approval.sent, name: 我送出的, kind: tab, parent: portal.approval.read, sort: 30 }
+  - { code: portal.form.read, name: 表單下載, kind: menu, parent: portal.group.approval, sort: 60 }
+  - { code: portal.form.list, name: 表單清單, kind: tab, parent: portal.form.read, sort: 10 }
+  - { code: portal.ga.read, name: 總務專區, kind: menu, parent: portal.group.resources, sort: 75 }
+  - { code: portal.ga.service, name: 總務服務項目, kind: tab, parent: portal.ga.read, sort: 10 }
+  - { code: portal.ga.apply, name: 申請專區, kind: tab, parent: portal.ga.read, sort: 20 }
+  - { code: portal.ga.property, name: 個人資產明細, kind: tab, parent: portal.ga.read, sort: 30 }
+  - { code: portal.ga.outbound, name: 外送資產明細, kind: tab, parent: portal.ga.read, sort: 40 }
+  - { code: portal.ga.parking, name: 湖口廠停車資訊, kind: tab, parent: portal.ga.read, sort: 50 }
+  - { code: portal.hr.read, name: 人資專區, kind: menu, parent: portal.group.resources, sort: 75 }
+  - { code: portal.hr.welfare, name: 團體保險, kind: tab, parent: portal.hr.read, sort: 10 }
+  - { code: portal.hr.agent, name: 主管職務代理人, kind: tab, parent: portal.hr.read, sort: 20 }
+  - { code: portal.job.read, name: 內部職缺, kind: menu, parent: portal.group.resources, sort: 75 }
+  - { code: portal.job.list, name: 內部職缺, kind: tab, parent: portal.job.read, sort: 10 }
+  - { code: portal.survey.read, name: 問卷調查, kind: menu, parent: portal.group.resources, sort: 75 }
+  - { code: portal.survey.list, name: 問卷清單, kind: tab, parent: portal.survey.read, sort: 10 }
+  - { code: portal.onboarding.read, name: 新人導覽, kind: menu, parent: portal.group.resources, sort: 80 }
+  - { code: portal.onboarding.tips, name: 小叮嚀, kind: tab, parent: portal.onboarding.read, sort: 10 }
+  - { code: portal.onboarding.quiz, name: 驗收區, kind: tab, parent: portal.onboarding.read, sort: 20 }
+  - { code: portal.directory.read, name: 分機表、聯絡窗口, kind: menu, parent: portal.group.resources, sort: 90 }
+  - { code: portal.directory.extension, name: 分機表, kind: tab, parent: portal.directory.read, sort: 10 }
+  - { code: portal.directory.contact, name: 聯絡窗口, kind: tab, parent: portal.directory.read, sort: 20 }
+  - { code: portal.gui-number.read, name: 集團統編資訊, kind: menu, parent: portal.group.resources, sort: 100 }
+  - { code: portal.gui-number.list, name: 集團統編, kind: tab, parent: portal.gui-number.read, sort: 10 }
+  - { code: portal.news.read, name: 最新公告, kind: menu, parent: portal.group.news, sort: 110 }
+  - { code: portal.news.all, name: 全部, kind: tab, parent: portal.news.read, sort: 10 }
+  - { code: portal.news.unread, name: 未讀, kind: tab, parent: portal.news.read, sort: 20 }
+  - { code: portal.calendar.read, name: 行事曆, kind: menu, parent: portal.group.news, sort: 120 }
+  - { code: portal.calendar.month, name: 月曆視圖, kind: tab, parent: portal.calendar.read, sort: 10 }
+  - { code: portal.calendar.list, name: 年度清單, kind: tab, parent: portal.calendar.read, sort: 20 }
+  - { code: portal.links.read, name: 集團系統, kind: menu, parent: portal.group.news, sort: 130 }
+  - { code: portal.links.list, name: 系統入口, kind: tab, parent: portal.links.read, sort: 10 }
+  - { code: portal.talk.read, name: 3691 全民開講, kind: menu, parent: portal.group.news, sort: 140 }
+  - { code: portal.talk.board, name: 討論看板, kind: tab, parent: portal.talk.read, sort: 10 }
+  - { code: portal.mgr.rights.read, name: 主管權限說明, kind: menu, parent: portal.group.manager, sort: 200 }
+  - { code: portal.mgr.rights.level1, name: 課級主管 (Level 1), kind: tab, parent: portal.mgr.rights.read, sort: 10 }
+  - { code: portal.mgr.rights.level2, name: 理級主管 (Level 2), kind: tab, parent: portal.mgr.rights.read, sort: 20 }
+  - { code: portal.mgr.rights.level3, name: 處級主管 (Level 3), kind: tab, parent: portal.mgr.rights.read, sort: 30 }
+  - { code: portal.mgr.rights.level4, name: 副總/總經理室 (Level 4), kind: tab, parent: portal.mgr.rights.read, sort: 40 }
+  - { code: portal.mgr.shift.read, name: 部門班表匯入, kind: menu, parent: portal.group.manager, sort: 201 }
+  - { code: portal.mgr.shift.upload, name: 班表上傳與預覽, kind: tab, parent: portal.mgr.shift.read, sort: 10 }
+  - { code: portal.mgr.boss-trace.read, name: 主管工時追蹤, kind: menu, parent: portal.group.manager, sort: 202 }
+  - { code: portal.mgr.boss-trace.trace, name: 工時與健康追蹤, kind: tab, parent: portal.mgr.boss-trace.read, sort: 10 }
+  - { code: portal.mgr.attendance.read, name: 部屬出勤分析, kind: menu, parent: portal.group.manager, sort: 203 }
+  - { code: portal.mgr.attendance.punch, name: 部屬刷卡分析, kind: tab, parent: portal.mgr.attendance.read, sort: 10 }
+  - { code: portal.mgr.attendance.abnormal, name: 異常出勤追蹤, kind: tab, parent: portal.mgr.attendance.read, sort: 20 }
+  - { code: portal.mgr.leave-balance.read, name: 休假餘額控管, kind: menu, parent: portal.group.manager, sort: 204 }
+  - { code: portal.mgr.leave-balance.rank, name: 特補休屆期排行, kind: tab, parent: portal.mgr.leave-balance.read, sort: 10 }
+  - { code: portal.mgr.promotion.read, name: 職等晉升地圖, kind: menu, parent: portal.group.manager, sort: 205 }
+  - { code: portal.mgr.promotion.map, name: 晉升條件地圖, kind: tab, parent: portal.mgr.promotion.read, sort: 10 }
+  - { code: portal.mgr.training.read, name: 部門訓練計畫, kind: menu, parent: portal.group.manager, sort: 206 }
+  - { code: portal.mgr.training.plan, name: 年度訓練開課計畫, kind: tab, parent: portal.mgr.training.read, sort: 10 }
+  - { code: portal.mgr.safety-course.read, name: 工安課程達成率, kind: menu, parent: portal.group.manager, sort: 207 }
+  - { code: portal.mgr.safety-course.rate, name: 部屬完訓達成名冊, kind: tab, parent: portal.mgr.safety-course.read, sort: 10 }
+  - { code: portal.mgr.property.read, name: 部門財產清冊, kind: menu, parent: portal.group.manager, sort: 208 }
+  - { code: portal.mgr.property.list, name: 固定資產保管清冊, kind: tab, parent: portal.mgr.property.read, sort: 10 }
+  - { code: portal.mgr.budget.read, name: 部門預算執行, kind: menu, parent: portal.group.manager, sort: 209 }
+  - { code: portal.mgr.budget.exec, name: 預算執行率長條圖, kind: tab, parent: portal.mgr.budget.read, sort: 10 }
+  - { code: portal.mgr.budget-apply.read, name: 新年度預算編列, kind: menu, parent: portal.group.manager, sort: 210 }
+  - { code: portal.mgr.budget-apply.apply, name: 預算提案與動支申請, kind: tab, parent: portal.mgr.budget-apply.read, sort: 10 }
+  - { code: portal.esh.license.read, name: 證照管理, kind: menu, parent: portal.group.esh, sort: 300 }
+  - { code: portal.esh.license.list, name: 全廠持照清冊與預警, kind: tab, parent: portal.esh.license.read, sort: 10 }
+  - { code: portal.esh.item.read, name: 證照項目設定, kind: menu, parent: portal.group.esh, sort: 301 }
+  - { code: portal.esh.item.list, name: 法定證照代碼維護, kind: tab, parent: portal.esh.item.read, sort: 10 }
+  - { code: portal.esh.need.read, name: 工作站法定需求, kind: menu, parent: portal.group.esh, sort: 302 }
+  - { code: portal.esh.need.list, name: 站點持照配置與缺口, kind: tab, parent: portal.esh.need.read, sort: 10 }
+  - { code: portal.esh.personal.read, name: 人員證照登記, kind: menu, parent: portal.group.esh, sort: 303 }
+  - { code: portal.esh.personal.list, name: 同仁證照登錄審核, kind: tab, parent: portal.esh.personal.read, sort: 10 }
+  - { code: portal.esh.manager.read, name: 環安窗口設定, kind: menu, parent: portal.group.esh, sort: 304 }
+  - { code: portal.esh.manager.list, name: 廠區窗口與擔當名冊, kind: tab, parent: portal.esh.manager.read, sort: 10 }
+  - { code: portal.esh.chemical.read, name: 危害性化學品資訊, kind: menu, parent: portal.group.esh, sort: 305 }
+  - { code: portal.esh.chemical.regulated, name: 列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 10 }
+  - { code: portal.esh.chemical.unregulated, name: 一般非列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 20 }
+  # 按鈕(按鈕 = 其呼叫的寫入 API 權限,PRD D4;其餘按鈕隨各 Tab 內容一起登記)
+  - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.basic, sort: 10 }
+  - { code: portal.news.publish, name: 發布公告, kind: button, parent: portal.news.all, sort: 10 }
+  - { code: portal.onboarding.edit, name: 維護新人導覽, kind: button, parent: portal.onboarding.tips, sort: 10 }
 
 roles:
   - code: employee
     name: 員工
+    description: 員工入口網一般功能(個人資訊、表單、行政資源、集團與公告、危害性化學品清單)
     permissions:
       - portal.app.access
       - portal.home.read
       - portal.profile.read
-      - portal.profile.edit
+      - portal.profile.basic
+      - portal.profile.pension
+      - portal.profile.health-family
+      - portal.profile.tax-dependents
+      - portal.profile.insurance-bracket
+      - portal.profile.commute
+      - portal.query.read
+      - portal.query.card
+      - portal.query.attendance
+      - portal.query.overtime
+      - portal.query.leave
+      - portal.query.schedule
+      - portal.query.comp-time
+      - portal.query.annual-leave
+      - portal.query.insurance-detail
+      - portal.query.nhi2
       - portal.salary.read
-      - portal.leave.read
-      - portal.leave-history.read
-      - portal.leave.apply
-      - portal.attendance.read
-      - portal.attendance.punch
+      - portal.salary.slip
+      - portal.salary.bonus
+      - portal.annual-gains.read
+      - portal.annual-gains.list
+      - portal.annual-gains.tax-proof
+      - portal.salary-adjust.read
+      - portal.salary-adjust.history
       - portal.attendance-abnormal.read
+      - portal.attendance-abnormal.list
+      - portal.abnormal-respond.read
+      - portal.abnormal-respond.report
       - portal.release-mail.read
+      - portal.release-mail.list
       - portal.asset.read
+      - portal.asset.current
+      - portal.asset.transfer
+      - portal.cipher-reset.read
+      - portal.cipher-reset.reset
       - portal.course.read
+      - portal.course.required
       - portal.note.read
+      - portal.note.list
       - portal.form.read
-      - portal.resource.read
+      - portal.form.list
+      - portal.ga.read
+      - portal.ga.service
+      - portal.ga.apply
+      - portal.ga.property
+      - portal.ga.outbound
+      - portal.ga.parking
+      - portal.hr.read
+      - portal.hr.welfare
+      - portal.hr.agent
+      - portal.job.read
+      - portal.job.list
       - portal.survey.read
+      - portal.survey.list
       - portal.onboarding.read
+      - portal.onboarding.tips
+      - portal.onboarding.quiz
       - portal.directory.read
+      - portal.directory.extension
+      - portal.directory.contact
       - portal.gui-number.read
+      - portal.gui-number.list
       - portal.news.read
+      - portal.news.all
+      - portal.news.unread
       - portal.calendar.read
+      - portal.calendar.month
+      - portal.calendar.list
       - portal.links.read
+      - portal.links.list
       - portal.talk.read
+      - portal.talk.board
       - portal.esh.chemical.read
-  # 主管:Gateway 指派規則(G1)依職級設定成員,不再用舊系統「JobCode + Email 非空」判定
+      - portal.esh.chemical.regulated
+      - portal.esh.chemical.unregulated
+      - portal.profile.edit
+  # 簽核:BPM 簽核資訊與待我簽核(BPM API 上線前沿用原 portal-approver 的範圍)
+  - code: portal-approver
+    name: 入口網簽核主管
+    permissions:
+      - portal.ef-info.read
+      - portal.ef-info.pending
+      - portal.ef-info.unclosed
+      - portal.approval.read
+      - portal.approval.pending
+      - portal.approval.done
+      - portal.approval.sent
+  # 主管:Gateway 指派規則(G1)依職級設定成員,不再用舊系統「JobCode + Email 非空」判定(資料層級由後端依部門含下層過濾)
   - code: portal-manager
     name: 入口網主管專區
     permissions:
       - portal.mgr.rights.read
+      - portal.mgr.rights.level1
+      - portal.mgr.rights.level2
+      - portal.mgr.rights.level3
+      - portal.mgr.rights.level4
       - portal.mgr.shift.read
+      - portal.mgr.shift.upload
       - portal.mgr.boss-trace.read
+      - portal.mgr.boss-trace.trace
       - portal.mgr.attendance.read
+      - portal.mgr.attendance.punch
+      - portal.mgr.attendance.abnormal
       - portal.mgr.leave-balance.read
+      - portal.mgr.leave-balance.rank
       - portal.mgr.promotion.read
+      - portal.mgr.promotion.map
       - portal.mgr.training.read
+      - portal.mgr.training.plan
       - portal.mgr.safety-course.read
+      - portal.mgr.safety-course.rate
       - portal.mgr.property.read
+      - portal.mgr.property.list
       - portal.mgr.budget.read
+      - portal.mgr.budget.exec
       - portal.mgr.budget-apply.read
+      - portal.mgr.budget-apply.apply
   - code: portal-esh-admin
     name: 入口網 ESH 證照管理
     permissions:
       - portal.esh.license.read
+      - portal.esh.license.list
       - portal.esh.item.read
+      - portal.esh.item.list
       - portal.esh.need.read
+      - portal.esh.need.list
       - portal.esh.personal.read
+      - portal.esh.personal.list
       - portal.esh.manager.read
-    # adGroups:
-    #   - 'CN=<環安衛群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
-  # 以下角色需填入公司 AD 群組 DN 才有成員(DN 含逗號,必須用區塊清單並加引號);未填時角色存在但沒有人
+      - portal.esh.manager.list
+  - code: portal-editor
+    name: 入口網內容維護(人資 / 行政)
+    permissions: [portal.news.publish, portal.onboarding.edit]
   - code: it-app-user
     name: IT 管理系統使用者
     permissions: [it.app.access]
-    # adGroups:
-    #   - 'CN=<IT 人員群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
-  - code: portal-approver
-    name: 入口網簽核主管
-    permissions: [bpm.approval.read, bpm.approval.approve, bpm.approval.reject]
-    # adGroups:
-    #   - 'CN=<主管群組>,OU=Groups,DC=gsc,DC=com,DC=tw'
-  - code: portal-editor
-    name: 入口網內容維護(人資 / 行政)
-    permissions: [portal.news.publish, portal.resource.edit, portal.onboarding.edit]
-    # adGroups:
-    #   - 'CN=<人資行政群組>,OU=Groups,DC=gsc,DC=com,DC=tw'

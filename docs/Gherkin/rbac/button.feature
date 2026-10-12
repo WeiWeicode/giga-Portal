@@ -5,7 +5,7 @@
   身為 IT 權限管理人員
   我要依角色、部門(含下層)、職級控制入口網的選單、Tab、按鈕,且畫面與 API 檢查一致
 
-  # PRD §6.3、§5.2;Gateway PRD §8.3.1–§8.3.2。
+  # PRD §6.3、§5.2;Gateway PRD §8.3.1–§8.3.2;FRAMEWORK-PLAN §2–§3(代碼見附錄 A)。
 
   背景:
     假如 角色 "news-editor" 擁有 "portal.news.read"、"portal.news.publish"
@@ -27,10 +27,37 @@
     假如 使用者沒有「表單與簽核」群組下任何功能的權限
     那麼 側欄不顯示「表單與簽核」
 
+  @auto @manual
   場景: 沒有 Tab 權限時隱藏該 Tab
-    假如 使用者有 "bpm.approval.read",沒有「我送出的」Tab 的權限
+    假如 使用者有 "portal.approval.read"、"portal.approval.pending"、"portal.approval.done",沒有 "portal.approval.sent"
     當 開啟「待我簽核」
     那麼 只顯示「待簽核」「已簽核」兩個 Tab
+
+  @manual
+  場景: 目前 Tab 沒有權限時改到同頁第一個可看的 Tab
+    假如 使用者有 "portal.mgr.rights.read"、"portal.mgr.rights.level2",沒有 "portal.mgr.rights.level1"
+    當 開啟 "/manager/rights"
+    那麼 網址改為 "/manager/rights/level2"
+
+  @auto @manual
+  場景: 有選單權限但沒有任何 Tab 權限的功能頁不顯示
+    假如 使用者有 "portal.salary.read",沒有 "portal.salary.slip"、"portal.salary.bonus"
+    那麼 側欄不顯示「薪資獎金」
+    當 開啟 "/personal/salary"
+    那麼 顯示 403 頁
+
+  @auto @manual
+  場景: 選單名稱、大項與排序以 BFF 為準
+    當 IT 在 GigaItApp「選單管理」把「表單下載」改名並移到「個人資訊」
+    而且 使用者換頁(5 分鐘內重新取得 /api/auth/me)
+    那麼 側欄、頁首與麵包屑顯示新名稱,且「表單下載」列在「個人資訊」下
+
+  @e2e
+  場景: IT 管理系統管理員可查看主管專區與 ESH
+    假如 使用者擁有角色 "it-admin",沒有 "portal-manager"、"portal-esh-admin"
+    當 開啟員工入口網
+    那麼 側欄顯示「主管專區」「ESH證照管理」全部功能頁與 Tab
+    而且 不顯示任何按鈕權限的按鈕
 
   場景: 權限調整後重新整理即生效
     當 IT 在 GigaItApp 移除 "news-editor" 的 "portal.news.publish"
