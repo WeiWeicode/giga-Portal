@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { loadConfig } from '../src/config.js';
+import { pickUser } from '../src/modules/bpm/nana-repo.js';
 import { BpmService, TODO_LIMIT, type BpmRepo, type RequestedRow, type TodoRow } from '../src/modules/bpm/bpm.js';
 import { DB_ENV, testApp, type TestApp } from './helpers.js';
 
@@ -131,5 +132,14 @@ describe('BPM 簽核資訊', () => {
     const ok = loadConfig({ ...base, BPM_DB_HOST: '10.10.130.191', BPM_DB_USER: 'u', BPM_DB_PASSWORD: 'p', BPM_WEB_URL: 'http://10.10.130.191:8080/' });
     assert.equal(ok.bpm?.webUrl, 'http://10.10.130.191:8080');
     assert.equal(ok.bpm?.sql.database, 'NaNa');
+  });
+
+  it('同工號多帳號時只認唯一在職的一個', () => {
+    const u = (oid: string, active: boolean) => ({ oid, id: 'S1', active });
+    assert.deepEqual(pickUser([u('A', false)]), { oid: 'A', id: 'S1' });
+    assert.deepEqual(pickUser([u('A', false), u('B', true)]), { oid: 'B', id: 'S1' });
+    assert.equal(pickUser([u('A', true), u('B', true)]), null);
+    assert.equal(pickUser([u('A', false), u('B', false)]), null);
+    assert.equal(pickUser([]), null);
   });
 });

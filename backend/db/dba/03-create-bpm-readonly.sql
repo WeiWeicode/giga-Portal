@@ -19,7 +19,7 @@ GO
 -- 2) NaNa 使用者與唯讀權限
 USE [NaNa];
 CREATE USER [portal_bpm_ro] FOR LOGIN [portal_bpm_ro] WITH DEFAULT_SCHEMA = [dbo];
-GRANT SELECT ON [dbo].[Users] ([OID], [id], [leaveDate]) TO [portal_bpm_ro];  -- 工號(id)→ OID,只認在職
+GRANT SELECT ON [dbo].[Users] ([OID], [id], [leaveDate]) TO [portal_bpm_ro];  -- 工號(id)→ OID;同工號多帳號時以離職日挑在職的一個
 GRANT SELECT ON [dbo].[LocalToDoWorkItem] ([userOID], [workItemOID], [subject], [processInstanceName], [createdTime]) TO [portal_bpm_ro];  -- 待辦收件匣
 GRANT SELECT ON [dbo].[WorkItem] ([OID], [contextOID], [workItemName], [currentState]) TO [portal_bpm_ro];  -- 關卡狀態與名稱
 GRANT SELECT ON [dbo].[ProcessInstance] ([OID], [contextOID], [serialNumber], [processInstanceName], [subject], [currentState], [createdTime], [requesterOID]) TO [portal_bpm_ro];  -- 單號、申請人、流程狀態

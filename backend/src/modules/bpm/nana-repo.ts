@@ -9,6 +9,12 @@ import sql from 'mssql';
 import type { SqlConfig } from '../../config.js';
 import { ABNORMAL_STATE, TODO_LIMIT, TODO_STATES, type BpmRepo, type BpmUser, type RequestedRow, type TodoRow } from './bpm.js';
 
+/** 同工號可能有多筆(多公司別帳號):只有一筆就用;多筆時只有一個在職才用 */
+export function pickUser(rows: { oid: string; id: string; active: boolean }[]): BpmUser | null {
+  const pick = rows.length === 1 ? rows[0] : rows.filter((r) => r.active).length === 1 ? rows.find((r) => r.active) : undefined;
+  return pick ? { oid: pick.oid, id: pick.id } : null;
+}
+
 const twTime = (s: string | null) => (s ? new Date(`${s}+08:00`).toISOString() : null);
 const states = [...TODO_STATES, ABNORMAL_STATE].join(', ');
 
@@ -39,14 +45,17 @@ export class NanaBpmRepo implements BpmRepo {
 
   async user(empNo: string): Promise<BpmUser | null> {
     const pool = await this.ready();
-    // 逐字元比對(不分大小寫的定序會讓 s112009 對到 S112009);只認在職且唯一的一筆,0 或多筆都視為沒有帳號
+    // 逐字元比對(不分大小寫的定序會讓 s112009 對到 S112009)。身分已由 Gateway 驗證,離職日只用來在同工號多帳號時挑在職的一個:
+    // 191 測試區的離職日多半過期(2026-10-12 實測 8,080 位中 6,979 位有過去的離職日),不能拿來排除帳號。
+    // 只有一筆 → 用它;多筆 → 只有一個在職才用;其他情況視為沒有帳號
     const r = await pool
       .request()
       .input('id', sql.VarChar(50), empNo)
-      .query<{ oid: string; id: string }>(
-        'SELECT TOP 2 RTRIM(OID) AS oid, RTRIM(id) AS id FROM dbo.Users WHERE id COLLATE Latin1_General_BIN2 = @id AND leaveDate IS NULL',
+      .query<{ oid: string; id: string; active: boolean }>(
+        `SELECT TOP 10 RTRIM(OID) AS oid, RTRIM(id) AS id, CAST(CASE WHEN leaveDate IS NULL THEN 1 ELSE 0 END AS bit) AS active
+         FROM dbo.Users WHERE id COLLATE Latin1_General_BIN2 = @id`,
       );
-    return r.recordset.length === 1 ? r.recordset[0]! : null;
+    return pickUser(r.recordset);
   }
 
   async todos(userOid: string): Promise<TodoRow[]> {
