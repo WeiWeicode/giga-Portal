@@ -25,7 +25,7 @@
 | 1 | Oracle ERP(TIPTOP)經 220 的連結伺服器 `OLDERPDB` / `ERPSOURCE` 讀取,約 300 處;DATABASE-MAP §3 寫「已停用」不正確 | 依 D-1 不做;凡 `OPENQUERY` 取得的欄位 = 系統轉移中 |
 | 2 | DATABASE-MAP 未列、舊程式以三段式名稱引用的庫:dry run 確認 **220 有** `Safety`、`welfare_s`、`MisDb`、`Notes`、`GscSystem`、`NotesAppDb`、`LearnDB`;**220 沒有** `MBO`、`ReleasemailDB`、`WPORTALZ`、`HEALTH`、`EF_DB` | 220 有的照 D-2 複製;沒有的見 Q-D9、Q-D10 |
 | 3 | `MBO`:舊程式連線字串指 220,但 220 已無此庫 | 新入口網沒有對應頁面,不處理 |
-| 4b | `ReleasemailDB`:舊程式經連結伺服器 `OPENQUERY(RMailDB, …)` 讀取,不在 220 | 郵件審核頁見 Q-D9 |
+| 4b | `ReleasemailDB`:舊程式經連結伺服器 `OPENQUERY(RMailDB, …)` 讀取,不在 220 | 郵件審核已不實施,頁面退場(Q-D9) |
 | 4 | BPM 簽核資訊呼叫 `LOS.dbo.SP_EFInfoUnProcess_ByUserID_Solar`(資料在 NaNa) | 預存程序不複製;改以 BPM 工具包 `6_todo_viewer` 的查詢直讀 NaNa(§3.3) |
 | 5 | HANDOFF / PRD Q14 寫 PortalSolar 在 166;實際為 **220**(166 是附件檔案主機) | 已修正 HANDOFF |
 
@@ -100,7 +100,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | --- | --- | --- |
 | 個人提醒 | `portal` 新表 | 實作(讀寫) |
 | BPM 簽核資訊 | NaNa(191 / 190) | 實作(唯讀,§3.3) |
-| 郵件審核資訊 | `ReleasemailDB`(經 220 連結伺服器 `RMailDB`,不在 220) | 待 Q-D9 |
+| 郵件審核資訊 | `ReleasemailDB`(經連結伺服器 `RMailDB`) | **退場**(Q-D9):P1 一併移除前端路由、`gateway-rbac.yaml` 的 `portal.release-mail.*`,測試區既有代碼以一次性 SQL 刪除 |
 | 年度必上課程 | `Safety` | 實作(唯讀) |
 | 個人基本資料 | TIPTOP `cpf_file` + PortalSolar `CpfExInfo`、`EmpTaxDependents`、`HRPDatabaseUpdate` | 部分:PortalSolar 能帶出的欄位實作(含寫入);TIPTOP 欄位轉移中 |
 | 個人資產明細 | PortalSolar `PersonalPropertyInfo` + TIPTOP `faj_file` | 部分,同上 |
@@ -149,5 +149,5 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | Q-D8 | 舊庫觸發程序 / 預存程序是否有寫入副作用(dry run ④ 列出有觸發程序的表) | 待 dry run |
 | Q12 | 薪資類二次驗證 | 依 D-1 暫緩(薪資頁轉移中) |
 | Q15 | 舊系統未對應頁面 | ✅ D-8:有 URL、不在選單(P7) |
-| Q-D9 | 郵件審核:`ReleasemailDB` 不在 220,舊系統經連結伺服器 `RMailDB` 讀。測試 / 正式都經連結伺服器唯讀讀取,或該頁先轉移中 | 待決 |
+| Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
 | Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 / P5 前確認 |
