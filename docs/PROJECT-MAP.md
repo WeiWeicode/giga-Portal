@@ -60,7 +60,6 @@ giga-Portal/
 │  │  │  │  ├─ abnormalAttendance/ 出勤異常 portal.attendance-abnormal.read
 │  │  │  │  ├─ abnormalRespond/   出勤時數異常回報 portal.abnormal-respond.read
 │  │  │  │  ├─ efInfo/            BPM 簽核資訊 portal.ef-info.read (2 Tabs: 待簽核 / 未結案)
-│  │  │  │  ├─ releaseMail/       郵件審核資訊 portal.release-mail.read
 │  │  │  │  ├─ property/          個人資產明細 portal.asset.read (2 Tabs: 保管資產 / 移轉歷程)
 │  │  │  │  ├─ cipherReset/       薪資金鑰重置 portal.cipher-reset.read (去留待決 PRD Q12)
 │  │  │  │  ├─ annualCourses/     年度必上課程 portal.course.read
@@ -113,8 +112,9 @@ giga-Portal/
 │  └─ docker-compose.yml          spa-portal (發佈到 gw_www 的 portal, Nginx /);portal-api(profile api,Gateway 網路別名 portal-api:51271)
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
-   │                              db/(client 連線池與來源檢查、sources 舊庫前綴 copy / legacy)、routes/(me、courses、commute)、
-   │                              modules/(courses 規則與 repo、commute 服務與 repo、geocode Google)
+   │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
+   │                              routes/(me、courses、commute、notes、assets)、modules/(courses、commute、notes、geocode)、migrate.ts
+   ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
    ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
    └─ Dockerfile、.env.example

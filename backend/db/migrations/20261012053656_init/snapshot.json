@@ -1,0 +1,174 @@
+{
+  "version": "2",
+  "dialect": "mssql",
+  "id": "faed7782-70bd-4f51-824f-f2566ee87ed6",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "personal_note",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(1000)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "priority",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "due_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "done",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "columns": [
+        {
+          "value": "emp_no",
+          "isExpression": false
+        },
+        {
+          "value": "done",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_personal_note_emp",
+      "entityType": "indexes",
+      "table": "personal_note",
+      "schema": "portal"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "personal_note_pkey",
+      "table": "personal_note",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "column": "done",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "personal_note_done_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "personal_note_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "personal_note_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    }
+  ],
+  "renames": []
+}

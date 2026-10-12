@@ -1,187 +1,149 @@
 <script setup lang="ts">
 /**
- * 個人提醒與備忘錄 (對齊 old_PortalSolar PersonalNote)
- * 供同仁記錄公務交辦事項、行事提醒、重要截止日與個人筆記。
+ * 個人提醒(docs/Gherkin/personal/notes.feature):只有本人看得到的待辦、截止日與備忘。
+ * 資料:/api/portal/notes(portal.personal_note);新增 / 修改 / 刪除按鈕 v-can="portal.note.edit"(includes portal.api.note.write)。
  */
-import { ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GModal, GSelect } from '@/ui';
+import { computed, reactive, ref } from 'vue';
+import { describeError } from '@/api/gateway';
+import { createNote, deleteNote, listNotes, updateNote, type Note, type NoteInput, type NotePriority } from '@/api/portal';
+import { useAsync } from '@/composables/useAsync';
+import { confirm, toast } from '@/ui/feedback';
 
-interface NoteItem {
-  id: string;
-  title: string;
-  date: string;
-  priority: 'high' | 'medium' | 'low';
-  category: string;
-  done: boolean;
-  content: string;
+const { data, loading, error, reload } = useAsync(() => listNotes());
+const notes = computed(() => data.value?.items ?? []);
+const pending = computed(() => notes.value.filter((n) => !n.done).length);
+
+const CATEGORIES = ['工作交辦', '行事提醒', '重要截止', '個人筆記'];
+const categoryOptions = CATEGORIES.map((c) => ({ label: c, value: c }));
+const PRIORITY: Record<NotePriority, { label: string; tone: string }> = {
+  high: { label: '高', tone: 'danger' },
+  medium: { label: '中', tone: 'alert' },
+  low: { label: '低', tone: 'neutral' },
+};
+const priorityOptions = (Object.keys(PRIORITY) as NotePriority[]).map((p) => ({ label: `${PRIORITY[p].label}優先`, value: p }));
+
+const today = new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
+const overdue = (n: Note) => !n.done && !!n.dueDate && n.dueDate < today;
+
+// 新增 / 編輯
+const modal = ref(false);
+const editing = ref<Note | null>(null);
+const form = reactive({ title: '', content: '', category: '工作交辦', priority: 'medium' as NotePriority, dueDate: '' });
+const saving = ref(false);
+const titleError = ref<string | null>(null);
+
+function openNew() {
+  editing.value = null;
+  Object.assign(form, { title: '', content: '', category: '工作交辦', priority: 'medium', dueDate: '' });
+  titleError.value = null;
+  modal.value = true;
+}
+function openEdit(n: Note) {
+  editing.value = n;
+  Object.assign(form, { title: n.title, content: n.content ?? '', category: n.category, priority: n.priority, dueDate: n.dueDate ?? '' });
+  titleError.value = null;
+  modal.value = true;
 }
 
-const notes = ref<NoteItem[]>([
-  {
-    id: '1',
-    title: '完成 Q3 GitLab CI/CD 自動化部署測試區驗證',
-    date: '2026/10/02',
-    priority: 'high',
-    category: '工程研發',
-    done: false,
-    content: '需確認 Docker 離線快取與 Alpine musl 依賴安裝正常。',
-  },
-  {
-    id: '2',
-    title: '參加職場霸凌防制線上教育訓練課程',
-    date: '2026/10/15',
-    priority: 'medium',
-    category: '法規必修',
-    done: false,
-    content: '至 E-Learning 平台收看 1 小時影片並完成線上測驗。',
-  },
-  {
-    id: '3',
-    title: '盤點辦公室與個人名下固定資產設備',
-    date: '2026/10/20',
-    priority: 'low',
-    category: '總務行政',
-    done: true,
-    content: '完成 ThinkPad 筆電與 4K 螢幕標籤條碼核對。',
-  },
-]);
-
-const newModal = ref(false);
-const newTitle = ref('');
-const newDate = ref('');
-const newCategory = ref('工作交辦');
-const newPriority = ref<'high' | 'medium' | 'low'>('medium');
-const newContent = ref('');
-
-const categoryOptions = [
-  { label: '工作交辦', value: '工作交辦' },
-  { label: '工程研發', value: '工程研發' },
-  { label: '法規必修', value: '法規必修' },
-  { label: '總務行政', value: '總務行政' },
-  { label: '個人筆記', value: '個人筆記' },
-];
-
-const priorityOptions = [
-  { label: '高優先級 (重要緊急)', value: 'high' },
-  { label: '中優先級 (一般交辦)', value: 'medium' },
-  { label: '低優先級 (備忘參考)', value: 'low' },
-];
-
-function addNote() {
-  if (!newTitle.value) return;
-  notes.value.unshift({
-    id: String(Date.now()),
-    title: newTitle.value,
-    date: newDate.value || new Date().toISOString().slice(0, 10).replace(/-/g, '/'),
-    priority: newPriority.value,
-    category: newCategory.value,
-    done: false,
-    content: newContent.value,
-  });
-  newTitle.value = '';
-  newContent.value = '';
-  newModal.value = false;
+async function save() {
+  if (!form.title.trim()) {
+    titleError.value = '請填寫標題';
+    return;
+  }
+  const body: NoteInput = { title: form.title, content: form.content || null, category: form.category, priority: form.priority, dueDate: form.dueDate || null };
+  saving.value = true;
+  try {
+    if (editing.value) await updateNote(editing.value.id, body);
+    else await createNote(body);
+    modal.value = false;
+    toast.success(editing.value ? '已更新提醒' : '已新增提醒');
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '儲存失敗');
+  } finally {
+    saving.value = false;
+  }
 }
 
-function toggleDone(item: NoteItem) {
-  item.done = !item.done;
+async function toggle(n: Note) {
+  try {
+    await updateNote(n.id, { done: !n.done });
+    await reload();
+  } catch (e) {
+    toast.fromError(e);
+  }
 }
 
-function deleteNote(item: NoteItem) {
-  notes.value = notes.value.filter((n) => n.id !== item.id);
+async function remove(n: Note) {
+  if (!(await confirm({ title: '刪除提醒', message: `確定刪除「${n.title}」?`, confirmText: '刪除', tone: 'danger' }))) return;
+  try {
+    await deleteNote(n.id);
+    toast.success('已刪除');
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '刪除失敗');
+  }
 }
 </script>
 
 <template>
   <div class="notes-page stack">
     <div class="header-actions">
-      <div class="summary-info">
-        <GBadge tone="storage" icon="bell">目前待辦提醒共 {{ notes.filter((n) => !n.done).length }} 項</GBadge>
-      </div>
-      <GButton variant="primary" icon="plus" @click="newModal = true">新增提醒備忘</GButton>
+      <GBadge tone="storage" icon="bell">未完成 {{ pending }} 項</GBadge>
+      <GButton v-can="'portal.note.edit'" variant="primary" icon="plus" @click="openNew">新增提醒</GButton>
     </div>
 
-    <div class="notes-grid">
-      <GCard
-        v-for="item in notes"
-        :key="item.id"
-        class="note-card glass"
-        :class="{ completed: item.done }"
-      >
+    <GCard v-if="loading && !data"><GEmpty icon="clock" title="載入中…" /></GCard>
+    <GCard v-else-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得個人提醒" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <GCard v-else-if="!notes.length">
+      <GEmpty icon="bell" title="還沒有提醒" description="記錄待辦事項、截止日或備忘,只有自己看得到。" />
+    </GCard>
+    <div v-else class="notes-grid">
+      <GCard v-for="n in notes" :key="n.id" class="note-card" :class="{ completed: n.done }">
         <div class="note-header">
           <div class="note-badges">
-            <GBadge :tone="item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'alert' : 'neutral'">
-              {{ item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低' }}
-            </GBadge>
-            <GBadge tone="storage">{{ item.category }}</GBadge>
+            <GBadge :tone="PRIORITY[n.priority].tone">{{ PRIORITY[n.priority].label }}</GBadge>
+            <GBadge tone="storage">{{ n.category }}</GBadge>
           </div>
-          <span class="mono small faint">{{ item.date }}</span>
+          <span v-if="n.dueDate" class="mono small" :class="overdue(n) ? 'late' : 'faint'">{{ overdue(n) ? '已逾期 ' : '' }}{{ n.dueDate }}</span>
         </div>
-
         <div class="note-body">
-          <h4 :class="{ strikethrough: item.done }">{{ item.title }}</h4>
-          <p class="content-text">{{ item.content }}</p>
+          <h4 :class="{ strikethrough: n.done }">{{ n.title }}</h4>
+          <p v-if="n.content" class="content-text">{{ n.content }}</p>
         </div>
-
-        <div class="note-footer">
-          <GButton
-            variant="ghost"
-            size="sm"
-            :icon="item.done ? 'refresh-cw' : 'check'"
-            @click="toggleDone(item)"
-          >
-            {{ item.done ? '標記未完成' : '標記完成' }}
-          </GButton>
-          <GButton variant="ghost" size="sm" icon="trash-2" @click="deleteNote(item)">
-            刪除
-          </GButton>
+        <div v-can="'portal.note.edit'" class="note-footer">
+          <GButton variant="ghost" size="sm" :icon="n.done ? 'undo' : 'check'" @click="toggle(n)">{{ n.done ? '標記未完成' : '標記完成' }}</GButton>
+          <GButton variant="ghost" size="sm" icon="edit" @click="openEdit(n)">編輯</GButton>
+          <GButton variant="ghost" size="sm" icon="trash" @click="remove(n)">刪除</GButton>
         </div>
       </GCard>
     </div>
 
-    <GAlert tone="neutral" icon="info">
-      本提醒系統記錄僅儲存於個人帳戶，具私密性。您所設定的待辦事項亦會同步摘要顯示於入口網首頁「個人秘書」專區。
-    </GAlert>
-
-    <!-- 新增彈窗 -->
-    <GModal v-model:open="newModal" title="新增個人行事提醒備忘">
-      <div class="modal-form stack">
-        <div>
-          <label class="form-label">提醒主旨 / 待辦標題 <span class="required">*</span></label>
-          <GInput v-model="newTitle" placeholder="例如：填報專案工時、繳交體檢報告" />
+    <GModal v-model:open="modal" :title="editing ? '編輯提醒' : '新增提醒'" icon="bell">
+      <form class="stack" @submit.prevent="save">
+        <GInput v-model="form.title" label="標題" placeholder="例:繳交體檢報告" :error="titleError" required />
+        <div class="grid grid-3">
+          <GInput v-model="form.dueDate" type="date" label="到期日" />
+          <GSelect v-model="form.category" label="類別" :options="categoryOptions" />
+          <GSelect v-model="form.priority" label="優先" :options="priorityOptions" />
         </div>
-        <div class="grid-two">
-          <div>
-            <label class="form-label">截止日期</label>
-            <GInput v-model="newDate" type="date" />
-          </div>
-          <div>
-            <label class="form-label">分類項目</label>
-            <GSelect v-model="newCategory" :options="categoryOptions" />
-          </div>
+        <GTextarea v-model="form.content" label="內容" />
+        <div class="row modal-actions">
+          <GButton @click="modal = false">取消</GButton>
+          <GButton type="submit" variant="primary" icon="check" :loading="saving">儲存</GButton>
         </div>
-        <div>
-          <label class="form-label">優先級別</label>
-          <GSelect v-model="newPriority" :options="priorityOptions" />
-        </div>
-        <div>
-          <label class="form-label">備忘詳細內容</label>
-          <GInput v-model="newContent" placeholder="記錄詳細說明、相關聯絡人或備註" />
-        </div>
-        <div class="modal-btn-row">
-          <GButton variant="secondary" @click="newModal = false">取消</GButton>
-          <GButton variant="primary" icon="check" @click="addNote">新增建立</GButton>
-        </div>
-      </div>
+      </form>
     </GModal>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.notes-page {
+  --gap: 16px;
 }
 .header-actions {
   display: flex;
@@ -192,13 +154,8 @@ function deleteNote(item: NoteItem) {
 }
 .notes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-}
-.note-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 .note-card.completed {
   opacity: 0.7;
@@ -207,14 +164,16 @@ function deleteNote(item: NoteItem) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 .note-badges {
   display: flex;
   gap: 6px;
 }
 .note-body h4 {
-  margin: 0 0 6px;
+  margin: 10px 0 6px;
   font-size: var(--fs-md);
+  overflow-wrap: anywhere;
 }
 .note-body h4.strikethrough {
   text-decoration: line-through;
@@ -225,35 +184,23 @@ function deleteNote(item: NoteItem) {
   font-size: var(--fs-sm);
   color: var(--text-2);
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .note-footer {
   display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-top: 8px;
-  margin-top: auto;
-}
-.form-label {
-  display: block;
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  margin-bottom: 6px;
-}
-.required {
-  color: var(--c-danger);
-}
-.grid-two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.modal-btn-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 4px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
-.mono {
-  font-family: var(--font-mono, monospace);
+.late {
+  color: var(--c-danger, #e11d48);
+  font-weight: 600;
+}
+.modal-actions {
+  justify-content: flex-end;
+}
+.small {
+  font-size: var(--fs-sm);
 }
 </style>

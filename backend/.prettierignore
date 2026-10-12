@@ -1,2 +1,4 @@
 node_modules
 dist
+db/migrations/**/snapshot.json
+package-lock.json

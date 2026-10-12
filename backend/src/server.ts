@@ -4,11 +4,14 @@
  */
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
-import { openPool, probeSources } from './db/client.js';
+import { createDb, openPool, probeSources } from './db/client.js';
 import { CommuteService } from './modules/commute/commute.js';
 import { MssqlCommuteRepo } from './modules/commute/repo.js';
 import { MssqlCourseRepo } from './modules/courses/repo.js';
 import { GoogleGeocoder } from './modules/geocode.js';
+import { DrizzleNoteRepo } from './modules/notes/drizzle-repo.js';
+import { NoteService } from './modules/notes/notes.js';
+import { MssqlAssetNoteRepo } from './routes/assets.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -44,6 +47,9 @@ const app = await buildApp({
   config,
   courses: new MssqlCourseRepo(pool, config.sources),
   commute: new CommuteService(new MssqlCommuteRepo(pool, config.sources), geocoder),
+  // 測試區開啟 SQL 2012 語法檢查(正式區不檢查,避免額外負擔)
+  notes: new NoteService(new DrizzleNoteRepo(createDb(pool, config.gateway.gwEnv !== 'prod'))),
+  assets: new MssqlAssetNoteRepo(pool, config.sources),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };

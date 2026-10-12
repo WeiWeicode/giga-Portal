@@ -150,7 +150,7 @@ group 排序 10、20…;頁的 sort 依表中順序 10、20…;Tab sort 依表�
 | | `personal/abnormal-attendance` | `portal.attendance-abnormal.read` | `attendance-abnormal.list` |
 | | `personal/abnormal-respond` | ★`portal.abnormal-respond.read` | `abnormal-respond.report` |
 | | `personal/ef-info` | ★`portal.ef-info.read`(includes `bpm.approval.read`) | `ef-info.pending`、`ef-info.unclosed` |
-| | `personal/release-mail` | `portal.release-mail.read` | `release-mail.list` |
+| | ~~`personal/release-mail`~~(2026-10-12 退場) | ~~`portal.release-mail.read`~~ | ~~`release-mail.list`~~ |
 | | `personal/property` | `portal.asset.read` | `asset.current`、`asset.transfer` |
 | | `personal/cipher-reset` | ★`portal.cipher-reset.read`(Q12 可能退場) | `cipher-reset.reset` |
 | | `personal/annual-courses` | `portal.course.read` | `course.required` |

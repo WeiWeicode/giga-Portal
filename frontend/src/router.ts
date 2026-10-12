@@ -231,21 +231,6 @@ const appPages: RouteRecordRaw[] = [
     ],
   ),
   page(
-    'personal/release-mail',
-    {
-      title: '郵件審核資訊',
-      subtitle: 'Release Mail Info.',
-      icon: 'mail',
-      group: 'personal',
-      permission: 'portal.release-mail.read',
-      milestone: 'M5',
-      description: '外寄郵件安全性稽核、機敏外發審批狀態與投遞歷程',
-    },
-    [
-      { key: 'list', label: '郵件審核', path: '', icon: 'mail', component: () => import('./pages/personal/releaseMail/ReleaseMailPage.vue') },
-    ],
-  ),
-  page(
     'personal/property',
     {
       title: '個人資產明細',
@@ -257,7 +242,7 @@ const appPages: RouteRecordRaw[] = [
       description: '個人名下保管之固定資產、筆電、周邊設備與移轉歷程',
     },
     [
-      { key: 'current', label: '保管資產清冊', path: '', icon: 'boxes', component: () => import('./pages/personal/property/PropertyCurrentTab.vue') },
+      { key: 'current', label: '保管資產清冊', path: '', icon: 'boxes', requires: ['portal.api.asset.read'], component: () => import('./pages/personal/property/PropertyCurrentTab.vue') },
       { key: 'transfer', label: '資產移轉歷程', path: 'transfer', icon: 'clock', component: () => import('./pages/personal/property/PropertyTransferTab.vue') },
     ],
   ),
@@ -303,7 +288,7 @@ const appPages: RouteRecordRaw[] = [
       description: '個人日常重要待辦、交辦備忘與行事提醒備忘錄',
     },
     [
-      { key: 'list', label: '個人備忘', path: '', icon: 'bell', component: () => import('./pages/personal/notes/NotesPage.vue') },
+      { key: 'list', label: '個人備忘', path: '', icon: 'bell', requires: ['portal.api.note.read'], component: () => import('./pages/personal/notes/NotesPage.vue') },
     ],
   ),
   // 表單與簽核

@@ -57,3 +57,39 @@ export interface CommuteInput {
 /** 溫室氣體盤查通勤調查:目前資料與選項 / 送出(與舊入口網共用資料) */
 export const commute = () => http.get<CommuteInfo>('/api/portal/commute');
 export const submitCommute = (body: CommuteInput) => http.put<CommuteRecord>('/api/portal/commute', body);
+
+export type NotePriority = 'high' | 'medium' | 'low';
+export interface Note {
+  id: number;
+  title: string;
+  content: string | null;
+  category: string;
+  priority: NotePriority;
+  dueDate: string | null;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface NoteInput {
+  title: string;
+  content?: string | null;
+  category: string;
+  priority: NotePriority;
+  dueDate?: string | null;
+}
+
+/** 個人提醒(本人;portal.personal_note) */
+export const listNotes = () => http.get<{ items: Note[] }>('/api/portal/notes');
+export const createNote = (body: NoteInput) => http.post<Note>('/api/portal/notes', body);
+export const updateNote = (id: number, body: Partial<NoteInput> & { done?: boolean }) => http.patch<Note>(`/api/portal/notes/${id}`, body);
+export const deleteNote = (id: number) => http.delete<void>(`/api/portal/notes/${id}`);
+
+export interface AssetNote {
+  compDb: string | null;
+  assetNo: string;
+  assetSub: string | null;
+  note: string | null;
+  hasPhoto: boolean;
+}
+/** 個人資產備註(舊入口網填寫的 PortalSolar PersonalPropertyInfo;資產清單在 TIPTOP 轉移中) */
+export const assetNotes = () => http.get<{ items: AssetNote[] }>('/api/portal/assets/notes');

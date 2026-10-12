@@ -14,9 +14,12 @@ import { AppError } from './errors.js';
 import { swaggerOptions } from './openapi.js';
 import type { CommuteService } from './modules/commute/commute.js';
 import type { CourseRepo } from './modules/courses/repo.js';
+import type { NoteService } from './modules/notes/notes.js';
+import { assetRoutes, type AssetNoteRepo } from './routes/assets.js';
 import { commuteRoutes } from './routes/commute.js';
 import { courseRoutes } from './routes/courses.js';
 import { meRoutes } from './routes/me.js';
+import { noteRoutes } from './routes/notes.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -39,6 +42,8 @@ export interface AppOptions {
   /** 各功能的資料存取;未提供(輸出 OpenAPI、單元測試未用到)時該 API 回 503 */
   courses?: CourseRepo | null;
   commute?: CommuteService | null;
+  notes?: NoteService | null;
+  assets?: AssetNoteRepo | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -110,5 +115,7 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(meRoutes);
   await app.register(courseRoutes(opts.courses ?? null));
   await app.register(commuteRoutes(opts.commute ?? null));
+  await app.register(noteRoutes(opts.notes ?? null));
+  await app.register(assetRoutes(opts.assets ?? null));
   return app;
 }

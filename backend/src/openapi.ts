@@ -25,6 +25,9 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.course.read', name: '入口網 API:年度必上課程查詢' },
   { code: 'portal.api.commute.read', name: '入口網 API:通勤調查查詢' },
   { code: 'portal.api.commute.write', name: '入口網 API:通勤調查送出' },
+  { code: 'portal.api.note.read', name: '入口網 API:個人提醒查詢' },
+  { code: 'portal.api.note.write', name: '入口網 API:個人提醒新增 / 修改 / 刪除' },
+  { code: 'portal.api.asset.read', name: '入口網 API:個人資產備註查詢' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

@@ -212,7 +212,7 @@ flowchart LR
 | 個人資訊 | 個人基本資料 / 自助查詢 / 薪資獎金 / 年度所得 / 薪資異動 | `portal.profile.read` / `portal.query.read` / `portal.salary.read` / `portal.annual-gains.read` / `portal.salary-adjust.read`(薪資類二次驗證待決 Q12) | employee |
 | | 出勤異常 / 出勤時數異常回報 | `portal.attendance-abnormal.read` / `portal.abnormal-respond.read` | employee |
 | | BPM 簽核資訊 | `portal.ef-info.read`(BPM API 登記後綁定 `bpm.approval.read`) | portal-approver |
-| | 郵件審核資訊 / 個人資產明細 / 薪資金鑰重置 / 年度必上課程 / 個人提醒 | `portal.release-mail.read` / `portal.asset.read` / `portal.cipher-reset.read` / `portal.course.read` / `portal.note.read` | employee |
+| | 個人資產明細 / 薪資金鑰重置 / 年度必上課程 / 個人提醒(郵件審核資訊 2026-10-12 退場,PORTAL-API-PLAN Q-D9) | `portal.asset.read` / `portal.cipher-reset.read` / `portal.course.read` / `portal.note.read` | employee |
 | 表單與簽核 | 待我簽核 / 表單下載 | `portal.approval.read`(同上綁定 BPM API)/ `portal.form.read` | portal-approver / employee |
 | 行政資源 | 總務專區 / 人資專區 / 內部職缺 / 問卷調查 / 新人導覽 / 分機表 / 集團統編 | `portal.ga.read` / `portal.hr.read` / `portal.job.read` / `portal.survey.read` / `portal.onboarding.read` / `portal.directory.read` / `portal.gui-number.read` | employee |
 | 集團與公告 | 最新公告 / 行事曆 / 集團系統 / 3691 全民開講 | `portal.news.read` / `portal.calendar.read` / `portal.links.read` / `portal.talk.read` | employee |

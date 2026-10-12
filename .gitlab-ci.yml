@@ -36,6 +36,7 @@ check:backend:
     - npm ci --no-audit --no-fund
     - npm run typecheck
     - npm test
+    - npm run db:check-2012
 
 deploy-test:
   <<: *runner

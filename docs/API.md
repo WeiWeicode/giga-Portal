@@ -49,6 +49,9 @@
 | GET | `/api/portal/courses/required?year=` | `portal.api.course.read` | 本人年度必上課程:`{ year, eligible, inYear, deduction, courses[{ key, name, category, status: done/missing/na, hours?, minHours? }] }`(規則同舊入口網,PORTAL-API-PLAN D-9) |
 | GET | `/api/portal/commute` | `portal.api.commute.read` | 本人通勤調查最新一筆有效資料、通勤方式選項、`canSubmit`(Google 金鑰是否設定) |
 | PUT | `/api/portal/commute` | `portal.api.commute.write` | 送出通勤調查(與舊入口網共用 PortalSolar CpfExInfo);400 驗證、422 `PORTAL_ADDRESS_UNRESOLVED`、502 `PORTAL_GEOCODE_FAILED`、503 `PORTAL_GEOCODE_UNAVAILABLE` |
+| GET / POST | `/api/portal/notes` | `portal.api.note.read` / `.write` | 本人個人提醒清單(未完成在前、依到期日)/ 新增(每人上限 500,409 `PORTAL_NOTE_LIMIT`) |
+| PATCH / DELETE | `/api/portal/notes/:id` | `portal.api.note.write` | 修改、標記完成 / 刪除;別人的提醒回 404 `PORTAL_NOTE_NOT_FOUND` |
+| GET | `/api/portal/assets/notes` | `portal.api.asset.read` | 本人在舊入口網填寫的保管資產備註(PortalSolar PersonalPropertyInfo;唯讀) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案

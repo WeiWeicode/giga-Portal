@@ -103,12 +103,12 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 
 | 頁面 | 資料來源 | 處理 |
 | --- | --- | --- |
-| 個人提醒 | `portal` 新表 | P1-2 實作(讀寫;需 migration 機制) |
+| 個人提醒 | `portal.personal_note`(新表,Drizzle migration) | **P1-2 完成**(`/notes` CRUD;舊 PCalendar 自 2021 未使用,不沿用) |
 | BPM 簽核資訊 | NaNa(191 / 190) | P1-3 實作(唯讀,§3.3;D-13 帳號) |
-| 郵件審核資訊 | `ReleasemailDB`(經連結伺服器 `RMailDB`) | **退場**(Q-D9):P1 一併移除前端路由、`gateway-rbac.yaml` 的 `portal.release-mail.*`,測試區既有代碼以一次性 SQL 刪除 |
+| 郵件審核資訊 | `ReleasemailDB`(經連結伺服器 `RMailDB`) | **退場**(Q-D9,P1-2):前端路由、Portal 與 GigaItApp 的 yaml 已移除;測試區代碼以 `deploy/sql/2026-10-12-portal-release-mail-remove.sql` 刪除 |
 | 年度必上課程 | LOS `EmployeeInfo`、`Safety` 名單、LearnDB 完訓紀錄 | **P1-1 完成**(D-9;`GET /courses/required`) |
 | 個人基本資料 | TIPTOP `cpf_file` + PortalSolar `CpfExInfo` | **P1-1 完成**:通勤調查(`GET / PUT /commute`,D-10 / D-11);其餘 5 個 Tab 系統轉移中 |
-| 個人資產明細 | PortalSolar `PersonalPropertyInfo`(備註、照片) | P1-2(D-12;照片檔在 166,經 giga-file-service 舊檔對照,F4 前先只顯示備註) |
+| 個人資產明細 | PortalSolar `PersonalPropertyInfo`(備註、照片) | **P1-2 完成**:保管資產清冊 Tab 顯示備註(`GET /assets/notes`,唯讀);資產移轉歷程 Tab 轉移中;照片待 giga-file-service F4 |
 | 自助查詢、薪資獎金、年度所得、薪資異動、出勤異常、出勤時數異常回報、薪資金鑰重置 | TIPTOP | **整頁系統轉移中** |
 
 ### P2 行政資源
