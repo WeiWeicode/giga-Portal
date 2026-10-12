@@ -126,6 +126,19 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | 問卷調查 | PortalSolar `QAAnnual*`(寫入) | P2-2 |
 | 新人導覽 | PortalSolar `NewPepR`、`HRNewPtest`(寫入) | P2-2 |
 
+#### P2-2 盤點(2026-10-12,尚未實作)
+
+| 舊程式 | 行數 | 資料(測試區複本筆數) | 重點 |
+| --- | --- | --- | --- |
+| `QA/MyQAList.aspx(.cs)` | 627 | `QAAnnual`(204,問卷主檔:QANo、名稱、對象部門 `Kdept` / 人員 `Kpep`、起訖日、IsActive)、`QAAnnualB`(1,701,題目:Type、No、LimNo、Item、SubItem、IsWrite)、`QAAnnualC`(176,141,作答:QANo、LgNo、No、Answer + `CPF03/04/19/24/70/14/31/29/34`、`CPK02` 人事屬性、QATimes)、`QAAnnualD`(85,題目圖片) | 同仁可填的問卷清單與填答 |
+| `QA/QuestView.aspx(.cs)` | 635 | 同上 + NaNa `Users` / `OrganizationUnit` / `FunctionDefinition`(OPENQUERY) | 填答畫面;作答時寫入 TIPTOP 人事屬性(CPF*),人事轉移中**取不到** |
+| `QA/QuestSetting.aspx(.cs)` | 1,128 | 同上 + LOS `DeptInfo` / `EmployeeInfo`、`PromoteLevelInfo`、`welfare_s.WelfareCompanyInfo` | 問卷維護(建問卷、題目、對象、統計);舊系統寫死管理者,新版改按鈕權限 |
+| `HRnewPep01.aspx(.cs)` | 48 | `NewPepR`(2,786:LgNo、LgTime) | 新人導覽閱讀紀錄 |
+| `HRnewPep05.aspx(.cs)` | 279 | `HRNewPtest`(11,782:t1–t31 答案、a01、MakeTime、PGrade) | 新人驗收測驗(作答與成績) |
+| `HRnewPepAnw01–07.aspx` | 各約 150 | 無(靜態) | 小叮嚀內容(照搬,同 D-14) |
+
+P2-2 待決(下個工作階段先問使用者):① 問卷作答時舊系統寫入的 TIPTOP 人事屬性(性別、年資、職等等 CPF*)人事轉移中取不到——留空、改從 LOS 取,或該類問卷暫停;② 問卷維護 / 統計的權限角色(portal-editor 或另建);③ 新人驗收測驗的題目與正解是否寫死在 HRnewPep05(照搬)。建議分兩批:先新人導覽(較小),再問卷。
+
 
 ### P3 集團與公告 + 首頁
 
