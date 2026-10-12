@@ -16,6 +16,9 @@
 
 ## 2. 下一階段:portal-api 規劃起點
 
+> **2026-10-12 規劃 v0.2:`docs/PORTAL-API-PLAN.md`**(決議 D-1~D-7:人事 / TIPTOP 暫不做、顯示「系統轉移中」;220 舊庫複製到 `giganexus_gw_test` 的 `src_*`;新表放 `giganexus_gw[_test].portal`;2027-01 上線時正式區直接讀寫原庫)。
+> 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` dry run 完成(10 庫、3.6 GB 全部複製),待使用者以 `@dry_run = 0` 執行。下一步 P0-3 骨架。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。
+
 已定的前提(PRD、AGENT.md §7):
 
 - **定位**:一般下游後端,port **51271**,服務代碼 `portal-api`、系統代碼 `portal`、`gateway.project = giga-Portal`;只接受 BFF 轉入的 `/api/portal/*`(服務內 `/v1/*`),以 `@giganexus/backend-sdk` 驗證 `X-Internal-Token`,test / prod 啟動時**自動註冊** OpenAPI(路由 + `x-permissions`)為 Gateway 草稿。起點是 Gateway 後端樣本 `../giga-api-gateway-bff/samples/node-backend/`,不是複製 itapp-api。
@@ -29,7 +32,7 @@
 | # | 問題 |
 | --- | --- |
 | Q8 / Q13 | 首頁與各頁真實資料來源(HRM:LOS + ERP、BPM、LearnDB、Budget、資產、ReleaseMail)由誰提供 API |
-| Q14 | portal-api 資料庫沿用 PortalSolar(SQL Server,166)或新建並移轉;舊庫對照見 `docs/DATABASE-MAP.md` |
+| Q14 | portal-api 資料庫沿用 PortalSolar(SQL Server,220)或新建並移轉;舊庫對照見 `docs/DATABASE-MAP.md` |
 | Q12 | 薪資類頁面二次驗證(舊「薪資金鑰」或 Gateway step-up) |
 | Q15 | 舊系統未對應頁面(中華郵政、員工認股、內部拍賣、電視看板、垃圾信回報、ISO 文件)是否保留 |
 | 新增 | 首頁聚合路由 `/api/portal/dashboard`(FR-4.8)的區塊:待辦事項、個人秘書(BPM 待簽核數、個人連結)、公告輪播、集團動態圖片(圖片放 giga-file-service?) |
