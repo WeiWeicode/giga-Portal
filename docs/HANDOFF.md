@@ -17,7 +17,7 @@
 ## 2. 下一階段:portal-api 規劃起點
 
 > **2026-10-12 規劃 v0.2:`docs/PORTAL-API-PLAN.md`**(決議 D-1~D-7:人事 / TIPTOP 暫不做、顯示「系統轉移中」;220 舊庫複製到 `giganexus_gw_test` 的 `src_*`;新表放 `giganexus_gw[_test].portal`;2027-01 上線時正式區直接讀寫原庫)。
-> 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` 已複製完成(10 庫 899 表、0 失敗,`giganexus_gw_test` 的 `src_*`)。P0-3 / P0-4 程式完成(`backend/`、前端「系統轉移中」),**待使用者在主機 2 執行 `deploy/host2-set-api-secrets.sh` 後推 develop 部署**,再到 GigaItApp「服務與路由」發佈 portal-api 草稿。下一步 P1。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。
+> 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` 已複製完成(10 庫 899 表、0 失敗,`giganexus_gw_test` 的 `src_*`)。**P0 完成(2026-10-12)**:portal-api 測試區上線(容器 `giganexus-portal-portal-api-1`,機密 `/srv/giganexus/portal-secrets`,變數在 `portal.env`);`/api/portal/me` 已發佈(Gateway v43);人事 7 頁顯示「系統轉移中」。**下一步 P1 個人資訊**(PORTAL-API-PLAN §4)。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。
 
 已定的前提(PRD、AGENT.md §7):
 

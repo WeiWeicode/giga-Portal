@@ -91,8 +91,8 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | --- | --- | --- |
 | P0-1 | `01-create-schema.sql`:`portal` schema、`portal_app` / `portal_migrate`(使用者執行) | ✅ 2026-10-12 使用者執行 |
 | P0-2 | `02-refresh-test-data.sql`:dry run 確認範圍 → 實際複製 | ✅ 2026-10-12 使用者執行:10 庫 899 表全部成功,0 失敗;只有 `PortalSolar.dbo.TEST`(測試表)有觸發程序,無 FK / 計算欄 → 複本與正式區寫入行為一致 |
-| P0-3 | `backend/` 骨架、健康檢查、自動註冊、monitor、CI / compose 部署到測試區 | 程式與單元測試完成(2026-10-12);待主機 2 機密(`deploy/host2-set-api-secrets.sh`)後部署、發佈路由草稿 |
-| P0-4 | 共用:來源前綴設定、身分(內部 Token)、「系統轉移中」前端元件 | 完成(`db/sources.ts`、`identity.ts`、前端 `MigratingPage` + `composables/migrating.ts` 7 頁);部分欄位的 `unavailable` 標示隨 P1 頁面實作 |
+| P0-3 | `backend/` 骨架、健康檢查、自動註冊、monitor、CI / compose 部署到測試區 | ✅ 2026-10-12 測試區上線(e0ebbe3):`/readyz` SQL 與 11 個來源 ok;`/api/portal/me` 經 Gateway v43 發佈並由使用者驗證 |
+| P0-4 | 共用:來源前綴設定、身分(內部 Token)、「系統轉移中」前端元件 | ✅ 完成(`db/sources.ts`、`identity.ts`、前端 `MigratingPage` + `composables/migrating.ts` 7 頁,測試區使用者驗證);部分欄位的 `unavailable` 標示隨 P1 頁面實作 |
 
 ### P1 個人資訊
 

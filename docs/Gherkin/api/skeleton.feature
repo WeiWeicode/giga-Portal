@@ -82,7 +82,7 @@
       假如 GW_ENV 為 "prod"、PORTAL_SRC_MODE 為 "copy"
       那麼 啟動失敗
 
-    @manual
+    @manual @auto
     場景: 就緒檢查回報每個來源是否可讀
       假如 portal-api 部署到測試區
       當 呼叫 GET /readyz
