@@ -1,0 +1,38 @@
+{
+  "name": "@giganexus/portal-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GigaNexus 員工入口網後端 portal-api(Node.js + Fastify):經 BFF /api/portal/*,讀寫 220 舊庫(測試區為 giganexus_gw_test 的 src_* 複本)與 schema portal(docs/PORTAL-API-PLAN.md)",
+  "type": "module",
+  "gateway": {
+    "project": "giga-Portal"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/src/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:int": "tsx --env-file-if-exists=.env --test test/int/*.int.test.ts",
+    "openapi": "tsx src/print-openapi.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@fastify/swagger": "9.9.1",
+    "@giganexus/backend-sdk": "^0.3.0",
+    "fastify": "5.12.5",
+    "mssql": "11.0.2"
+  },
+  "devDependencies": {
+    "@types/mssql": "9.1.11",
+    "@types/node": "22.20.4",
+    "jose": "6.2.12",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}

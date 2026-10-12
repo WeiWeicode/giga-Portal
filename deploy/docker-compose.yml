@@ -2,7 +2,14 @@
 #   docker compose -f deploy/docker-compose.yml run --rm --build spa-portal                   # 前端:發佈到 gw_www 的 portal(Nginx /,取代範例入口網)
 #   docker compose -f deploy/docker-compose.yml run --rm spa-portal rollback portal           # 前端回滾到上一版
 #   RELEASE_SHA=$(git rev-parse --short HEAD) docker compose -f deploy/docker-compose.yml ...  # 指定版本名稱(未指定時為建置時間)
-# portal-api(M4)上線時在此加入,加入 Gateway 的 Docker 網路(別名 portal-api:51271)。
+#
+# portal-api(後端,PORTAL-API-PLAN §3;CI deploy-api-test 於 develop 執行):
+#   docker compose --env-file <主機受保護目錄>/portal.env -f deploy/docker-compose.yml --profile api build --pull portal-api
+#   docker compose --env-file <主機受保護目錄>/portal.env -f deploy/docker-compose.yml --profile api up -d --wait portal-api
+#   變數未設定時由 portal-api 啟動檢查失敗(不在 compose 以 :? 擋,避免影響只發佈 SPA 的指令)
+#   網路:加入 Gateway 的 Docker 網路(GW_NETWORK),別名 portal-api → BFF 以 http://portal-api:51271 轉入 /api/portal/*
+#   機密(PORTAL_SECRETS_DIR,uid 1000 可讀;deploy/host2-set-api-secrets.sh 產生):
+#     portal_db_password(portal_app)、gw_api_key(Gateway CLI client:create --code portal-api)、monitor_api_key(giga-observe 服務 portal-api)
 name: giganexus-portal
 
 services:
@@ -20,10 +27,51 @@ services:
       - gw_www:/srv/www
     command: ["publish", "portal"]
 
+  portal-api:
+    image: giganexus/portal-api:${IMAGE_TAG:-dev}
+    build:
+      context: ../backend
+      secrets: [npm_token]
+    profiles: ["api"]
+    restart: unless-stopped
+    environment:
+      GW_ENV: ${GW_ENV:-}
+      SERVICE_CODE: portal-api
+      GW_BASE_URL: ${GW_BASE_URL:-}
+      # 同一 Docker 網路直連 bff-1 取 JWKS(不經 Nginx 的內網白名單;同 file-api)
+      GW_JWKS_URL: ${GW_JWKS_URL:-http://bff-1:3000/.well-known/jwks.json}
+      GW_API_KEY_FILE: /run/secrets/gw_api_key
+      SERVICE_ADVERTISE_URL: http://portal-api:51271
+      PORTAL_DB_HOST: ${PORTAL_DB_HOST:-}
+      PORTAL_DB_PORT: ${PORTAL_DB_PORT:-1433}
+      PORTAL_DB_NAME: ${PORTAL_DB_NAME:-}
+      PORTAL_DB_USER: ${PORTAL_DB_USER:-}
+      PORTAL_DB_PASSWORD_FILE: /run/secrets/portal_db_password
+      # 測試區 copy(giganexus_gw_test 的 src_*)/ 正式區 legacy(220 原庫);未設定依 GW_ENV
+      PORTAL_SRC_MODE: ${PORTAL_SRC_MODE:-}
+      MONITOR_URL: ${MONITOR_URL:-http://observe-api:51202}
+      MONITOR_API_KEY_FILE: /run/secrets/monitor_api_key
+      RELEASE_SHA: ${RELEASE_SHA:-dev}
+    secrets: [gw_api_key, portal_db_password, monitor_api_key]
+    networks:
+      gateway:
+        aliases: [portal-api]
+
 # 建置用:GitLab npm Registry 讀取 Token(環境變數 GITLAB_NPM_TOKEN;CI 由主機機密檔讀入)
 secrets:
   npm_token:
     environment: GITLAB_NPM_TOKEN
+  gw_api_key:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/gw_api_key
+  portal_db_password:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/portal_db_password
+  monitor_api_key:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/monitor_api_key
+
+networks:
+  gateway:
+    external: true
+    name: ${GW_NETWORK:-giganexus-gw_default}
 
 volumes:
   gw_www:

@@ -1,0 +1,28 @@
+/**
+ * OpenAPI 根層設定(BACKEND-GUIDE.md §6.1):x-gateway 與 x-permissions 必填。
+ * 每個 operation 的 operationId、summary、description、x-permission、x-gherkin 寫在各路由的 schema。
+ */
+import type { SwaggerOptions } from '@fastify/swagger';
+
+declare module 'fastify' {
+  interface FastifySchema {
+    /** 權限代碼(例 portal.note.read)、authenticated(登入即可)或 public(需 IT 核准) */
+    'x-permission'?: string;
+    /** 行為規格:Gherkin 場景文字(zh-TW 關鍵字),存入 gw.api_route.gherkin */
+    'x-gherkin'?: string;
+    'x-audit-level'?: 'none' | 'meta' | 'body';
+    'x-timeout-ms'?: number;
+    'x-gateway-path'?: string;
+  }
+}
+
+/**
+ * 本服務的 API 權限代碼(kind 省略 = api;讀 / 寫分開)。畫面節點(目錄 / 選單 / Tab / 按鈕)仍由
+ * deploy/gateway-rbac.yaml 登記,以 includes 綁定這裡的 API 權限(BACKEND-GUIDE §6.1 v0.6)。P1 起隨功能加入。
+ */
+export const PERMISSIONS: { code: string; name: string }[] = [];
+
+export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {
+  const extensions = { 'x-gateway': { upstream: serviceCode, system: 'portal', project }, 'x-permissions': PERMISSIONS };
+  return { openapi: { openapi: '3.0.3', info: { title: '員工入口網 portal-api', version: '0.1.0' }, ...extensions } };
+}

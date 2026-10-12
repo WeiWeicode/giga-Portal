@@ -1,6 +1,6 @@
 # 員工入口網 — API 規格
 
-> **狀態:規劃中**。portal-api 端點為設計草案,實作時以 OpenAPI(`/openapi.json`,自動註冊到 Gateway)為準並回頭更新本文件。
+> **狀態:P0 骨架(2026-10-12)**。已實作的端點見 §3.0,其餘為設計草案;實作時以 OpenAPI(`/openapi.json`,自動註冊到 Gateway)為準並回頭更新本文件。分批見 [PORTAL-API-PLAN.md](PORTAL-API-PLAN.md)。
 > 對應 [PRD.md](PRD.md) v0.1.2;錯誤格式與內部 Token 依 Gateway BACKEND-GUIDE §4、§5.3。
 
 ---
@@ -39,7 +39,16 @@
 
 > 新增使用的 API 前先查 BFF 路由表(Gateway `AGENT.md` §10.4):`node ../giga-api-gateway-bff/sdk/node/dist/lookup-cli.js <關鍵字> --gherkin`。
 
-## 3. portal-api 端點一覽(草案)
+## 3. portal-api 端點一覽
+
+### 3.0 已實作
+
+| 方法 | 對外路徑 | 權限 | 說明 |
+| --- | --- | --- | --- |
+| GET | `/api/portal/me` | `authenticated` | 目前登入者:`{ empNo, name, dept, companies }`(內部 Token);系統對系統呼叫回 403 `PORTAL_DATA_ACCESS_DENIED` |
+| GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
+
+### 3.1 草案
 
 | 方法 | 對外路徑 | 權限 | 說明 |
 | --- | --- | --- | --- |
@@ -75,7 +84,8 @@
 
 | code | HTTP | 情境 |
 | --- | --- | --- |
-| `PORTAL_VALIDATION_FAILED` | 400 | 參數錯誤(`details` 列出欄位) |
+| `PORTAL_INTERNAL_TOKEN_INVALID` | 401 | 缺少或無效的內部 Token(不經 BFF 直接呼叫) |
+| `VALIDATION_FAILED` | 400 | 參數錯誤(`details` 列出欄位;沿用 Gateway 共用代碼) |
 | `PORTAL_NOT_FOUND` | 404 | 公告、資源不存在 |
 | `PORTAL_DATA_ACCESS_DENIED` | 403 | 不在可見 / 可管理範圍(例:管理其他部門的公告) |
 | `PORTAL_CONFLICT` | 409 | 同時編輯(版本不符) |

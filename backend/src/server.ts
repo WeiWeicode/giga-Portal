@@ -1,0 +1,63 @@
+/**
+ * 啟動:連 SQL Server(giganexus_gw[_test],帳號 portal_app),開始服務後由 setupGateway 依部署區在背景自動註冊 API
+ * (dev 不註冊,test / prod 寫入 Gateway 草稿)。舊庫來源不可讀時仍啟動,由 /readyz 與監控心跳回報。
+ */
+import { buildApp } from './app.js';
+import { loadConfig } from './config.js';
+import { openPool, probeSources } from './db/client.js';
+
+const config = loadConfig();
+const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
+
+type Check = { name: string; ok: boolean; latencyMs: number | null; message?: string };
+
+/** SQL Server 本身(監控心跳只用這個,不探測舊庫來源) */
+async function sqlCheck(): Promise<Check> {
+  const t0 = performance.now();
+  try {
+    await pool.request().query('SELECT 1');
+    return { name: 'sql', ok: true, latencyMs: Math.round(performance.now() - t0) };
+  } catch (err) {
+    return { name: 'sql', ok: false, latencyMs: null, message: (err as Error).message };
+  }
+}
+
+/** 就緒檢查:SQL Server 與每個舊庫來源 */
+async function checks(): Promise<Check[]> {
+  const sql = await sqlCheck();
+  if (!sql.ok) return [sql];
+  const sources = (await probeSources(pool, config.sources)).map(([key, error]) => ({
+    name: `src:${key}`,
+    ok: error === null,
+    latencyMs: null,
+    ...(error ? { message: error } : {}),
+  }));
+  return [sql, ...sources];
+}
+
+const app = await buildApp({
+  config,
+  readiness: async () => {
+    const c = await checks();
+    return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
+  },
+  // 監控心跳只回報 SQL 本身;各來源狀態看 /readyz
+  deps: async () => {
+    const { name, ok, latencyMs } = await sqlCheck();
+    return [{ name, ok, latencyMs }];
+  },
+});
+await app.listen({ host: config.host, port: config.port });
+app.log.info(
+  { gwEnv: config.gateway.gwEnv, serviceCode: config.gateway.serviceCode, sourceMode: config.sourceMode, monitor: config.monitor.enabled },
+  '服務已啟動',
+);
+
+for (const signal of ['SIGINT', 'SIGTERM'])
+  process.once(signal, () => {
+    // close 會一併送出監控緩衝(最多等 3 秒)
+    void app
+      .close()
+      .then(() => pool.close())
+      .then(() => process.exit(0));
+  });

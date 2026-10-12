@@ -24,6 +24,8 @@ giga-Portal/
 │  ├─ ARCHITECTURE.md             架構、請求流程、權限流程、風格切換、部署
 │  ├─ API.md                      portal-api 端點 (草案) 與使用的 BFF API
 │  ├─ HANDOFF.md                  交接:目前狀態、下一階段 portal-api 起點與待決
+│  ├─ PORTAL-API-PLAN.md          portal-api 規劃:決議 D-1~D-8、測試資料複本、來源前綴、P0–P7 分批
+│  ├─ DATABASE-MAP.md             舊系統資料庫對照
 │  ├─ FRAMEWORK-PLAN.md           框架對齊 GigaItApp(2026-10-12 完成):代碼規則與完整代碼表
 │  ├─ UI-GUIDE.md                 綠能 token、玻璃 / 扁平、全域元件差異、版面
 │  ├─ PROJECT-MAP.md              本文件
@@ -98,19 +100,23 @@ giga-Portal/
 │  │  │  │  ├─ personalLicense/   人員證照登記 (證書字號效期登錄審核、電子證照上傳)
 │  │  │  │  ├─ managerSetup/      環安窗口設定 (廠區/部門法定專責人、緊急應變窗口名冊)
 │  │  │  │  └─ chemicals/         危害性化學品資訊 (2 Tabs: 列管化學品 CAS No. / 一般非列管化學品)
-│  │  │  └─ 共通頁面:             Placeholder、NoAccess、Unavailable、Forbidden、NotFound
+│  │  │  └─ 共通頁面:             Placeholder、MigratingPage(人事系統轉移中,composables/migrating.ts 列頁面)、NoAccess、Unavailable、Forbidden、NotFound
 │  │  ├─ ui/                      全域 UI 套件: G* 元件、icons.ts (圖示登記,含 GigaItApp 全部圖示)、styles/tokens.css (綠能 × 玻璃 / 扁平)、base.css、charts/、feedback
 │  │  └─ components.d.ts          全域元件型別
-│  └─ test/                       Vitest: redirect、apps、menu (含 BFF 目錄 / 名稱 / 排序)、theme、greeting (35 passed)
+│  └─ test/                       Vitest: redirect、apps、menu (含 BFF 目錄 / 名稱 / 排序)、theme、greeting、migrating (37 passed)
 ├─ deploy/
 │  ├─ gateway-rbac.yaml           測試區 / 正式區的選單目錄、menu / tab / button 代碼與角色 (首次登記;之後以 GigaItApp 選單管理為準)
 │  ├─ apply-gateway-rbac.sh       以 Gateway 正式 compose 的 migrate 映像套用上檔
-│  ├─ sql/                        一次性 SQL(2026-10-12-portal-menu-realign.sql:測試區舊選單代碼移到大項、刪除已移除代碼)
-│  ├─ test.env.example            公司環境 Compose 變數範本
-│  └─ docker-compose.yml          spa-portal (發佈到 gw_www 的 portal, Nginx /); portal-api (M4 規劃)
-└─ backend/ (規劃, M4)            portal-api (以 Gateway 後端樣本為基礎)
-   ├─ src/                        server、app、config、errors、openapi、routes/、store/
-   └─ test/                       OpenAPI 自我檢查、內部 Token、資料層級
+│  ├─ sql/                        一次性 SQL(2026-10-12-portal-menu-realign.sql:測試區舊選單代碼移到大項、刪除已移除代碼;舊庫唯讀盤點)
+│  ├─ test.env.example            公司環境 Compose 變數範本(SPA + portal-api)
+│  ├─ host2-set-api-secrets.sh    主機 2 建立 portal-api 機密(portal_app 密碼、Gateway / 監控 Key)與 portal.env 變數(使用者執行)
+│  └─ docker-compose.yml          spa-portal (發佈到 gw_www 的 portal, Nginx /);portal-api(profile api,Gateway 網路別名 portal-api:51271)
+└─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
+   ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
+   │                              db/(client 連線池與來源檢查、sources 舊庫前綴 copy / legacy)、routes/(me)
+   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*(使用者以 sa 執行)
+   ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
+   └─ Dockerfile、.env.example
 ```
 
 ---

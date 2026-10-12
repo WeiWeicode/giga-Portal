@@ -15,6 +15,7 @@ import TabbedPage from './layouts/TabbedPage.vue';
 import { can, canAll, menuOf } from './api/gateway';
 import { CURRENT_APP, hasApp, resolveApps } from './composables/apps';
 import { buildMenu, type MenuGroupDef, type MenuPage } from './composables/menu';
+import { tabComponent } from './composables/migrating';
 import { ensureMe } from './composables/session';
 import type { TabItem } from './ui/components/GTabs.vue';
 import { hasIcon } from './ui/icons';
@@ -63,7 +64,7 @@ type TabDef = Omit<TabItem, 'permission' | 'to'> & {
 /** Tab 權限代碼(FRAMEWORK-PLAN §3.1) */
 export const tabCode = (menu: string, key: string) => `${menu.replace(/\.read$/, '')}.${key}`;
 
-/** 功能頁(TabbedPage):每個 Tab 是子路由,權限代碼由 menu 代碼與 key 組成 */
+/** 功能頁(TabbedPage):每個 Tab 是子路由,權限代碼由 menu 代碼與 key 組成;人事系統轉移中的頁面一律顯示 MigratingPage */
 function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; group?: string; permission: string }, tabs: TabDef[]): RouteRecordRaw {
   const base = `/${path}`;
   const defs = tabs.map(({ key, path: p, component, requires, ...t }) => ({
@@ -80,7 +81,7 @@ function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; grou
     meta: { ...meta, tabs: defs.map(({ path: _p, component: _c, requires: _r, ...t }) => t) },
     children: defs.map((t) => ({
       path: t.path,
-      component: t.component ?? Placeholder,
+      component: tabComponent(meta.permission, t.component ?? Placeholder),
       meta: { tab: t.label, permission: t.permission, ...(t.requires ? { requires: t.requires } : {}) },
     })),
   };

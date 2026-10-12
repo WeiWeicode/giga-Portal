@@ -18,6 +18,8 @@
 | `ui/theme.feature` | 玻璃 / 扁平 × 明亮 / 黑暗切換與記憶、自動扁平 | §6.6 FR-6.2–6.4 | M1 |
 | `ui/search.feature` | 全域搜尋(有權限的功能) | §6.6 FR-6.8 | M4 |
 | `home/home.feature` | 首頁區塊、聚合路由、部分失敗、模擬標示 | §6.4 | M4 |
+| `api/skeleton.feature` | portal-api 骨架:內部 Token、`/me`、OpenAPI、舊庫來源前綴 | PORTAL-API-PLAN §3 | P0 |
+| `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |
 | `home/approval.feature` | 待我簽核:核准 / 退回、權限 | §6.4 FR-4.5 | M4 / M5 |
 
 ## 標籤慣例
