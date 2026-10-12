@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.4(2026-10-12,P0 完成;P1 決議 D-9~D-13)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.5(2026-10-12,P0 完成;P1 決議 D-9~D-13;P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12)
@@ -24,6 +24,9 @@
 | D-15 | 內部職缺**不寄信**(應徵 / 推薦請洽人資);維護由舊系統寫死的兩個工號改為按鈕權限 `portal.job.edit`(角色 portal-editor) |
 | D-16 | 總務專區「個人資產明細」沿用個人資產備註;「外送資產明細」(TIPTOP)系統轉移中 |
 | D-17 | 分機表更新本人分機**不寄**「人員分機異動通知」給總機(舊系統會寄);異動仍記錄於 NotesPhoneTemp;分機表不回傳 Email |
+| D-18 | 問卷作答**人事屬性留空**:`QAAnnualC` 的 `CPF*` / `CPK02` 寫 NULL,即舊程式查不到 TIPTOP 時的寫法(`QuestView.aspx.cs` 533 行 else 分支:`INSERT INTO QAAnnualC (QANo, LgNo, No, Answer, QATimes)`);統計依人事屬性分組的部分顯示「系統轉移中」 |
+| D-19 | 問卷建立 / 維護 / 統計改按鈕權限 `portal.qa.edit`(角色 portal-editor;舊系統任何人都能建),只看自己建立的(`CLgNo` = 本人);舊系統寫死 S094009 的「代查他人問卷」改為 `portal.qa.admin`(portal-editor) |
+| D-20 | 新人驗收測驗**照搬**:20 題是非題、每題 5 分、滿分才通過並寫入 `HRNewPtest`(先刪本人舊紀錄,同舊系統),不及格不寫;正解只放 portal-api、由後端計分;不寄通知信(舊系統已註解) |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -137,7 +140,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | `HRnewPep05.aspx(.cs)` | 279 | `HRNewPtest`(11,782:t1–t31 答案、a01、MakeTime、PGrade) | 新人驗收測驗(作答與成績) |
 | `HRnewPepAnw01–07.aspx` | 各約 150 | 無(靜態) | 小叮嚀內容(照搬,同 D-14) |
 
-P2-2 待決(下個工作階段先問使用者):① 問卷作答時舊系統寫入的 TIPTOP 人事屬性(性別、年資、職等等 CPF*)人事轉移中取不到——留空、改從 LOS 取,或該類問卷暫停;② 問卷維護 / 統計的權限角色(portal-editor 或另建);③ 新人驗收測驗的題目與正解是否寫死在 HRnewPep05(照搬)。建議分兩批:先新人導覽(較小),再問卷。
+P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人導覽 → P2-2b 問卷**。
 
 
 ### P3 集團與公告 + 首頁
