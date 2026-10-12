@@ -17,7 +17,7 @@
 ## 2. 下一階段:portal-api 規劃起點
 
 > **2026-10-12 規劃 v0.2:`docs/PORTAL-API-PLAN.md`**(決議 D-1~D-7:人事 / TIPTOP 暫不做、顯示「系統轉移中」;220 舊庫複製到 `giganexus_gw_test` 的 `src_*`;新表放 `giganexus_gw[_test].portal`;2027-01 上線時正式區直接讀寫原庫)。
-> 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` dry run 完成(10 庫、3.6 GB 全部複製),待使用者以 `@dry_run = 0` 執行。下一步 P0-3 骨架。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。
+> 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` 已複製完成(10 庫 899 表、0 失敗,`giganexus_gw_test` 的 `src_*`)。**下一步 P0-3 骨架**。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。
 
 已定的前提(PRD、AGENT.md §7):
 

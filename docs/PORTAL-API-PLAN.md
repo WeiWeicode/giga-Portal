@@ -90,7 +90,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | 項目 | 內容 | 狀態 |
 | --- | --- | --- |
 | P0-1 | `01-create-schema.sql`:`portal` schema、`portal_app` / `portal_migrate`(使用者執行) | ✅ 2026-10-12 使用者執行 |
-| P0-2 | `02-refresh-test-data.sql`:dry run 確認範圍 → 實際複製 | dry run 完成(3.6 GB 全部複製);待 `@dry_run = 0` 執行 |
+| P0-2 | `02-refresh-test-data.sql`:dry run 確認範圍 → 實際複製 | ✅ 2026-10-12 使用者執行:10 庫 899 表全部成功,0 失敗;只有 `PortalSolar.dbo.TEST`(測試表)有觸發程序,無 FK / 計算欄 → 複本與正式區寫入行為一致 |
 | P0-3 | `backend/` 骨架、健康檢查、自動註冊、monitor、CI / compose 部署到測試區 | 未開始 |
 | P0-4 | 共用:來源前綴設定、身分(內部 Token)、「系統轉移中」前端元件 | 未開始 |
 
@@ -146,7 +146,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | --- | --- | --- |
 | Q-D4 | 複製範圍 | ✅ 全部複製(3.6 GB) |
 | Q-D6 | 正式區(2026-12)`portal_prod_app` 在舊庫的授權:只對用到的表 GRANT(建議),由 DBA 建 | 12 月前定 |
-| Q-D8 | 舊庫觸發程序 / 預存程序是否有寫入副作用(dry run ④ 列出有觸發程序的表) | 待 dry run |
+| Q-D8 | 舊庫觸發程序是否有寫入副作用 | ✅ 只有 `PortalSolar.dbo.TEST` 有觸發程序,不影響;預存程序不複製,用到時改寫 |
 | Q12 | 薪資類二次驗證 | 依 D-1 暫緩(薪資頁轉移中) |
 | Q15 | 舊系統未對應頁面 | ✅ D-8:有 URL、不在選單(P7) |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
