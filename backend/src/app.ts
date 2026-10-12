@@ -12,6 +12,10 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { Config } from './config.js';
 import { AppError } from './errors.js';
 import { swaggerOptions } from './openapi.js';
+import type { CommuteService } from './modules/commute/commute.js';
+import type { CourseRepo } from './modules/courses/repo.js';
+import { commuteRoutes } from './routes/commute.js';
+import { courseRoutes } from './routes/courses.js';
 import { meRoutes } from './routes/me.js';
 
 declare module 'fastify' {
@@ -32,6 +36,9 @@ export interface AppOptions {
   /** 就緒檢查:SQL Server 與各舊庫來源 */
   readiness?: () => Promise<{ ok: boolean; checks: Record<string, string> }>;
   deps?: () => Promise<DepStatus[]>;
+  /** 各功能的資料存取;未提供(輸出 OpenAPI、單元測試未用到)時該 API 回 503 */
+  courses?: CourseRepo | null;
+  commute?: CommuteService | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -101,5 +108,7 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   app.get('/openapi.json', noAuth, async () => app.swagger());
 
   await app.register(meRoutes);
+  await app.register(courseRoutes(opts.courses ?? null));
+  await app.register(commuteRoutes(opts.commute ?? null));
   return app;
 }

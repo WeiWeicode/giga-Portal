@@ -15,10 +15,22 @@ export const MIGRATING_PAGES: readonly string[] = [
 
 export const isMigrating = (menuPermission: string) => MIGRATING_PAGES.includes(menuPermission);
 
+/**
+ * 只有部分 Tab 來自 TIPTOP 的頁面:這些 Tab 顯示「系統轉移中」,同頁其他 Tab 照常(PORTAL-API-PLAN D-10)。
+ * 代碼 = Tab 權限代碼(router.ts tabCode)。
+ */
+export const MIGRATING_TABS: readonly string[] = [
+  'portal.profile.basic', // 基本資料
+  'portal.profile.pension', // 勞退新制資料
+  'portal.profile.health-family', // 健保眷屬加退保異動
+  'portal.profile.tax-dependents', // 所得稅扶養眷屬異動
+  'portal.profile.insurance-bracket', // 勞健保/勞退級距
+];
+
 export const MIGRATING_TEXT = '系統轉移中';
 
 export const MigratingPage = () => import('../pages/MigratingPage.vue');
 
-/** 功能頁各 Tab 的內容元件:轉移中的頁面一律換成 MigratingPage(不載入原 Tab、不呼叫 API) */
-export const tabComponent = <T>(menuPermission: string, component: T): T | typeof MigratingPage =>
-  isMigrating(menuPermission) ? MigratingPage : component;
+/** 功能頁各 Tab 的內容元件:轉移中的頁面或 Tab 一律換成 MigratingPage(不載入原 Tab、不呼叫 API) */
+export const tabComponent = <T>(menuPermission: string, tabPermission: string, component: T): T | typeof MigratingPage =>
+  isMigrating(menuPermission) || MIGRATING_TABS.includes(tabPermission) ? MigratingPage : component;

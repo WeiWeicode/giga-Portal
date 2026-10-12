@@ -113,7 +113,8 @@ giga-Portal/
 │  └─ docker-compose.yml          spa-portal (發佈到 gw_www 的 portal, Nginx /);portal-api(profile api,Gateway 網路別名 portal-api:51271)
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
-   │                              db/(client 連線池與來源檢查、sources 舊庫前綴 copy / legacy)、routes/(me)
+   │                              db/(client 連線池與來源檢查、sources 舊庫前綴 copy / legacy)、routes/(me、courses、commute)、
+   │                              modules/(courses 規則與 repo、commute 服務與 repo、geocode Google)
    ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
    └─ Dockerfile、.env.example

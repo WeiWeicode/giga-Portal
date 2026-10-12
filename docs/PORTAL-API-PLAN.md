@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.3(2026-10-12,加入 dry run 結果與 D-8)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.4(2026-10-12,P0 完成;P1 決議 D-9~D-13)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12)
@@ -15,6 +15,11 @@
 | D-6 | BPM 相關邏輯參考 `D:\檔案分享\Tools\BPM快速開發`(特別是 `6_todo_viewer`:待簽核 / 我申請的 / 經辦過、表單內容、簽核歷程、BPM 深連結) |
 | D-7 | **新舊系統並行**:2026-12 設定正式區、2027-01 正式上線,正式區直接讀寫**原本的資料庫與資料表**(PortalSolar 等,與舊系統共用) |
 | D-8 | 舊系統未對應頁面(員工認股、中華郵政、內部拍賣、電視看板、垃圾信回報、ISO 文件,及有日期的同意書)多為**臨時服務**:人事發信附 URL,員工點連結進入。新入口網**要有 URL 路徑,但不出現在選單**(P7) |
+| D-9 | 年度必上課程**完全照舊規則**(公司別 DS11 / DS15 / DS36、12 門課與各自適用對象、工安 5 門未完成各扣 2 分;舊主管職稱清單的漏逗號也照舊) |
+| D-10 | 個人基本資料**只開「溫室氣體盤查員工通勤調查」**;所得稅扶養眷屬、基本資料異動申請等人資匯入 TIPTOP 的流程與其餘 Tab 系統轉移中(Tab 層級) |
+| D-11 | 通勤調查送出時由 portal-api 呼叫 Google Geocoding 轉經緯度(同舊系統,解析不到不能送出);金鑰為主機 2 Docker secret。與舊系統的刻意差異:GoogleAddress 用正向查詢的 formatted_address(舊系統另以經緯度反查,多一次計費);同一人 10 秒內不能重複送出、地址未變沿用既有座標 |
+| D-12 | 個人資產明細**保留 PortalSolar 的備註與照片**(資產清單本身在 TIPTOP;只列已有備註的資產) |
+| D-13 | BPM 另建唯讀帳號 `portal_bpm_ro`(只 GRANT 用到的表),測試區 191 由使用者以 sa 執行 |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -98,12 +103,12 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 
 | 頁面 | 資料來源 | 處理 |
 | --- | --- | --- |
-| 個人提醒 | `portal` 新表 | 實作(讀寫) |
-| BPM 簽核資訊 | NaNa(191 / 190) | 實作(唯讀,§3.3) |
+| 個人提醒 | `portal` 新表 | P1-2 實作(讀寫;需 migration 機制) |
+| BPM 簽核資訊 | NaNa(191 / 190) | P1-3 實作(唯讀,§3.3;D-13 帳號) |
 | 郵件審核資訊 | `ReleasemailDB`(經連結伺服器 `RMailDB`) | **退場**(Q-D9):P1 一併移除前端路由、`gateway-rbac.yaml` 的 `portal.release-mail.*`,測試區既有代碼以一次性 SQL 刪除 |
-| 年度必上課程 | `Safety` | 實作(唯讀) |
-| 個人基本資料 | TIPTOP `cpf_file` + PortalSolar `CpfExInfo`、`EmpTaxDependents`、`HRPDatabaseUpdate` | 部分:PortalSolar 能帶出的欄位實作(含寫入);TIPTOP 欄位轉移中 |
-| 個人資產明細 | PortalSolar `PersonalPropertyInfo` + TIPTOP `faj_file` | 部分,同上 |
+| 年度必上課程 | LOS `EmployeeInfo`、`Safety` 名單、LearnDB 完訓紀錄 | **P1-1 完成**(D-9;`GET /courses/required`) |
+| 個人基本資料 | TIPTOP `cpf_file` + PortalSolar `CpfExInfo` | **P1-1 完成**:通勤調查(`GET / PUT /commute`,D-10 / D-11);其餘 5 個 Tab 系統轉移中 |
+| 個人資產明細 | PortalSolar `PersonalPropertyInfo`(備註、照片) | P1-2(D-12;照片檔在 166,經 giga-file-service 舊檔對照,F4 前先只顯示備註) |
 | 自助查詢、薪資獎金、年度所得、薪資異動、出勤異常、出勤時數異常回報、薪資金鑰重置 | TIPTOP | **整頁系統轉移中** |
 
 ### P2 行政資源

@@ -9,7 +9,8 @@
 #   變數未設定時由 portal-api 啟動檢查失敗(不在 compose 以 :? 擋,避免影響只發佈 SPA 的指令)
 #   網路:加入 Gateway 的 Docker 網路(GW_NETWORK),別名 portal-api → BFF 以 http://portal-api:51271 轉入 /api/portal/*
 #   機密(PORTAL_SECRETS_DIR,uid 1000 可讀;deploy/host2-set-api-secrets.sh 產生):
-#     portal_db_password(portal_app)、gw_api_key(Gateway CLI client:create --code portal-api)、monitor_api_key(giga-observe 服務 portal-api)
+#     portal_db_password(portal_app)、gw_api_key(Gateway CLI client:create --code portal-api)、monitor_api_key(giga-observe 服務 portal-api)、
+#     google_maps_api_key(通勤調查;可為空白)
 name: giganexus-portal
 
 services:
@@ -49,10 +50,12 @@ services:
       PORTAL_DB_PASSWORD_FILE: /run/secrets/portal_db_password
       # 測試區 copy(giganexus_gw_test 的 src_*)/ 正式區 legacy(220 原庫);未設定依 GW_ENV
       PORTAL_SRC_MODE: ${PORTAL_SRC_MODE:-}
+      # 通勤調查地址轉經緯度(Google Geocoding);檔案空白時通勤調查不能送出
+      GOOGLE_MAPS_API_KEY_FILE: /run/secrets/google_maps_api_key
       MONITOR_URL: ${MONITOR_URL:-http://observe-api:51202}
       MONITOR_API_KEY_FILE: /run/secrets/monitor_api_key
       RELEASE_SHA: ${RELEASE_SHA:-dev}
-    secrets: [gw_api_key, portal_db_password, monitor_api_key]
+    secrets: [gw_api_key, portal_db_password, monitor_api_key, google_maps_api_key]
     networks:
       gateway:
         aliases: [portal-api]
@@ -67,6 +70,8 @@ secrets:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/portal_db_password
   monitor_api_key:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/monitor_api_key
+  google_maps_api_key:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/google_maps_api_key
 
 networks:
   gateway:

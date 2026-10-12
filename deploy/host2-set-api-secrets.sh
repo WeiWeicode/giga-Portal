@@ -4,7 +4,8 @@
 # 產生(已存在的不覆寫;要重建先刪除該檔):
 #   /srv/giganexus/portal-secrets/   portal_db_password(portal_app,隱藏輸入)、
 #                                    gw_api_key(Gateway CLI client:create --code portal-api;自動註冊 OpenAPI 草稿用)、
-#                                    monitor_api_key(giga-observe ingest Key,服務 portal-api)
+#                                    monitor_api_key(giga-observe ingest Key,服務 portal-api)、
+#                                    google_maps_api_key(通勤調查地址轉經緯度,隱藏輸入;可留空,留空則通勤調查不能送出)
 #   /srv/giganexus/deploy/portal.env 補上 portal-api 的 Compose 變數(既有的 SPA 變數保留;範本 test.env.example)
 set -eu
 # 暫存檔(含 Key)只有本人可讀,結束或中斷時刪除;中斷輸入密碼時恢復終端機回顯
@@ -44,6 +45,12 @@ if [ ! -f "$D/monitor_api_key" ]; then
     node src/scripts/createApiKey.js --service portal-api --scope ingest --label "員工入口網 portal-api") > "$TMP/obs.txt"
   sed -n 's/^  key *: *//p' "$TMP/obs.txt" | tr -d '\r\n' > "$D/monitor_api_key"
   [ -s "$D/monitor_api_key" ] || { echo "取不到監控 Key(監控會停用,服務仍可啟動);稍後可刪除此檔重跑" >&2; }
+fi
+
+# ---------- Google Maps Geocoding 金鑰(通勤調查;PORTAL-API-PLAN D-11) ----------
+if [ ! -f "$D/google_maps_api_key" ]; then
+  stty -echo; printf 'Google Maps Geocoding API 金鑰(可留空):'; read -r k; stty echo; echo
+  printf '%s' "$k" > "$D/google_maps_api_key"; unset k
 fi
 
 # 只限縮檔案(目錄需讓 CI 的 docker compose 讀得到 secret 路徑)

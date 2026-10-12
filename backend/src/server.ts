@@ -5,6 +5,10 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { openPool, probeSources } from './db/client.js';
+import { CommuteService } from './modules/commute/commute.js';
+import { MssqlCommuteRepo } from './modules/commute/repo.js';
+import { MssqlCourseRepo } from './modules/courses/repo.js';
+import { GoogleGeocoder } from './modules/geocode.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -35,8 +39,11 @@ async function checks(): Promise<Check[]> {
   return [sql, ...sources];
 }
 
+const geocoder = config.googleMapsApiKey ? new GoogleGeocoder(config.googleMapsApiKey) : null;
 const app = await buildApp({
   config,
+  courses: new MssqlCourseRepo(pool, config.sources),
+  commute: new CommuteService(new MssqlCommuteRepo(pool, config.sources), geocoder),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
@@ -49,7 +56,13 @@ const app = await buildApp({
 });
 await app.listen({ host: config.host, port: config.port });
 app.log.info(
-  { gwEnv: config.gateway.gwEnv, serviceCode: config.gateway.serviceCode, sourceMode: config.sourceMode, monitor: config.monitor.enabled },
+  {
+    gwEnv: config.gateway.gwEnv,
+    serviceCode: config.gateway.serviceCode,
+    sourceMode: config.sourceMode,
+    monitor: config.monitor.enabled,
+    geocode: geocoder !== null,
+  },
   '服務已啟動',
 );
 

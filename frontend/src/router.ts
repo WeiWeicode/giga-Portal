@@ -81,7 +81,7 @@ function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; grou
     meta: { ...meta, tabs: defs.map(({ path: _p, component: _c, requires: _r, ...t }) => t) },
     children: defs.map((t) => ({
       path: t.path,
-      component: tabComponent(meta.permission, t.component ?? Placeholder),
+      component: tabComponent(meta.permission, t.permission, t.component ?? Placeholder),
       meta: { tab: t.label, permission: t.permission, ...(t.requires ? { requires: t.requires } : {}) },
     })),
   };
@@ -111,7 +111,7 @@ const appPages: RouteRecordRaw[] = [
       { key: 'health-family', label: '健保眷屬加退保異動', path: 'health-family', icon: 'users', component: () => import('./pages/personal/profile/ProfileHealthFamilyTab.vue') },
       { key: 'tax-dependents', label: '所得稅扶養眷屬異動', path: 'tax-dependents', icon: 'file-check', component: () => import('./pages/personal/profile/ProfileTaxDependentsTab.vue') },
       { key: 'insurance-bracket', label: '勞健保/勞退級距', path: 'insurance-bracket', icon: 'layers', component: () => import('./pages/personal/profile/ProfileInsuranceBracketTab.vue') },
-      { key: 'commute', label: '溫室氣體盤查員工通勤調查', path: 'commute', icon: 'leaf', component: () => import('./pages/personal/profile/ProfileCommuteTab.vue') },
+      { key: 'commute', label: '溫室氣體盤查員工通勤調查', path: 'commute', icon: 'leaf', requires: ['portal.api.commute.read'], component: () => import('./pages/personal/profile/ProfileCommuteTab.vue') },
     ],
   ),
   page(
@@ -288,7 +288,7 @@ const appPages: RouteRecordRaw[] = [
       description: '職業安全衛生、資安防護、法令遵循等年度必修課程進度',
     },
     [
-      { key: 'required', label: '必修課程', path: '', icon: 'spec', component: () => import('./pages/personal/annualCourses/AnnualCoursesPage.vue') },
+      { key: 'required', label: '必修課程', path: '', icon: 'spec', requires: ['portal.api.course.read'], component: () => import('./pages/personal/annualCourses/AnnualCoursesPage.vue') },
     ],
   ),
   page(

@@ -8,6 +8,7 @@
  *                     密碼 test / prod 只接受 PORTAL_DB_PASSWORD_FILE
  *   PORTAL_SRC_MODE   copy(複本 src_*)/ legacy(220 原庫);預設 dev / test 為 copy、prod 為 legacy,prod 不可設 copy
  *   PORTAL_SRC_<KEY>  個別來源覆寫「資料庫.schema」(db/sources.ts)
+ *   GOOGLE_MAPS_API_KEY(_FILE)  選用:通勤調查地址轉經緯度(Google Geocoding);未設定時通勤調查不能送出(503)
  *   DEV_SKIP_TOKEN    dev 專用:不驗證 X-Internal-Token(本機直連);非 dev 設定即啟動失敗
  */
 import { readFileSync } from 'node:fs';
@@ -31,6 +32,8 @@ export interface Config {
   sql: SqlConfig;
   sourceMode: SourceMode;
   sources: Sources;
+  /** null = 未設定,通勤調查不能送出 */
+  googleMapsApiKey: string | null;
   devSkipToken: boolean;
 }
 
@@ -101,6 +104,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     },
     sourceMode: mode,
     sources,
+    googleMapsApiKey: secret(env, 'GOOGLE_MAPS_API_KEY', !isDev) ?? null,
     devSkipToken,
   };
 }
