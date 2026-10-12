@@ -130,3 +130,36 @@ export interface BpmRequested {
 /** BPM 待簽核 / 我申請的未結案(NaNa 唯讀;連結開啟 BPM 原畫面) */
 export const bpmPending = () => http.get<BpmPending>('/api/portal/bpm/pending');
 export const bpmRequested = (page = 1, pageSize = 20) => http.get<BpmRequested>(`/api/portal/bpm/requested?page=${page}&pageSize=${pageSize}`);
+
+export interface DirectoryEntry {
+  empNo: string;
+  name: string | null;
+  englishName: string | null;
+  dept: string | null;
+  deptName: string | null;
+  title: string | null;
+  phone: string | null;
+}
+/** 分機表(PortalSolar NotesPhone,與舊入口網共用) */
+export const searchDirectory = (q: string) => http.get<{ items: DirectoryEntry[]; truncated: boolean }>(`/api/portal/directory?q=${encodeURIComponent(q)}`);
+export const updateMyPhone = (phone: string) => http.put<{ phone: string }>('/api/portal/directory/me/phone', { phone });
+
+export interface Job {
+  no: number;
+  title: string | null;
+  content: string | null;
+  postedAt: string | null;
+  closeAt: string | null;
+  open: boolean;
+}
+export interface JobInput {
+  title: string;
+  content: string;
+  /** YYYY-MM-DD */
+  closeAt: string;
+}
+/** 內部職缺(PortalSolar EnlistTB);維護限 portal.job.edit */
+export const listJobs = (all = false) => http.get<{ items: Job[] }>(`/api/portal/jobs${all ? '?all=true' : ''}`);
+export const createJob = (body: JobInput) => http.post<{ no: number }>('/api/portal/jobs', body);
+export const updateJob = (no: number, body: JobInput) => http.put<void>(`/api/portal/jobs/${no}`, body);
+export const deleteJob = (no: number) => http.delete<void>(`/api/portal/jobs/${no}`);

@@ -22,6 +22,8 @@
 | `personal/courses.feature` | 年度必上課程(照舊規則) | PORTAL-API-PLAN D-9 | P1 |
 | `personal/notes.feature` | 個人提醒(portal.personal_note) | PORTAL-API-PLAN P1-2 | P1 |
 | `personal/assets.feature` | 個人資產明細(備註) | PORTAL-API-PLAN D-12 | P1 |
+| `resources/directory.feature` | 分機表查詢與更新本人分機 | PORTAL-API-PLAN P2-1 | P2 |
+| `resources/jobs.feature` | 內部職缺 | PORTAL-API-PLAN D-15 | P2 |
 | `personal/bpm.feature` | BPM 簽核資訊(待簽核 / 未結案) | PORTAL-API-PLAN §3.3、D-13 | P1 |
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |

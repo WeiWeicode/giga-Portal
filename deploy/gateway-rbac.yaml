@@ -76,21 +76,21 @@ permissions:
   - { code: portal.ga.read, name: 總務專區, kind: menu, parent: portal.group.resources, sort: 75 }
   - { code: portal.ga.service, name: 總務服務項目, kind: tab, parent: portal.ga.read, sort: 10 }
   - { code: portal.ga.apply, name: 申請專區, kind: tab, parent: portal.ga.read, sort: 20 }
-  - { code: portal.ga.property, name: 個人資產明細, kind: tab, parent: portal.ga.read, sort: 30 }
+  - { code: portal.ga.property, name: 個人資產明細, kind: tab, parent: portal.ga.read, sort: 30, includes: [portal.api.asset.read] }
   - { code: portal.ga.outbound, name: 外送資產明細, kind: tab, parent: portal.ga.read, sort: 40 }
   - { code: portal.ga.parking, name: 湖口廠停車資訊, kind: tab, parent: portal.ga.read, sort: 50 }
   - { code: portal.hr.read, name: 人資專區, kind: menu, parent: portal.group.resources, sort: 75 }
   - { code: portal.hr.welfare, name: 團體保險, kind: tab, parent: portal.hr.read, sort: 10 }
-  - { code: portal.hr.agent, name: 主管職務代理人, kind: tab, parent: portal.hr.read, sort: 20 }
+  - { code: portal.hr.agent, name: 主管職務代理人, kind: tab, parent: portal.hr.read, sort: 20, includes: [portal.api.hr.read] }
   - { code: portal.job.read, name: 內部職缺, kind: menu, parent: portal.group.resources, sort: 75 }
-  - { code: portal.job.list, name: 內部職缺, kind: tab, parent: portal.job.read, sort: 10 }
+  - { code: portal.job.list, name: 內部職缺, kind: tab, parent: portal.job.read, sort: 10, includes: [portal.api.job.read] }
   - { code: portal.survey.read, name: 問卷調查, kind: menu, parent: portal.group.resources, sort: 75 }
   - { code: portal.survey.list, name: 問卷清單, kind: tab, parent: portal.survey.read, sort: 10 }
   - { code: portal.onboarding.read, name: 新人導覽, kind: menu, parent: portal.group.resources, sort: 80 }
   - { code: portal.onboarding.tips, name: 小叮嚀, kind: tab, parent: portal.onboarding.read, sort: 10 }
   - { code: portal.onboarding.quiz, name: 驗收區, kind: tab, parent: portal.onboarding.read, sort: 20 }
   - { code: portal.directory.read, name: 分機表、聯絡窗口, kind: menu, parent: portal.group.resources, sort: 90 }
-  - { code: portal.directory.extension, name: 分機表, kind: tab, parent: portal.directory.read, sort: 10 }
+  - { code: portal.directory.extension, name: 分機表, kind: tab, parent: portal.directory.read, sort: 10, includes: [portal.api.directory.read] }
   - { code: portal.directory.contact, name: 聯絡窗口, kind: tab, parent: portal.directory.read, sort: 20 }
   - { code: portal.gui-number.read, name: 集團統編資訊, kind: menu, parent: portal.group.resources, sort: 100 }
   - { code: portal.gui-number.list, name: 集團統編, kind: tab, parent: portal.gui-number.read, sort: 10 }
@@ -146,6 +146,8 @@ permissions:
   # 按鈕(按鈕 = 其呼叫的寫入 API 權限,PRD D4;其餘按鈕隨各 Tab 內容一起登記)
   - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.basic, sort: 10 }
   - { code: portal.note.edit, name: 新增 / 編輯個人提醒, kind: button, parent: portal.note.list, sort: 10, includes: [portal.api.note.write] }
+  - { code: portal.directory.edit, name: 更新本人分機, kind: button, parent: portal.directory.extension, sort: 10, includes: [portal.api.directory.write] }
+  - { code: portal.job.edit, name: 維護內部職缺, kind: button, parent: portal.job.list, sort: 10, includes: [portal.api.job.write] }
   - { code: portal.profile.commute-edit, name: 送出通勤調查, kind: button, parent: portal.profile.commute, sort: 10, includes: [portal.api.commute.write] }
   - { code: portal.news.publish, name: 發布公告, kind: button, parent: portal.news.all, sort: 10 }
   - { code: portal.onboarding.edit, name: 維護新人導覽, kind: button, parent: portal.onboarding.tips, sort: 10 }
@@ -217,6 +219,7 @@ roles:
       - portal.onboarding.quiz
       - portal.directory.read
       - portal.directory.extension
+      - portal.directory.edit
       - portal.directory.contact
       - portal.gui-number.read
       - portal.gui-number.list
@@ -290,7 +293,7 @@ roles:
       - portal.esh.manager.list
   - code: portal-editor
     name: 入口網內容維護(人資 / 行政)
-    permissions: [portal.news.publish, portal.onboarding.edit]
+    permissions: [portal.news.publish, portal.onboarding.edit, portal.job.edit]
   - code: it-app-user
     name: IT 管理系統使用者
     permissions: [it.app.access]

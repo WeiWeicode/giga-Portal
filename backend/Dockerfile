@@ -15,6 +15,8 @@ WORKDIR /app
 COPY --from=build /app/node_modules node_modules/
 COPY --from=build /app/dist dist/
 COPY package.json ./
+# 需登入才能下載的文件(routes/hr.ts)
+COPY assets/ assets/
 USER node
 EXPOSE 51271
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO- http://127.0.0.1:51271/healthz >/dev/null || exit 1

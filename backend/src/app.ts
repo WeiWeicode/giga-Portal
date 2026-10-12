@@ -20,6 +20,9 @@ import { assetRoutes, type AssetNoteRepo } from './routes/assets.js';
 import { commuteRoutes } from './routes/commute.js';
 import { courseRoutes } from './routes/courses.js';
 import { bpmRoutes } from './routes/bpm.js';
+import { directoryRoutes, type DirectoryRepo } from './routes/directory.js';
+import { hrRoutes } from './routes/hr.js';
+import { jobRoutes, type JobRepo } from './routes/jobs.js';
 import { meRoutes } from './routes/me.js';
 import { noteRoutes } from './routes/notes.js';
 
@@ -47,6 +50,8 @@ export interface AppOptions {
   notes?: NoteService | null;
   assets?: AssetNoteRepo | null;
   bpm?: BpmService | null;
+  directory?: DirectoryRepo | null;
+  jobs?: JobRepo | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -121,5 +126,8 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(noteRoutes(opts.notes ?? null));
   await app.register(assetRoutes(opts.assets ?? null));
   await app.register(bpmRoutes(opts.bpm ?? null));
+  await app.register(directoryRoutes(opts.directory ?? null));
+  await app.register(jobRoutes(opts.jobs ?? null));
+  await app.register(hrRoutes());
   return app;
 }

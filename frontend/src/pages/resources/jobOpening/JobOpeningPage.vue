@@ -1,333 +1,146 @@
 <script setup lang="ts">
 /**
- * 內部職缺申請 (對齊 old_PortalSolar JobOpening.aspx)
+ * 內部職缺(old_PortalSolar JobOpening.aspx;PORTAL-API-PLAN D-15;docs/Gherkin/resources/jobs.feature)
+ * 同仁看開放中的職缺(可切換含已截止);人資以 v-can="portal.job.edit" 新增 / 修改 / 刪除。應徵請洽人資(不寄信)。
  */
-import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GModal, GSelect } from '@/ui';
+import { reactive, ref } from 'vue';
+import { describeError } from '@/api/gateway';
+import { createJob, deleteJob, listJobs, updateJob, type Job } from '@/api/portal';
+import { useAsync } from '@/composables/useAsync';
+import { confirm, toast } from '@/ui/feedback';
 
-interface JobOpening {
-  id: string;
-  title: string;
-  dept: string;
-  location: string;
-  headcount: number;
-  postDate: string;
-  deadline: string;
-  requirements: string[];
-  description: string;
-  contact: string;
-  status: '熱門急徵' | '開放申請' | '即將截止';
+const showAll = ref(false);
+const { data, loading, error, reload } = useAsync(() => listJobs(showAll.value));
+
+function toggleAll() {
+  showAll.value = !showAll.value;
+  void reload();
 }
 
-const jobs = ref<JobOpening[]>([
-  {
-    id: 'JOB-2026-001',
-    title: '資深全端系統架構師 (Portal / Gateway)',
-    dept: '資訊服務部',
-    location: '湖口一廠 3F',
-    headcount: 1,
-    postDate: '2026-09-20',
-    deadline: '2026-10-31',
-    status: '熱門急徵',
-    contact: '資訊部 林協理 (# 2100) / 人資部 張專員 (# 1210)',
-    requirements: [
-      '具備 3 年以上 Vue 3 / TypeScript / Node.js 系統開發實務經驗。',
-      '熟悉 Docker 容器化部屬、CI/CD 自動化建置及微服務架構。',
-      '具備良好的跨部門溝通能力與問題排查技術熱忱。',
-    ],
-    description: '負責集團單一入口 (GigaNexus) 新一代前端與 BFF 微服務架構重構，規劃與推動企業系統雲原生現代化轉型。',
-  },
-  {
-    id: 'JOB-2026-002',
-    title: '太陽能導電銀鋁漿研發工程師',
-    dept: '先進材料研發處',
-    location: '湖口一廠 研發實驗室',
-    headcount: 2,
-    postDate: '2026-09-15',
-    deadline: '2026-11-15',
-    status: '開放申請',
-    contact: '研發處 黃副總 (# 3300) / 人資部 張專員 (# 1210)',
-    requirements: [
-      '化學工程、材料科學或光電材料相關研究所碩士以上學歷。',
-      '熟悉金屬粉末表面處理、高分子黏著劑配方合成與網印流變特性測試。',
-      '具備太陽能電池 N 型 TOPCon 或異質結 (HJT) 漿料開發經驗者尤佳。',
-    ],
-    description: '進行新世代高效太陽能電池正面超細線印刷導電漿料配方調配、燒結特性測試與客戶端產線試印驗證。',
-  },
-  {
-    id: 'JOB-2026-003',
-    title: '智慧電站綠能維運主管 (O&M Manager)',
-    dept: '禾迅綠電 維運事業部',
-    location: '新豐廠 / 外勤案場巡檢',
-    headcount: 1,
-    postDate: '2026-09-01',
-    deadline: '2026-10-15',
-    status: '即將截止',
-    contact: '維運部 鄧經理 (# 4100) / 人資部 張專員 (# 1210)',
-    requirements: [
-      '大專以上電機、電子工程相關科系畢，持有乙級以上室內配線或電匠證照。',
-      '具備 3 年以上高低壓太陽能發電系統或儲能案場運轉維護經驗。',
-      '具備小型客貨車駕照，能配合定期巡檢台灣各縣市電廠案場。',
-    ],
-    description: '負責地面型及屋頂型太陽能案場遠端監控、逆變器異常排查、預防性定期保養計劃規劃與台電併聯申報。',
-  },
-  {
-    id: 'JOB-2026-004',
-    title: '職業安全衛生資深管理師',
-    dept: '職業安全衛生室',
-    location: '湖口一廠 / 二廠',
-    headcount: 1,
-    postDate: '2026-09-25',
-    deadline: '2026-11-30',
-    status: '開放申請',
-    contact: '安衛室 何主任 (# 1119) / 人資部 張專員 (# 1210)',
-    requirements: [
-      '持有「乙級職業安全衛生管理員」或「甲種職業安全衛生業務主管」證照。',
-      '熟悉 ISO45001 / ISO14001 職業安全衛生與環境管理系統推展。',
-      '具備製造業毒性化學物質申報、作業環境監測與工傷防制三年以上經驗。',
-    ],
-    description: '規劃與推行全廠工安防護計畫、外包商施工安全管制、消防演練、化學品 SDS 定期更新與年度安衛教育訓練。',
-  },
-]);
+const modal = ref(false);
+const editing = ref<Job | null>(null);
+const form = reactive({ title: '', content: '', closeAt: '' });
+const saving = ref(false);
 
-const searchKeyword = ref('');
-const deptFilter = ref('');
-
-const filteredJobs = computed(() => {
-  return jobs.value.filter((j) => {
-    const matchDept = !deptFilter.value || j.dept === deptFilter.value;
-    const kw = searchKeyword.value.toLowerCase().trim();
-    const matchKw =
-      !kw ||
-      j.title.toLowerCase().includes(kw) ||
-      j.dept.toLowerCase().includes(kw) ||
-      j.description.toLowerCase().includes(kw);
-    return matchDept && matchKw;
-  });
-});
-
-const detailModal = ref(false);
-const activeJob = ref<JobOpening | null>(null);
-const applySubmitted = ref(false);
-
-function viewJob(j: JobOpening) {
-  activeJob.value = j;
-  applySubmitted.value = false;
-  detailModal.value = true;
+function openNew() {
+  editing.value = null;
+  Object.assign(form, { title: '', content: '', closeAt: '' });
+  modal.value = true;
+}
+function openEdit(j: Job) {
+  editing.value = j;
+  Object.assign(form, { title: j.title ?? '', content: j.content ?? '', closeAt: (j.closeAt ?? '').replace(/\//g, '-') });
+  modal.value = true;
 }
 
-function handleApply() {
-  applySubmitted.value = true;
+async function save() {
+  saving.value = true;
+  try {
+    const body = { title: form.title, content: form.content, closeAt: form.closeAt };
+    if (editing.value) await updateJob(editing.value.no, body);
+    else await createJob(body);
+    modal.value = false;
+    toast.success(editing.value ? '已更新職缺' : '已新增職缺');
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '儲存失敗');
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function remove(j: Job) {
+  if (!(await confirm({ title: '刪除職缺', message: `確定刪除「${j.title ?? ''}」?`, confirmText: '刪除', tone: 'danger' }))) return;
+  try {
+    await deleteJob(j.no);
+    toast.success('已刪除');
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '刪除失敗');
+  }
 }
 </script>
 
 <template>
-  <div class="job-opening-page stack">
-    <!-- 頂部轉調宣導 Banner -->
-    <GCard class="glass promo-banner">
-      <div class="promo-content">
-        <h3 class="promo-title">🌟 集團內部人才交流與轉調管道</h3>
-        <p class="promo-desc faint">
-          碩禾集團鼓勵優秀同仁多元跨界發展。在現職服務滿一年以上且近年度考績優良者，均可透過內部應徵管道申請集團內部轉調，發展更廣闊的職涯舞臺！
-        </p>
-      </div>
-    </GCard>
-
-    <!-- 搜尋過濾列 -->
-    <GCard class="glass filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label class="filter-label">職缺關鍵字檢索</label>
-          <GInput v-model="searchKeyword" placeholder="搜尋職缺名稱、工作內容、專業技能需求..." />
-        </div>
-        <div class="filter-item filter-select">
-          <label class="filter-label">招聘部門</label>
-          <GSelect
-            v-model="deptFilter"
-            :options="[
-              { label: '全部部門', value: '' },
-              { label: '資訊服務部', value: '資訊服務部' },
-              { label: '先進材料研發處', value: '先進材料研發處' },
-              { label: '禾迅綠電 維運事業部', value: '禾迅綠電 維運事業部' },
-              { label: '職業安全衛生室', value: '職業安全衛生室' },
-            ]"
-          />
-        </div>
-      </div>
-    </GCard>
-
-    <!-- 職缺列表卡片 -->
-    <div class="jobs-grid">
-      <GCard v-for="j in filteredJobs" :key="j.id" class="glass job-card">
-        <div class="job-top">
-          <div class="job-header">
-            <h4 class="job-title">{{ j.title }}</h4>
-            <GBadge :tone="j.status === '熱門急徵' ? 'warning' : j.status === '即將截止' ? 'danger' : 'healthy'">
-              {{ j.status }}
-            </GBadge>
-          </div>
-          <span class="faint small">{{ j.dept }} ｜ {{ j.location }} ｜ 需求人數: {{ j.headcount }} 名</span>
-        </div>
-
-        <p class="job-summary faint small">{{ j.description }}</p>
-
-        <div class="job-bottom">
-          <span class="mono extra-small faint">申請截止日：{{ j.deadline }}</span>
-          <GButton size="sm" tone="primary" @click="viewJob(j)">檢視詳情與應徵</GButton>
-        </div>
-      </GCard>
+  <div class="stack jobs">
+    <div class="row head">
+      <GButton variant="ghost" size="sm" :icon="showAll ? 'eye-off' : 'eye'" @click="toggleAll">{{ showAll ? '只看開放中' : '含已截止' }}</GButton>
+      <GButton v-can="'portal.job.edit'" variant="primary" icon="plus" @click="openNew">新增職缺</GButton>
     </div>
 
-    <!-- 職缺詳情與申請 Modal -->
-    <GModal v-model="detailModal" :title="activeJob?.title ?? '職缺詳細資訊'" width="650px">
-      <div v-if="activeJob" class="modal-job-stack">
-        <div class="job-meta-row">
-          <div><strong>招聘單位：</strong>{{ activeJob.dept }}</div>
-          <div><strong>工作地點：</strong>{{ activeJob.location }}</div>
-          <div><strong>截止日期：</strong><span class="mono">{{ activeJob.deadline }}</span></div>
+    <GCard v-if="loading && !data"><GEmpty icon="clock" title="載入中…" /></GCard>
+    <GCard v-else-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得內部職缺" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <GCard v-else-if="data && !data.items.length">
+      <GEmpty icon="bell" title="目前沒有開放中的內部職缺" description="有興趣的職缺或推薦人選,請洽人資單位。" />
+    </GCard>
+    <template v-else-if="data">
+      <GCard v-for="j in data.items" :key="j.no" :title="j.title ?? '(未命名)'" icon="user-plus" :class="{ closed: !j.open }">
+        <div class="meta">
+          <GBadge :tone="j.open ? 'primary' : 'neutral'">{{ j.open ? '開放中' : '已截止' }}</GBadge>
+          <span class="small faint">刊登 {{ j.postedAt ?? '—' }} · 截止 {{ j.closeAt ?? '—' }}</span>
         </div>
+        <p class="content">{{ j.content }}</p>
+        <div v-can="'portal.job.edit'" class="row acts">
+          <GButton variant="ghost" size="sm" icon="edit" @click="openEdit(j)">編輯</GButton>
+          <GButton variant="ghost" size="sm" icon="trash" @click="remove(j)">刪除</GButton>
+        </div>
+      </GCard>
+      <GAlert tone="neutral" icon="info">有興趣的職缺或推薦人選,請洽人資單位。</GAlert>
+    </template>
 
-        <div class="job-sec">
-          <strong class="sec-title">工作職責與工作內容：</strong>
-          <p class="sec-text small">{{ activeJob.description }}</p>
+    <GModal v-model:open="modal" :title="editing ? '編輯職缺' : '新增職缺'" icon="user-plus">
+      <form class="stack" @submit.prevent="save">
+        <GInput v-model="form.title" label="職稱 / 招募重點" required />
+        <p class="hint">內容不可包含 &lt; &gt; 符號(舊入口網同步顯示)。</p>
+        <GInput v-model="form.closeAt" type="date" label="截止日" required />
+        <GTextarea v-model="form.content" label="職缺內容" required />
+        <div class="row modal-actions">
+          <GButton @click="modal = false">取消</GButton>
+          <GButton type="submit" variant="primary" icon="check" :loading="saving">儲存</GButton>
         </div>
-
-        <div class="job-sec">
-          <strong class="sec-title">職務資格與技能條件：</strong>
-          <ul class="req-list small">
-            <li v-for="(r, idx) in activeJob.requirements" :key="idx">{{ r }}</li>
-          </ul>
-        </div>
-
-        <div class="job-sec">
-          <strong class="sec-title">應徵洽詢窗口：</strong>
-          <span class="small faint">{{ activeJob.contact }}</span>
-        </div>
-
-        <div v-if="applySubmitted" class="applied-alert">
-          <GAlert tone="success" icon="check">
-            內部轉調意向申請已成功送出！人資專員將於 3 個工作天內主動與您聯繫並安排面談。
-          </GAlert>
-        </div>
-      </div>
-      <template #footer>
-        <GButton variant="secondary" @click="detailModal = false">關閉</GButton>
-        <GButton v-if="!applySubmitted" tone="primary" @click="handleApply">提出內部轉調申請</GButton>
-      </template>
+      </form>
     </GModal>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.jobs {
+  --gap: 16px;
 }
-.promo-banner {
-  padding: 18px 20px;
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
-}
-.promo-title {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-}
-.promo-desc {
-  margin: 0;
-  font-size: 14px;
-}
-.filter-card {
-  padding: 12px 16px;
-}
-.filter-row {
-  display: flex;
-  gap: 16px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
-.filter-item {
-  flex: 1;
-  min-width: 220px;
-}
-.filter-select {
-  max-width: 220px;
-}
-.filter-label {
-  display: block;
-  font-size: 13px;
-  color: var(--color-faint);
-  margin-bottom: 4px;
-}
-.jobs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 16px;
-}
-.job-card {
-  display: flex;
-  flex-direction: column;
+.head {
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 18px;
+  gap: 8px;
 }
-.job-header {
+.meta {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 10px;
-}
-.job-title {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-}
-.job-summary {
-  line-height: 1.5;
-  margin: 0;
-}
-.job-bottom {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--color-border);
-  padding-top: 10px;
+  margin-bottom: 8px;
 }
-.modal-job-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.job-meta-row {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 14px;
-}
-.job-sec {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.sec-title {
-  font-size: 14px;
-}
-.sec-text {
+.content {
   margin: 0;
-  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
 }
-.req-list {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.closed {
+  opacity: 0.7;
 }
-.applied-alert {
+.acts,
+.modal-actions {
+  justify-content: flex-end;
   margin-top: 8px;
 }
-.extra-small {
-  font-size: 12px;
+.small {
+  font-size: var(--fs-sm);
+}
+.hint {
+  margin: -6px 0 0;
+  font-size: var(--fs-xs, 12px);
+  color: var(--text-3);
 }
 </style>

@@ -1,267 +1,67 @@
 <script setup lang="ts">
-/**
- * 總務申請專區 (對齊 old_PortalSolar GAffairs.aspx Tab2 子分頁: 宿舍/停車證/公務車/修繕/文具)
- */
-import { ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GSelect } from '@/ui';
+/** 總務專區 - 申請專區(old_PortalSolar GAffairs.aspx Tab2 照搬;PORTAL-API-PLAN D-14)。舊頁「宿舍」子頁籤已註解隱藏,不搬 */
+import { legacyDoc } from '@/composables/legacyDocs';
 
-const currentSubTab = ref<'car' | 'dorm' | 'parking' | 'repair' | 'stationery'>('car');
-
-// 公務車申請表單
-const carForm = ref({
-  date: '2026-10-15',
-  startTime: '09:00',
-  endTime: '17:00',
-  passengers: '3',
-  destination: '新竹科學園區 台灣半導體中心',
-  purpose: '拜訪客戶並交付試產銀膠樣品',
-});
-
-// 文具請領項目清單
-const stationeryItems = ref([
-  { id: 'S01', name: '0.5mm 黑色原子筆 (支)', qty: 2, checked: true },
-  { id: 'S02', name: 'A4 雙面影印紙 70g (包)', qty: 1, checked: true },
-  { id: 'S03', name: '黃色便利貼 3x3 (本)', qty: 1, checked: false },
-  { id: 'S04', name: '10 號訂書針 (盒)', qty: 1, checked: false },
-  { id: 'S05', name: '雙面膠帶 12mm (捲)', qty: 1, checked: false },
-]);
-
-const isCarSubmitted = ref(false);
-const isStationerySubmitted = ref(false);
+const sections: { key: string; title: string; lines: string[]; image?: string }[] = [
+  { key: 'parking', title: '停車證', lines: ['欲申請汽、機車停車證請上 Easyflow GP 申請,步驟如下:'], image: 'Icons/aff001.JPG' },
+  {
+    key: 'car',
+    title: '公務車',
+    lines: [
+      '※ 請至資源預約系統內申請借用。',
+      '※ 為使公務車能得到充分的利用,請借用人如果更改行程,不需借用公務車,一定要提早做取消的動作,以免影響他人權益。',
+      '※ 取消時間說明:當日借用起始時間前一小時內取消借用。',
+      '※ 若出車後中途回廠,則兩小時內需再出廠,但鑰匙需先歸還,出車前再領取,超過兩小時以上則請警衛先做歸還,欲使用時再借車。',
+      '※ 未做取消的動作罰則:',
+      '罰則 A:公務車借用後未使用者,限制公務車借用一個月。',
+      '罰則 B:未提早取消借用公務車者,限制公務車借用二週。',
+      '※ 公務車鑰匙由警衛室保管,若超過借用時間 30 分鐘仍未領取鑰匙出車或領取鑰匙未出車者,除取消該次借用權益並通知 MIS 部門以罰則 B 處理。',
+      '※「行車記錄器」於車輛起動時,將會自動錄影。車輛停駛不用時,將會自動切斷錄影。同仁借用車輛時,請確認行車記錄器為正常運作。若有故障,請通知公共事務課。',
+      '※ 請各使用人配合,謝謝。',
+    ],
+  },
+  {
+    key: 'repair',
+    title: '修繕及五金用品',
+    lines: ['※ 請至 Notes 入口公共事務系統內申請。', '※ 填寫完送出後需經由部門主管簽核完畢之後才會通知總務進行處理。', '※ 若是申請例如燈泡、電池等等請繳回舊品。'],
+    image: 'Icons/aff003.JPG',
+  },
+  {
+    key: 'stationery',
+    title: '文具用品',
+    lines: [
+      '※ 將所需文具告知助理,並將舊品繳回,各部門助理統整完該部門當月需申請項目後,統一於當月十號以前上 Easy Flow GP 填單申請。',
+      '※ 若無在申請品項內之需求文具,助理則另外填工作聯繫單申請並說明原因。',
+      '※ 若超過當月十號請於下個月再統一申請,如果是急需用品,請助理填寫工作聯繫單申請,則額外辦理。',
+      '※ 主管簽核完成後,總務單位會統整並經由行政部主管同意後統一叫貨,貨到時即通知各單位領取。',
+      '※ 若無繳回舊品者,則不能申請新品,請各單位注意,並請各部門助理協助回收。',
+    ],
+  },
+];
 </script>
 
 <template>
-  <div class="ga-apply-tab stack">
-    <!-- 子導覽分類 -->
-    <div class="sub-nav-row">
-      <button
-        type="button"
-        class="sub-tab-btn"
-        :class="{ active: currentSubTab === 'car' }"
-        @click="currentSubTab = 'car'"
-      >
-        公務車預約 (Tab2_3)
-      </button>
-      <button
-        type="button"
-        class="sub-tab-btn"
-        :class="{ active: currentSubTab === 'stationery' }"
-        @click="currentSubTab = 'stationery'"
-      >
-        文具用品申領 (Tab2_5)
-      </button>
-      <button
-        type="button"
-        class="sub-tab-btn"
-        :class="{ active: currentSubTab === 'parking' }"
-        @click="currentSubTab = 'parking'"
-      >
-        停車證登記 (Tab2_2)
-      </button>
-      <button
-        type="button"
-        class="sub-tab-btn"
-        :class="{ active: currentSubTab === 'dorm' }"
-        @click="currentSubTab = 'dorm'"
-      >
-        員工宿舍申請 (Tab2_1)
-      </button>
-      <button
-        type="button"
-        class="sub-tab-btn"
-        :class="{ active: currentSubTab === 'repair' }"
-        @click="currentSubTab = 'repair'"
-      >
-        修繕及五金用品 (Tab2_4)
-      </button>
-    </div>
-
-    <!-- 1. 公務車預約 -->
-    <GCard v-if="currentSubTab === 'car'" title="公務車線上預約借用" icon="car" class="glass">
-      <form class="apply-form stack" @submit.prevent="isCarSubmitted = true">
-        <div class="form-grid">
-          <div>
-            <label class="form-label">預計用車日期</label>
-            <GInput v-model="carForm.date" type="date" />
-          </div>
-          <div>
-            <label class="form-label">用車時段</label>
-            <div class="time-range">
-              <GInput v-model="carForm.startTime" type="time" />
-              <span class="faint">~</span>
-              <GInput v-model="carForm.endTime" type="time" />
-            </div>
-          </div>
-          <div>
-            <label class="form-label">同行人數</label>
-            <GInput v-model="carForm.passengers" type="number" />
-          </div>
-          <div>
-            <label class="form-label">前往目的地</label>
-            <GInput v-model="carForm.destination" placeholder="例如：新竹科學園區、桃園機場" />
-          </div>
-        </div>
-        <div>
-          <label class="form-label">公務事由與拜訪對象</label>
-          <GInput v-model="carForm.purpose" placeholder="詳細說明用車公務事由" />
-        </div>
-        <div class="form-actions">
-          <GButton type="submit" variant="primary" icon="send">送出派車申請</GButton>
-        </div>
-        <GAlert v-if="isCarSubmitted" tone="success" icon="check-circle">
-          公務車借用預約已送出！總務組將於每日 16:00 前完成車輛調派審核並發送派車簡訊。
-        </GAlert>
-      </form>
-    </GCard>
-
-    <!-- 2. 文具用品申領 -->
-    <GCard v-else-if="currentSubTab === 'stationery'" title="每月常態性辦公文具線上請領" icon="edit-3" class="glass">
-      <div class="stack">
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th width="60" class="text-center">勾選</th>
-                <th>品項代號</th>
-                <th>文具品名與規格規格</th>
-                <th width="150">申請領用數量</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="it in stationeryItems" :key="it.id">
-                <td class="text-center">
-                  <input v-model="it.checked" type="checkbox" />
-                </td>
-                <td class="mono font-bold">{{ it.id }}</td>
-                <td>{{ it.name }}</td>
-                <td>
-                  <GInput v-model.number="it.qty" type="number" :disabled="!it.checked" style="width: 100px" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="form-actions">
-          <GButton variant="primary" icon="check" @click="isStationerySubmitted = true">確認請領清單</GButton>
-        </div>
-        <GAlert v-if="isStationerySubmitted" tone="success" icon="check-circle">
-          文具耗材申領清單已送交總務庫存組！預計於本週五下午配送至各部門座位。
-        </GAlert>
-      </div>
-    </GCard>
-
-    <!-- 3. 停車證登記 -->
-    <GCard v-else-if="currentSubTab === 'parking'" title="汽機車停車識別證申請與登記" icon="truck" class="glass">
-      <div class="form-grid stack">
-        <div><label class="form-label">車輛類別</label><GSelect :options="[{ label: '汽車停車證', value: 'car' }, { label: '機車停車證', value: 'motor' }]" /></div>
-        <div><label class="form-label">車牌號碼</label><GInput placeholder="例：ABC-5678" /></div>
-        <div><label class="form-label">行照所有人姓名</label><GInput placeholder="限本人、配偶或直系親屬" /></div>
-        <div><label class="form-label">廠區停車場志願</label><GSelect :options="[{ label: '湖口一廠平面停車場', value: 'p1' }, { label: '湖口二廠地下停車場', value: 'p2' }]" /></div>
-        <div class="form-actions"><GButton variant="primary" icon="send">送出車證申請</GButton></div>
-      </div>
-    </GCard>
-
-    <!-- 4. 宿舍申請 -->
-    <GCard v-else-if="currentSubTab === 'dorm'" title="員工單身宿舍床位申請" icon="home" class="glass">
-      <div class="form-grid stack">
-        <div><label class="form-label">戶籍地址</label><GInput placeholder="非新竹地區同仁優先分配" /></div>
-        <div><label class="form-label">預計入住日期</label><GInput type="date" /></div>
-        <div><label class="form-label">房型需求</label><GSelect :options="[{ label: '雙人套房', value: 'double' }, { label: '單人雅房', value: 'single' }]" /></div>
-        <div class="form-actions"><GButton variant="primary" icon="send">提出宿舍申請</GButton></div>
-      </div>
-    </GCard>
-
-    <!-- 5. 修繕報修 -->
-    <GCard v-else title="水電設施修繕與五金用品報修" icon="wrench" class="glass">
-      <div class="form-grid stack">
-        <div><label class="form-label">報修地點 / 樓層</label><GInput placeholder="例：湖口一廠 3F 資訊部茶水間" /></div>
-        <div><label class="form-label">損壞項目類別</label><GSelect :options="[{ label: '照明燈具損壞', value: 'light' }, { label: '空調冷氣異常', value: 'ac' }, { label: '給排水堵塞', value: 'pipe' }, { label: '門窗與五金修繕', value: 'door' }]" /></div>
-        <div><label class="form-label">問題現況說明</label><GInput placeholder="請描述損壞情況與緊急程度" /></div>
-        <div class="form-actions"><GButton variant="primary" icon="send">提交工務修繕單</GButton></div>
-      </div>
+  <div class="stack ga-apply">
+    <GCard v-for="s in sections" :key="s.key" :title="s.title" icon="file-check">
+      <p v-for="(l, i) in s.lines" :key="i" class="line">{{ l }}</p>
+      <img v-if="s.image" class="shot" :src="legacyDoc(s.image)" :alt="`${s.title}申請步驟`" loading="lazy" />
     </GCard>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.ga-apply {
+  --gap: 16px;
 }
-.sub-nav-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.line {
+  margin: 0 0 6px;
+  line-height: 1.6;
 }
-.sub-tab-btn {
-  padding: 8px 16px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--glass-soft);
-  color: var(--text-2);
-  font: inherit;
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  transition: all var(--dur);
-}
-.sub-tab-btn:hover {
-  background: var(--glass-hover);
-  color: var(--text);
-}
-.sub-tab-btn.active {
-  background: var(--c-primary);
-  color: var(--on-primary);
-  font-weight: 600;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
-}
-.form-label {
+.shot {
   display: block;
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  margin-bottom: 6px;
-  color: var(--text-2);
-}
-.time-range {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
+  max-width: 100%;
   margin-top: 10px;
-}
-.table-wrap {
-  overflow-x: auto;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-sm);
-}
-.data-table th,
-.data-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-}
-.data-table th {
-  font-weight: 600;
-  color: var(--text-2);
-  background: var(--glass-soft);
-  text-align: left;
-}
-.text-center {
-  text-align: center;
-}
-.mono {
-  font-family: var(--font-mono, monospace);
-}
-.font-bold {
-  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid var(--line);
 }
 </style>

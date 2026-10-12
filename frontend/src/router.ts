@@ -339,8 +339,8 @@ const appPages: RouteRecordRaw[] = [
     [
       { key: 'service', label: '總務服務項目', path: '', icon: 'list', component: () => import('./pages/resources/generalAffairs/GeneralAffairsServiceTab.vue') },
       { key: 'apply', label: '申請專區', path: 'apply', icon: 'edit', component: () => import('./pages/resources/generalAffairs/GeneralAffairsApplyTab.vue') },
-      { key: 'property', label: '個人資產明細', path: 'property', icon: 'boxes', component: () => import('./pages/resources/generalAffairs/GeneralAffairsPropertyTab.vue') },
-      { key: 'outbound', label: '外送資產明細', path: 'outbound', icon: 'send', component: () => import('./pages/resources/generalAffairs/GeneralAffairsOutboundTab.vue') },
+      { key: 'property', label: '個人資產明細', path: 'property', icon: 'boxes', requires: ['portal.api.asset.read'], component: () => import('./pages/personal/property/PropertyCurrentTab.vue') },
+      { key: 'outbound', label: '外送資產明細', path: 'outbound', icon: 'send' },
       { key: 'parking', label: '湖口廠停車資訊', path: 'parking', icon: 'compass', component: () => import('./pages/resources/generalAffairs/GeneralAffairsParkingTab.vue') },
     ],
   ),
@@ -357,7 +357,7 @@ const appPages: RouteRecordRaw[] = [
     },
     [
       { key: 'welfare', label: '團體保險', path: '', icon: 'shield', component: () => import('./pages/resources/hr/HrWelfareTab.vue') },
-      { key: 'agent', label: '主管職務代理人', path: 'agents', icon: 'users', component: () => import('./pages/resources/hr/HrAgentTab.vue') },
+      { key: 'agent', label: '主管職務代理人', path: 'agents', icon: 'users', requires: ['portal.api.hr.read'], component: () => import('./pages/resources/hr/HrAgentTab.vue') },
     ],
   ),
   page(
@@ -372,7 +372,7 @@ const appPages: RouteRecordRaw[] = [
       description: '集團內部轉調機會、開放職缺與應徵管道',
     },
     [
-      { key: 'list', label: '內部職缺', path: '', icon: 'bell', component: () => import('./pages/resources/jobOpening/JobOpeningPage.vue') },
+      { key: 'list', label: '內部職缺', path: '', icon: 'bell', requires: ['portal.api.job.read'], component: () => import('./pages/resources/jobOpening/JobOpeningPage.vue') },
     ],
   ),
   page(
@@ -418,7 +418,7 @@ const appPages: RouteRecordRaw[] = [
       description: '全體同仁簡易分機查詢與廠區緊急聯絡通報窗口',
     },
     [
-      { key: 'extension', label: '分機表', path: '', icon: 'phone', component: () => import('./pages/resources/directory/DirectoryExtensionTab.vue') },
+      { key: 'extension', label: '分機表', path: '', icon: 'phone', requires: ['portal.api.directory.read'], component: () => import('./pages/resources/directory/DirectoryExtensionTab.vue') },
       { key: 'contact', label: '聯絡窗口', path: 'contacts', icon: 'users', component: () => import('./pages/resources/directory/DirectoryContactTab.vue') },
     ],
   ),

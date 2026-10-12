@@ -102,6 +102,7 @@ giga-Portal/
 │  │  │  └─ 共通頁面:             Placeholder、MigratingPage(人事系統轉移中,composables/migrating.ts 列頁面)、NoAccess、Unavailable、Forbidden、NotFound
 │  │  ├─ ui/                      全域 UI 套件: G* 元件、icons.ts (圖示登記,含 GigaItApp 全部圖示)、styles/tokens.css (綠能 × 玻璃 / 扁平)、base.css、charts/、feedback
 │  │  └─ components.d.ts          全域元件型別
+│  ├─ public/legacy-docs/        舊入口網 166 下載的 PDF / 圖片(人資專區、總務專區;PORTAL-API-PLAN D-14,網址 /legacy-docs/…)
 │  └─ test/                       Vitest: redirect、apps、menu (含 BFF 目錄 / 名稱 / 排序)、theme、greeting、migrating (37 passed)
 ├─ deploy/
 │  ├─ gateway-rbac.yaml           測試區 / 正式區的選單目錄、menu / tab / button 代碼與角色 (首次登記;之後以 GigaItApp 選單管理為準)
@@ -113,7 +114,7 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets、bpm)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode)、migrate.ts
+   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
    ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀

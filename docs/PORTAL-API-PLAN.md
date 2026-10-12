@@ -20,6 +20,10 @@
 | D-11 | 通勤調查送出時由 portal-api 呼叫 Google Geocoding 轉經緯度(同舊系統,解析不到不能送出);金鑰為主機 2 Docker secret。與舊系統的刻意差異:GoogleAddress 用正向查詢的 formatted_address(舊系統另以經緯度反查,多一次計費);同一人 10 秒內不能重複送出、地址未變沿用既有座標 |
 | D-12 | 個人資產明細**保留 PortalSolar 的備註與照片**(資產清單本身在 TIPTOP;只列已有備註的資產) |
 | D-13 | BPM 另建唯讀帳號 `portal_bpm_ro`(只 GRANT 用到的表),測試區 191 由使用者以 sa 執行 |
+| D-14 | 行政資源的靜態內容(集團統編、人資專區、聯絡窗口、總務服務項目 / 申請專區 / 湖口廠停車)**照搬舊頁**(改內容要改程式,同舊系統);舊站 166 的 30 個 PDF / 圖片經使用者同意下載到 `frontend/public/legacy-docs/`(網址 `/legacy-docs/…`,`/docs` 為 Gateway 保留路徑),不需登入可讀(同舊站);**含人員姓名的主管職務代理人名單例外**,放 `backend/assets/hr/` 經 portal-api 驗證後下載(`GET /hr/manager-agents`);Gateway 送 X-Frame-Options DENY,PDF 以新分頁開啟;舊頁已隱藏的「宿舍」說明不搬 |
+| D-15 | 內部職缺**不寄信**(應徵 / 推薦請洽人資);維護由舊系統寫死的兩個工號改為按鈕權限 `portal.job.edit`(角色 portal-editor) |
+| D-16 | 總務專區「個人資產明細」沿用個人資產備註;「外送資產明細」(TIPTOP)系統轉移中 |
+| D-17 | 分機表更新本人分機**不寄**「人員分機異動通知」給總機(舊系統會寄);異動仍記錄於 NotesPhoneTemp;分機表不回傳 Email |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -113,7 +117,15 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 
 ### P2 行政資源
 
-總務專區(資產相關 Tab 轉移中;`welfare_s` 等 220 資料實作)、人資專區、內部職缺(`EnlistTB`)、問卷調查(`QAAnnual*`,寫入)、新人導覽(`NewPepR`、`HRNewPtest`,寫入)、分機表 / 聯絡窗口(`NotesPhone`,寫入)、集團統編。
+| 頁面 | 資料來源 | 處理 |
+| --- | --- | --- |
+| 集團統編、人資專區(團險 / 主管職務代理人)、聯絡窗口 | 舊頁靜態內容 + 166 文件 | **P2-1 完成**(D-14) |
+| 總務專區 | 服務項目 / 申請專區 / 停車:靜態;個人資產:PersonalPropertyInfo 備註;外送資產:TIPTOP | **P2-1 完成**(D-14、D-16) |
+| 分機表 | PortalSolar `NotesPhone`(查詢)、`NotesPhoneTemp`(異動紀錄) | **P2-1 完成**:`GET /directory`、`PUT /directory/me/phone` |
+| 內部職缺 | PortalSolar `EnlistTB`(2023-06 後無開放職缺) | **P2-1 完成**(D-15):`/jobs` CRUD |
+| 問卷調查 | PortalSolar `QAAnnual*`(寫入) | P2-2 |
+| 新人導覽 | PortalSolar `NewPepR`、`HRNewPtest`(寫入) | P2-2 |
+
 
 ### P3 集團與公告 + 首頁
 

@@ -26,6 +26,7 @@ export const MIGRATING_TABS: readonly string[] = [
   'portal.profile.tax-dependents', // 所得稅扶養眷屬異動
   'portal.profile.insurance-bracket', // 勞健保/勞退級距
   'portal.asset.transfer', // 資產移轉歷程(D-12)
+  'portal.ga.outbound', // 總務專區 外送資產明細(TIPTOP)
 ];
 
 export const MIGRATING_TEXT = '系統轉移中';

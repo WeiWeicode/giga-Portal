@@ -14,6 +14,8 @@ import { GoogleGeocoder } from './modules/geocode.js';
 import { DrizzleNoteRepo } from './modules/notes/drizzle-repo.js';
 import { NoteService } from './modules/notes/notes.js';
 import { MssqlAssetNoteRepo } from './routes/assets.js';
+import { MssqlDirectoryRepo } from './routes/directory.js';
+import { MssqlJobRepo } from './routes/jobs.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -55,6 +57,8 @@ const app = await buildApp({
   notes: new NoteService(new DrizzleNoteRepo(createDb(pool, config.gateway.gwEnv !== 'prod'))),
   assets: new MssqlAssetNoteRepo(pool, config.sources),
   bpm: bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl) : null,
+  directory: new MssqlDirectoryRepo(pool, config.sources),
+  jobs: new MssqlJobRepo(pool, config.sources),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
