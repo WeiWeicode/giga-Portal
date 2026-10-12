@@ -9,6 +9,8 @@
  *   PORTAL_SRC_MODE   copy(複本 src_*)/ legacy(220 原庫);預設 dev / test 為 copy、prod 為 legacy,prod 不可設 copy
  *   PORTAL_SRC_<KEY>  個別來源覆寫「資料庫.schema」(db/sources.ts)
  *   GOOGLE_MAPS_API_KEY(_FILE)  選用:通勤調查地址轉經緯度(Google Geocoding);未設定時通勤調查不能送出(503)
+ *   BPM_DB_HOST / _PORT / _NAME / _USER / _PASSWORD(_FILE)  選用:BPM NaNa 唯讀(portal_bpm_ro;測試區 191、正式區 190);未設定時 /bpm/* 回 503
+ *   BPM_WEB_URL       BPM 網站位址(深連結;與 BPM_DB_HOST 同一台,例 http://10.10.130.191:8080),設定 BPM_DB_HOST 時必填
  *   DEV_SKIP_TOKEN    dev 專用:不驗證 X-Internal-Token(本機直連);非 dev 設定即啟動失敗
  */
 import { readFileSync } from 'node:fs';
@@ -34,6 +36,8 @@ export interface Config {
   sources: Sources;
   /** null = 未設定,通勤調查不能送出 */
   googleMapsApiKey: string | null;
+  /** null = 未設定 BPM 資料來源 */
+  bpm: { sql: SqlConfig; webUrl: string } | null;
   devSkipToken: boolean;
 }
 
@@ -61,6 +65,34 @@ export function required<T>(name: string, v: T | undefined | null | ''): T {
 }
 
 const flag = (v: string | undefined) => v === '1' || v === 'true';
+
+/** BPM NaNa(選用);BPM_DB_HOST 空白視為未設定 */
+function bpmConfig(env: NodeJS.ProcessEnv, strictFile: boolean): Config['bpm'] {
+  const host = env.BPM_DB_HOST?.trim();
+  if (!host) return null;
+  const raw = required('BPM_WEB_URL', env.BPM_WEB_URL?.trim());
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new ConfigError(`BPM_WEB_URL 格式錯誤:${raw}`);
+  }
+  if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.pathname !== '/' || u.search || u.hash)
+    throw new ConfigError(`BPM_WEB_URL 必須為 http(s)://主機[:port],不含帳密與路徑:${raw}`);
+  const webUrl = u.origin;
+  const port = Number(env.BPM_DB_PORT ?? 1433);
+  if (!Number.isInteger(port) || port <= 0) throw new ConfigError(`BPM_DB_PORT 必須為正整數:${env.BPM_DB_PORT}`);
+  return {
+    webUrl,
+    sql: {
+      server: host,
+      port,
+      database: env.BPM_DB_NAME || 'NaNa',
+      user: required('BPM_DB_USER', env.BPM_DB_USER),
+      password: required('BPM_DB_PASSWORD(或 BPM_DB_PASSWORD_FILE)', secret(env, 'BPM_DB_PASSWORD', strictFile)),
+    },
+  };
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): Config {
   const gateway = loadGatewayEnv(env, cwd);
@@ -105,6 +137,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     sourceMode: mode,
     sources,
     googleMapsApiKey: secret(env, 'GOOGLE_MAPS_API_KEY', !isDev) ?? null,
+    bpm: bpmConfig(env, !isDev),
     devSkipToken,
   };
 }

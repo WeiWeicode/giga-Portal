@@ -8,6 +8,8 @@ import { createDb, openPool, probeSources } from './db/client.js';
 import { CommuteService } from './modules/commute/commute.js';
 import { MssqlCommuteRepo } from './modules/commute/repo.js';
 import { MssqlCourseRepo } from './modules/courses/repo.js';
+import { BpmService } from './modules/bpm/bpm.js';
+import { NanaBpmRepo } from './modules/bpm/nana-repo.js';
 import { GoogleGeocoder } from './modules/geocode.js';
 import { DrizzleNoteRepo } from './modules/notes/drizzle-repo.js';
 import { NoteService } from './modules/notes/notes.js';
@@ -42,6 +44,8 @@ async function checks(): Promise<Check[]> {
   return [sql, ...sources];
 }
 
+// BPM NaNa 連線延遲到第一次查詢,連不上不影響啟動
+const bpmRepo = config.bpm ? new NanaBpmRepo(config.bpm.sql) : null;
 const geocoder = config.googleMapsApiKey ? new GoogleGeocoder(config.googleMapsApiKey) : null;
 const app = await buildApp({
   config,
@@ -50,6 +54,7 @@ const app = await buildApp({
   // 測試區開啟 SQL 2012 語法檢查(正式區不檢查,避免額外負擔)
   notes: new NoteService(new DrizzleNoteRepo(createDb(pool, config.gateway.gwEnv !== 'prod'))),
   assets: new MssqlAssetNoteRepo(pool, config.sources),
+  bpm: bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl) : null,
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
@@ -68,6 +73,7 @@ app.log.info(
     sourceMode: config.sourceMode,
     monitor: config.monitor.enabled,
     geocode: geocoder !== null,
+    bpm: config.bpm?.sql.server ?? null,
   },
   '服務已啟動',
 );
@@ -77,6 +83,6 @@ for (const signal of ['SIGINT', 'SIGTERM'])
     // close 會一併送出監控緩衝(最多等 3 秒)
     void app
       .close()
-      .then(() => pool.close())
+      .then(() => Promise.all([pool.close(), bpmRepo?.close()]))
       .then(() => process.exit(0));
   });

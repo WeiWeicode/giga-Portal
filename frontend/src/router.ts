@@ -226,8 +226,8 @@ const appPages: RouteRecordRaw[] = [
       description: 'EasyFlow BPM 流程表單待簽核單據與未結案追蹤清單',
     },
     [
-      { key: 'pending', label: '待簽核', path: '', icon: 'inbox', component: () => import('./pages/personal/efInfo/EfPendingTab.vue') },
-      { key: 'unclosed', label: '未結案', path: 'unclosed', icon: 'clock', component: () => import('./pages/personal/efInfo/EfUnclosedTab.vue') },
+      { key: 'pending', label: '待簽核', path: '', icon: 'inbox', requires: ['portal.api.bpm.read'], component: () => import('./pages/personal/efInfo/EfPendingTab.vue') },
+      { key: 'unclosed', label: '未結案', path: 'unclosed', icon: 'clock', requires: ['portal.api.bpm.read'], component: () => import('./pages/personal/efInfo/EfUnclosedTab.vue') },
     ],
   ),
   page(

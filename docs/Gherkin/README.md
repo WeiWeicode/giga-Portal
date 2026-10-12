@@ -22,6 +22,7 @@
 | `personal/courses.feature` | 年度必上課程(照舊規則) | PORTAL-API-PLAN D-9 | P1 |
 | `personal/notes.feature` | 個人提醒(portal.personal_note) | PORTAL-API-PLAN P1-2 | P1 |
 | `personal/assets.feature` | 個人資產明細(備註) | PORTAL-API-PLAN D-12 | P1 |
+| `personal/bpm.feature` | BPM 簽核資訊(待簽核 / 未結案) | PORTAL-API-PLAN §3.3、D-13 | P1 |
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |
 | `home/approval.feature` | 待我簽核:核准 / 退回、權限 | §6.4 FR-4.5 | M4 / M5 |

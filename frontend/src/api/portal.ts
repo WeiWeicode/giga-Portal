@@ -93,3 +93,40 @@ export interface AssetNote {
 }
 /** 個人資產備註(舊入口網填寫的 PortalSolar PersonalPropertyInfo;資產清單在 TIPTOP 轉移中) */
 export const assetNotes = () => http.get<{ items: AssetNote[] }>('/api/portal/assets/notes');
+
+export interface BpmPending {
+  total: number;
+  abnormal: number;
+  hasAccount: boolean;
+  truncated: boolean;
+  items: {
+    workItemName: string | null;
+    subject: string | null;
+    processName: string | null;
+    serialNumber: string | null;
+    processState: string;
+    abnormal: boolean;
+    createdAt: string | null;
+    performUrl: string | null;
+    traceUrl: string | null;
+  }[];
+}
+export interface BpmRequested {
+  total: number;
+  page: number;
+  pageSize: number;
+  hasAccount: boolean;
+  items: {
+    serialNumber: string | null;
+    processName: string | null;
+    subject: string | null;
+    processState: string;
+    currentActivities: string[];
+    createdAt: string | null;
+    traceUrl: string | null;
+  }[];
+}
+
+/** BPM 待簽核 / 我申請的未結案(NaNa 唯讀;連結開啟 BPM 原畫面) */
+export const bpmPending = () => http.get<BpmPending>('/api/portal/bpm/pending');
+export const bpmRequested = (page = 1, pageSize = 20) => http.get<BpmRequested>(`/api/portal/bpm/requested?page=${page}&pageSize=${pageSize}`);

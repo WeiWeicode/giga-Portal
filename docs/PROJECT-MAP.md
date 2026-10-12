@@ -113,9 +113,9 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets)、modules/(courses、commute、notes、geocode)、migrate.ts
+   │                              routes/(me、courses、commute、notes、assets、bpm)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
-   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*(使用者以 sa 執行)
+   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
    └─ Dockerfile、.env.example
 ```

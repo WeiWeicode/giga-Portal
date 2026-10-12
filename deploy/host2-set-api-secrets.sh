@@ -5,7 +5,8 @@
 #   /srv/giganexus/portal-secrets/   portal_db_password(portal_app,隱藏輸入)、
 #                                    gw_api_key(Gateway CLI client:create --code portal-api;自動註冊 OpenAPI 草稿用)、
 #                                    monitor_api_key(giga-observe ingest Key,服務 portal-api)、
-#                                    google_maps_api_key(通勤調查地址轉經緯度,隱藏輸入;可留空,留空則通勤調查不能送出)
+#                                    google_maps_api_key(通勤調查地址轉經緯度,隱藏輸入;可留空,留空則通勤調查不能送出)、
+#                                    bpm_db_password(BPM 191 唯讀帳號 portal_bpm_ro,隱藏輸入;可留空,留空則 BPM 簽核資訊不可用)
 #   /srv/giganexus/deploy/portal.env 補上 portal-api 的 Compose 變數(既有的 SPA 變數保留;範本 test.env.example)
 set -eu
 # 暫存檔(含 Key)只有本人可讀,結束或中斷時刪除;中斷輸入密碼時恢復終端機回顯
@@ -53,6 +54,13 @@ if [ ! -f "$D/google_maps_api_key" ]; then
   printf '%s' "$k" > "$D/google_maps_api_key"; unset k
 fi
 
+# ---------- BPM 唯讀帳號 portal_bpm_ro(191;backend/db/dba/03-create-bpm-readonly.sql) ----------
+if [ ! -f "$D/bpm_db_password" ]; then
+  stty -echo; printf 'portal_bpm_ro 密碼(BPM 191,可留空):'; read -r b; stty echo; echo
+  printf '%s' "$b" > "$D/bpm_db_password"
+  unset b
+fi
+
 # 只限縮檔案(目錄需讓 CI 的 docker compose 讀得到 secret 路徑)
 chown 1000:1000 "$D"/*; chmod 400 "$D"/*
 
@@ -66,6 +74,10 @@ add PORTAL_DB_HOST 10.10.130.220
 add PORTAL_DB_NAME giganexus_gw_test
 add PORTAL_DB_USER portal_app
 add PORTAL_SECRETS_DIR "$D"
+if [ -s "$D/bpm_db_password" ]; then
+  add BPM_DB_HOST 10.10.130.191
+  add BPM_WEB_URL http://10.10.130.191:8080
+fi
 
 ls -l "$D"
 echo "完成。之後推 develop 由 CI 部署 portal-api;部署後在 GigaItApp「服務與路由」審查 portal-api 的路由草稿並發佈。"

@@ -12,12 +12,14 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { Config } from './config.js';
 import { AppError } from './errors.js';
 import { swaggerOptions } from './openapi.js';
+import type { BpmService } from './modules/bpm/bpm.js';
 import type { CommuteService } from './modules/commute/commute.js';
 import type { CourseRepo } from './modules/courses/repo.js';
 import type { NoteService } from './modules/notes/notes.js';
 import { assetRoutes, type AssetNoteRepo } from './routes/assets.js';
 import { commuteRoutes } from './routes/commute.js';
 import { courseRoutes } from './routes/courses.js';
+import { bpmRoutes } from './routes/bpm.js';
 import { meRoutes } from './routes/me.js';
 import { noteRoutes } from './routes/notes.js';
 
@@ -44,6 +46,7 @@ export interface AppOptions {
   commute?: CommuteService | null;
   notes?: NoteService | null;
   assets?: AssetNoteRepo | null;
+  bpm?: BpmService | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -117,5 +120,6 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(commuteRoutes(opts.commute ?? null));
   await app.register(noteRoutes(opts.notes ?? null));
   await app.register(assetRoutes(opts.assets ?? null));
+  await app.register(bpmRoutes(opts.bpm ?? null));
   return app;
 }

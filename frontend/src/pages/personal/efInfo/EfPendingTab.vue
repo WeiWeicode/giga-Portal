@@ -1,126 +1,91 @@
 <script setup lang="ts">
 /**
- * BPM 簽核資訊 - 待簽核分頁 (對齊 old_PortalSolar EFInfo.aspx Tab1)
+ * BPM 簽核資訊 - 待簽核(old_PortalSolar EFInfo.aspx Tab1;docs/Gherkin/personal/bpm.feature)
+ * 資料:GET /api/portal/bpm/pending(NaNa 唯讀);「簽核」「追蹤」以新視窗開啟 BPM 原畫面(入口網不代簽)。
  */
-import { ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard } from '@/ui';
+import { describeError } from '@/api/gateway';
+import { bpmPending } from '@/api/portal';
+import { useAsync } from '@/composables/useAsync';
 
-interface BpmItem {
-  id: string;
-  company: string;
-  unit: string;
-  formName: string;
-  subject: string;
-  createTime: string;
-  currentStep: string;
-  stepUser: string;
-  status: string;
-  link: string;
+const { data, loading, error, reload } = useAsync(() => bpmPending());
+const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '—');
+/** 只開 http(s) 連結(縱深防禦;後端已限制 BPM_WEB_URL) */
+function open(url: string | null) {
+  if (!url) return;
+  try {
+    if (['http:', 'https:'].includes(new URL(url).protocol)) window.open(url, '_blank', 'noopener');
+  } catch {
+    /* 格式錯誤的網址不開 */
+  }
 }
-
-const pendingList: BpmItem[] = [
-  {
-    id: 'BPM-20261001-0023',
-    company: '碩禾電子材料',
-    unit: 'V1420 資訊服務部',
-    formName: '請假申請單',
-    subject: '同仁事假 8 小時申請 (出差後補休折抵)',
-    createTime: '2026/10/01 14:20',
-    currentStep: '部門主管審核',
-    stepUser: '蔣佳緯 (V112001)',
-    status: '簽核中',
-    link: 'http://10.10.130.190:9090/NaNaWeb/',
-  },
-  {
-    id: 'BPM-20260930-0081',
-    company: '碩禾電子材料',
-    unit: 'V1210 廠務工程部',
-    formName: '公務車預約借用單',
-    subject: '公務車預約：湖口至桃園觀音廠公務視察',
-    createTime: '2026/09/30 09:15',
-    currentStep: '主管核決',
-    stepUser: '蔣佳緯 (V112001)',
-    status: '簽核中',
-    link: 'http://10.10.130.190:9090/NaNaWeb/',
-  },
-  {
-    id: 'BPM-20260928-0105',
-    company: '國碩科技',
-    unit: 'G1100 總管理處',
-    formName: '電子簽核工作聯繫單',
-    subject: '集團單一入口網 GigaNexus 測試環境切換會簽',
-    createTime: '2026/09/28 16:40',
-    currentStep: '協同會簽',
-    stepUser: '蔣佳緯 (V112001)',
-    status: '簽核中',
-    link: 'http://10.10.130.190:9090/NaNaWeb/',
-  },
-];
 </script>
 
 <template>
-  <div class="ef-pending-tab stack">
-    <GCard title="待我簽核表單清單" icon="inbox" class="glass">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>流程編號 / 提出時間</th>
-              <th>公司 / 提出單位</th>
-              <th>表單名稱與主旨</th>
-              <th>當前關卡 / 審核人</th>
-              <th>狀態</th>
-              <th class="text-center">簽核入口</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in pendingList" :key="item.id">
-              <td>
-                <div class="mono font-bold">{{ item.id }}</div>
-                <div class="small faint mono">{{ item.createTime }}</div>
-              </td>
-              <td>
-                <div>{{ item.company }}</div>
-                <div class="small faint">{{ item.unit }}</div>
-              </td>
-              <td>
-                <strong>{{ item.formName }}</strong>
-                <div class="small text-secondary">{{ item.subject }}</div>
-              </td>
-              <td>
-                <div><GBadge tone="storage">{{ item.currentStep }}</GBadge></div>
-                <div class="small faint">{{ item.stepUser }}</div>
-              </td>
-              <td><GBadge tone="primary">{{ item.status }}</GBadge></td>
-              <td class="text-center">
-                <GButton
-                  as="a"
-                  :href="item.link"
-                  target="_blank"
-                  variant="primary"
-                  size="sm"
-                  icon="external"
-                >
-                  前往簽核
-                </GButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="stack bpm-tab">
+    <GCard v-if="loading && !data"><GEmpty icon="clock" title="載入中…" /></GCard>
+    <GCard v-else-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得 BPM 待簽核" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
     </GCard>
-
-    <GAlert tone="neutral" icon="info">
-      本資料即時連線集團 BPM (NaNaWeb / EasyFlow) 簽核引擎。點擊「前往簽核」將於新分頁開啟 BPM 批核介面。
-    </GAlert>
+    <GCard v-else-if="data && !data.hasAccount">
+      <GEmpty icon="user-x" title="BPM 沒有您的帳號" description="以工號在 BPM 找不到帳號,請洽資訊單位。" />
+    </GCard>
+    <template v-else-if="data">
+      <div class="row head">
+        <GBadge tone="storage" icon="inbox">待簽核 {{ data.total }} 筆</GBadge>
+        <GBadge v-if="data.abnormal" tone="danger" icon="alert-triangle">異常關卡 {{ data.abnormal }} 筆</GBadge>
+        <GButton variant="ghost" size="sm" icon="refresh" :loading="loading" @click="reload">重新整理</GButton>
+      </div>
+      <GAlert v-if="data.truncated" tone="info" icon="info">待簽核超過 500 筆,只顯示最新的 500 筆;其餘請至 BPM 查看。</GAlert>
+      <GCard v-if="!data.items.length"><GEmpty icon="check-circle" title="沒有待簽核的單據" /></GCard>
+      <GCard v-else>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>單號</th>
+                <th>流程</th>
+                <th>主旨</th>
+                <th>目前關卡</th>
+                <th>派送時間</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(i, k) in data.items" :key="k" :class="{ bad: i.abnormal }">
+                <td class="mono">{{ i.serialNumber ?? '—' }}</td>
+                <td>{{ i.processName ?? '—' }}</td>
+                <td class="subject">{{ i.subject ?? '—' }}</td>
+                <td>
+                  {{ i.workItemName ?? '—' }}
+                  <GBadge v-if="i.abnormal" tone="danger">異常</GBadge>
+                </td>
+                <td class="mono small">{{ fmt(i.createdAt) }}</td>
+                <td class="acts">
+                  <GButton v-if="i.performUrl" variant="primary" size="sm" icon="external" @click="open(i.performUrl)">簽核</GButton>
+                  <GButton v-if="i.traceUrl" variant="ghost" size="sm" icon="eye" @click="open(i.traceUrl)">追蹤</GButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </GCard>
+      <GAlert v-if="data.abnormal" tone="warning" icon="alert-triangle">
+        標示「異常」的關卡卡在流程中、BPM 不計入待辦,無法從這裡簽核;請以「追蹤」查看並洽流程管理員。
+      </GAlert>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.bpm-tab {
+  --gap: 16px;
+}
+.head {
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 .table-wrap {
   overflow-x: auto;
@@ -132,25 +97,30 @@ const pendingList: BpmItem[] = [
 }
 .data-table th,
 .data-table td {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
 }
 .data-table th {
   font-weight: 600;
   color: var(--text-2);
   background: var(--glass-soft);
-  text-align: left;
 }
-.text-center {
-  text-align: center;
+.data-table tr.bad td {
+  background: color-mix(in srgb, var(--c-danger, #e11d48) 6%, transparent);
+}
+.subject {
+  min-width: 220px;
+  overflow-wrap: anywhere;
+}
+.acts {
+  white-space: nowrap;
 }
 .mono {
   font-family: var(--font-mono, monospace);
 }
-.font-bold {
-  font-weight: 700;
-}
-.text-secondary {
-  color: var(--text-2);
+.small {
+  font-size: var(--fs-xs, 12px);
 }
 </style>

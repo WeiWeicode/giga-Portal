@@ -56,8 +56,8 @@ permissions:
   - { code: portal.abnormal-respond.read, name: 出勤時數異常回報, kind: menu, parent: portal.group.personal, sort: 41 }
   - { code: portal.abnormal-respond.report, name: 異常回報, kind: tab, parent: portal.abnormal-respond.read, sort: 10 }
   - { code: portal.ef-info.read, name: BPM 簽核資訊, kind: menu, parent: portal.group.personal, sort: 41 }
-  - { code: portal.ef-info.pending, name: 待簽核, kind: tab, parent: portal.ef-info.read, sort: 10 }
-  - { code: portal.ef-info.unclosed, name: 未結案, kind: tab, parent: portal.ef-info.read, sort: 20 }
+  - { code: portal.ef-info.pending, name: 待簽核, kind: tab, parent: portal.ef-info.read, sort: 10, includes: [portal.api.bpm.read] }
+  - { code: portal.ef-info.unclosed, name: 未結案, kind: tab, parent: portal.ef-info.read, sort: 20, includes: [portal.api.bpm.read] }
   - { code: portal.asset.read, name: 個人資產明細, kind: menu, parent: portal.group.personal, sort: 43 }
   - { code: portal.asset.current, name: 保管資產清冊, kind: tab, parent: portal.asset.read, sort: 10, includes: [portal.api.asset.read] }
   - { code: portal.asset.transfer, name: 資產移轉歷程, kind: tab, parent: portal.asset.read, sort: 20 }

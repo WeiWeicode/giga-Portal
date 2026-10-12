@@ -10,7 +10,7 @@
 #   網路:加入 Gateway 的 Docker 網路(GW_NETWORK),別名 portal-api → BFF 以 http://portal-api:51271 轉入 /api/portal/*
 #   機密(PORTAL_SECRETS_DIR,uid 1000 可讀;deploy/host2-set-api-secrets.sh 產生):
 #     portal_db_password(portal_app)、gw_api_key(Gateway CLI client:create --code portal-api)、monitor_api_key(giga-observe 服務 portal-api)、
-#     google_maps_api_key(通勤調查;可為空白)
+#     google_maps_api_key(通勤調查;可為空白)、bpm_db_password(portal_bpm_ro;可為空白)
 name: giganexus-portal
 
 services:
@@ -52,10 +52,17 @@ services:
       PORTAL_SRC_MODE: ${PORTAL_SRC_MODE:-}
       # 通勤調查地址轉經緯度(Google Geocoding);檔案空白時通勤調查不能送出
       GOOGLE_MAPS_API_KEY_FILE: /run/secrets/google_maps_api_key
+      # BPM 簽核資訊(NaNa 唯讀 portal_bpm_ro;測試區 191、正式區 190);BPM_DB_HOST 空白則 /bpm/* 回 503
+      BPM_DB_HOST: ${BPM_DB_HOST:-}
+      BPM_DB_PORT: ${BPM_DB_PORT:-1433}
+      BPM_DB_NAME: ${BPM_DB_NAME:-NaNa}
+      BPM_DB_USER: ${BPM_DB_USER:-portal_bpm_ro}
+      BPM_DB_PASSWORD_FILE: /run/secrets/bpm_db_password
+      BPM_WEB_URL: ${BPM_WEB_URL:-}
       MONITOR_URL: ${MONITOR_URL:-http://observe-api:51202}
       MONITOR_API_KEY_FILE: /run/secrets/monitor_api_key
       RELEASE_SHA: ${RELEASE_SHA:-dev}
-    secrets: [gw_api_key, portal_db_password, monitor_api_key, google_maps_api_key]
+    secrets: [gw_api_key, portal_db_password, monitor_api_key, google_maps_api_key, bpm_db_password]
     networks:
       gateway:
         aliases: [portal-api]
@@ -72,6 +79,8 @@ secrets:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/monitor_api_key
   google_maps_api_key:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/google_maps_api_key
+  bpm_db_password:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/bpm_db_password
 
 networks:
   gateway:

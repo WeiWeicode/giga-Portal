@@ -104,7 +104,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | 頁面 | 資料來源 | 處理 |
 | --- | --- | --- |
 | 個人提醒 | `portal.personal_note`(新表,Drizzle migration) | **P1-2 完成**(`/notes` CRUD;舊 PCalendar 自 2021 未使用,不沿用) |
-| BPM 簽核資訊 | NaNa(191 / 190) | P1-3 實作(唯讀,§3.3;D-13 帳號) |
+| BPM 簽核資訊 | NaNa(191 / 190) | **P1-3 完成**:`GET /bpm/pending`(待簽核,LocalToDoWorkItem 狀態 0/1,97 標示異常)、`GET /bpm/requested`(我申請的未結案,分頁);深連結開 BPM 原畫面;帳號 `portal_bpm_ro`(`backend/db/dba/03-create-bpm-readonly.sql`) |
 | 郵件審核資訊 | `ReleasemailDB`(經連結伺服器 `RMailDB`) | **退場**(Q-D9,P1-2):前端路由、Portal 與 GigaItApp 的 yaml 已移除;測試區代碼以 `deploy/sql/2026-10-12-portal-release-mail-remove.sql` 刪除 |
 | 年度必上課程 | LOS `EmployeeInfo`、`Safety` 名單、LearnDB 完訓紀錄 | **P1-1 完成**(D-9;`GET /courses/required`) |
 | 個人基本資料 | TIPTOP `cpf_file` + PortalSolar `CpfExInfo` | **P1-1 完成**:通勤調查(`GET / PUT /commute`,D-10 / D-11);其餘 5 個 Tab 系統轉移中 |
@@ -154,5 +154,8 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | Q-D8 | 舊庫觸發程序是否有寫入副作用 | ✅ 只有 `PortalSolar.dbo.TEST` 有觸發程序,不影響;預存程序不複製,用到時改寫 |
 | Q12 | 薪資類二次驗證 | 依 D-1 暫緩(薪資頁轉移中) |
 | Q15 | 舊系統未對應頁面 | ✅ D-8:有 URL、不在選單(P7) |
+| Q-D11 | BPM「未結案」定義(我申請且 ProcessInstance.currentState = 1)尚未與舊 LOS 預存程序 `SP_EFInfoUnProcess_ByCreateUserID_Solar` 比對(SP 本體不在 repo) | 191 帳號建立後,對同一人比對 SP 與新查詢筆數 |
+| Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | 待確認 |
+| Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方;目前以逐字元比對 + 在職唯一降低風險,是否再依公司限定只查碩禾系 | 待決 |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
 | Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 / P5 前確認 |
