@@ -2,6 +2,11 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-10-12 框架對齊測試區驗收、收尾文件
+- 內容:使用者執行 `deploy/sql/2026-10-12-portal-menu-realign.sql` 後,以 S112009(employee / gw-super-admin / it-admin)在測試區驗收:入口網大項 7、menu 44(全部在 `portal.group.*` 下)、tab 76、已移除代碼消失;首頁大項為直接連結;主管專區 11 頁可見、「主管權限說明」Tab 與麵包屑正確;首頁兩欄卡片、最新公告即時連線;giga-observe `portal-web` 健康。新增交接文件 `docs/HANDOFF.md`(下一階段 portal-api);FRAMEWORK-PLAN 標示完成並記錄驗收結果;PRD 記錄目前控管範圍(只到選單 / Tab,API 層待 portal-api)
+- 檔案:`docs/HANDOFF.md`(新增)、`docs/FRAMEWORK-PLAN.md`、`docs/PRD.md`、`docs/PROJECT-MAP.md`、`AGENT.md`
+- 驗證:瀏覽器(測試區,已登入的瀏覽器面板)讀取 `/api/auth/me` 與畫面;`/api/observe/topology` 的 `portal-web` 節點
+
 ## 2026-10-12 首頁版面對齊舊入口網、首頁大項不摺疊、舊選單代碼整理 SQL
 - 內容:需求方驗收回饋。① 側欄「首頁」大項直接是連結,不再摺疊出「入口網首頁」(BFF 頁名與大項名稱不同時也成立,`AppLayout.vue isDirect`)。② 首頁移除「功能導覽」,版面改依 `old_PortalSolar/MainFormX.aspx`:問候橫幅 + 兩欄卡片(待辦事項、個人秘書、最新公告、公告輪播、集團動態);除最新公告(BFF 通知中心)外標示「待串接」,不放假資料。③ `deploy/sql/2026-10-12-portal-menu-realign.sql`:測試區 2026-10-12 前登記的 37 個代碼改為 yaml 的名稱 / 上層(`portal.group.*`)/ 排序,刪除已移除的 10 個代碼(`portal.leave.*`、`portal.attendance.read / punch`、`portal.resource.*`、舊 `bpm.approval.*` 畫面權限),寫 audit_log、遞增權限版本;由使用者以測試區 DB 帳號執行
 - 檔案:`frontend/src/layouts/AppLayout.vue`、`frontend/src/pages/home/Home.vue`、`deploy/sql/2026-10-12-portal-menu-realign.sql`、`docs/PROJECT-MAP.md`

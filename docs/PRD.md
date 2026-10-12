@@ -17,7 +17,7 @@
 | 上位規範 | Gateway PRD **v0.7**(§7.2.1 子路徑、§8.2 登入、§8.3.1 指派規則、§8.3.2 UI 權限分類、§8.3.3 應用登記與切換、§8.7 管理 API)、DATABASE §3.2、FRONTEND-GUIDE v0.2(§7 登入與權限、§7.4 應用切換、§7.5 選單 / Tab / 按鈕)、BACKEND-GUIDE v0.4(§3.3 port 51271、§4 內部 Token、§6.1 `x-permissions`、§7.5 自動註冊);跨專案規則見 Gateway `AGENT.md` §10 |
 | 相關文件 | [ARCHITECTURE.md](ARCHITECTURE.md)、[API.md](API.md)、[UI-GUIDE.md](UI-GUIDE.md)、[PROJECT-MAP.md](PROJECT-MAP.md)、[Gherkin/](Gherkin/README.md)、[../AGENT.md](../AGENT.md) |
 | 相關專案 | `../giga-api-gateway-bff/`(登入、RBAC、路由)、`../GigaItApp/`(權限設定畫面;本案同時修改,見 §9) |
-| 狀態 | 草案:架構與權限模型已定(§1.2);Gateway 規格已改版為 v0.7(尚未實作);**M1 前端框架已完成並發佈到本機 Nginx**(進度見 §11),portal-api 自 M4;待決事項見 §12 |
+| 狀態 | 草案:架構與權限模型已定(§1.2);**前端框架已上測試區並與 GigaItApp 對齊**(進度見 §11、`FRAMEWORK-PLAN.md`);下一階段 portal-api(`HANDOFF.md` §2);待決事項見 §12 |
 
 ### 1.1 修訂紀錄
 
@@ -220,7 +220,9 @@ flowchart LR
 | ESH | 證照管理 / 項目 / 需求 / 人員 / 管理員 | `portal.esh.{license,item,need,personal,manager}.read` | **portal-esh-admin** |
 | | 危害性化學品清單 | `portal.esh.chemical.read` | employee |
 
-IT 管理系統管理員(`it-admin`,GigaItApp)可查看全部 menu 與 Tab(不含按鈕),供 IT 協助排查。已移除:`portal.leave.*`、`portal.attendance.read`、`portal.attendance.punch`、`portal.resource.read`、`portal.resource.edit`(隱藏的 M1 頁)。
+IT 管理系統管理員(`it-admin`,GigaItApp)可查看全部 menu 與 Tab(不含按鈕),供 IT 協助排查。
+
+**目前控管範圍(2026-10-12)**:只到選單 / Tab(前端隱藏 + 路由守衛 403,權限由 BFF 計算);各頁為 mock、尚無 API,**API 層權限與資料層級過濾於 portal-api / 各系統 API 串接時補上**。`portal-esh-admin`、`portal-manager` 目前沒有成員:ESH 證照管理員對應舊系統 `LicenseManagerInfo`,主管以 Gateway 指派規則(職級)設定,由 IT 在 GigaItApp 指派。已移除:`portal.leave.*`、`portal.attendance.read`、`portal.attendance.punch`、`portal.resource.read`、`portal.resource.edit`(隱藏的 M1 頁)。
 
 ### 6.6 網頁框架與 UI(風格)
 
@@ -354,7 +356,7 @@ flowchart LR
 | --- | --- |
 | M1 | 前端框架完成並發佈到 Nginx(測試區)(`deploy/docker-compose.yml` 的 `spa-portal`):登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、403 / 無權限頁、應用切換、玻璃 / 扁平 × 明亮 / 黑暗。**暫時做法**:應用清單依 `*.app.access` 推導(待 G3);本機權限代碼暫存 `deploy/gateway-dev-rbac.yaml`(待 G2 與 portal-api)。註冊、忘記 / 重設密碼頁待 Gateway 實作 `/api/auth/register`、`/password/forgot`、`/password/reset` |
 | M3 | **2026-10-02 GigaItApp 實作 I1–I4**(單一入口、`it.*` 權限登記 BFF、應用層守衛、應用權限樹 × 角色 / 指派規則 / 試算),本機經測試區 Gateway 驗證;G5:`itapp-api` 上游與 `/api/it/*` 路由已登記(草稿),待 CI 部署後發佈,Nginx `/it/api/` 直通過渡期保留 |
-| 框架對齊 | **2026-10-12**(`FRAMEWORK-PLAN.md` P1–P3):web-kit 改 npm Registry;選單目錄 / 名稱以 BFF 為準;Tab 權限;一頁一碼;`it-admin` 可查看入口網;通知鈴鐺、公告對話框與首頁最新公告(`/ws/notify?app=portal`) |
+| 框架對齊 | **2026-10-12 完成並通過測試區驗收**(`FRAMEWORK-PLAN.md` P1–P4):web-kit 改 npm Registry;選單目錄 / 名稱以 BFF 為準;Tab 權限;一頁一碼;`it-admin` 可查看入口網;通知鈴鐺、公告對話框與首頁最新公告(`/ws/notify?app=portal`) |
 | 其他 | 未開始 |
 
 不在第一版:LINE 綁定、通知中心設定、常用功能自訂排序(v0.2)、表單與同仁搜尋(Q8)。

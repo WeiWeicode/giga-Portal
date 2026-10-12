@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-12**
+> **最後更新: 2026-10-12**(框架對齊完成並通過測試區驗收;交接見 `docs/HANDOFF.md`)
 > 0. 2026-10-12:框架對齊 GigaItApp(`docs/FRAMEWORK-PLAN.md`):web-kit 改 npm Registry;側欄大項 `portal.group.*` 與名稱 / 排序 / 圖示以 BFF 為準(`composables/menu.ts`);每個 Tab 有權限代碼(`router.ts` `tabCode`);一頁一碼;移除隱藏的 M1 頁;`ui/icons.ts`;通知(`components/notify/`、`composables/notify.ts`)與首頁最新公告。
 > 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
 > 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
@@ -23,6 +23,8 @@ giga-Portal/
 │  ├─ PRD.md                      產品需求 (決策、FR、配合修改、待決事項)
 │  ├─ ARCHITECTURE.md             架構、請求流程、權限流程、風格切換、部署
 │  ├─ API.md                      portal-api 端點 (草案) 與使用的 BFF API
+│  ├─ HANDOFF.md                  交接:目前狀態、下一階段 portal-api 起點與待決
+│  ├─ FRAMEWORK-PLAN.md           框架對齊 GigaItApp(2026-10-12 完成):代碼規則與完整代碼表
 │  ├─ UI-GUIDE.md                 綠能 token、玻璃 / 扁平、全域元件差異、版面
 │  ├─ PROJECT-MAP.md              本文件
 │  ├─ Gherkin/                    驗收場景 (@auto / @manual / @wip)
@@ -186,5 +188,5 @@ giga-Portal/
 | 項目 | 現況說明 | 未來規劃 |
 | --- | --- | --- |
 | UI 套件為複製品 | 與 GigaItApp 各有一份 `ui/` | 等 npm / NuGet 私有 Registry 上線後抽成獨立共用套件 |
-| 舊權限代碼的上層 | 2026-10-12 前登記的 menu 代碼在測試區的上層仍是 `portal.app.access`(apply 不覆寫) | 在 GigaItApp 選單管理移到 `portal.group.*`;入口網側欄不受影響 |
+| 只有選單 / Tab 控管 | 各頁為 mock、尚無 API;主管專區、ESH 只靠選單 / Tab 權限(角色成員待 IT 指派) | portal-api 與各系統 API 串接時,每支 API 掛權限代碼並依部門 / 身分過濾資料 |
 | portal-api 資料層 | 現階段各功能頁以靜態 Mock 資料展示排版與欄位 | M4 里程碑起實作 Fastify 後端與資料庫 CRUD |

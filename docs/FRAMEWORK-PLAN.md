@@ -1,6 +1,6 @@
 # giga-Portal 框架對齊計畫(FRAMEWORK-PLAN)
 
-> 狀態:**P1–P3 已實作(2026-10-12)**;F1–F3 依建議定案,同意修改 GigaItApp `it-admin`。P4 測試區驗收進行中。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 狀態:**完成(2026-10-12)**:P1–P4 已上測試區並驗收;F1–F3 依建議定案;GigaItApp `it-admin` 已修改;舊代碼整理 SQL 已由使用者執行。下一階段 portal-api 見 `HANDOFF.md`。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 範圍:登入、選單、Tab、按鈕、首頁儀表板與通知等**框架**,對齊 GigaItApp 現行做法;**Tab 內容(mock 資料、真實 API)不在本計畫**,屬下一階段(PRD M4 / M5)。
 > 上位規範:`../giga-api-gateway-bff/docs/`(PRD §8.3 權限、FRONTEND-GUIDE §7、NOTIFY-PLAN §6.5);參考實作:`../GigaItApp/`(commit `85fe8c0`)。
 
@@ -117,6 +117,10 @@ BFF 還沒有新代碼時,側欄退回前端預設值,畫面行為與現在相�
 | GigaItApp 發布公告(管道含員工入口網) | Portal 鈴鐺即時出現,首頁最新公告卡更新 |
 | 應用切換 | Portal ⇄ GigaItApp 不需重新登入 |
 | 畫面 | 玻璃 / 扁平 × 明亮 / 黑暗 四種組合、375px 寬 |
+
+**驗收結果(2026-10-12,S112009,角色 employee / gw-super-admin / it-admin)**:`/api/auth/me` 的入口網大項 7 個名稱正確、menu 44 個全部掛在 `portal.group.*` 下、tab 76 個、已移除代碼不再出現;側欄「首頁」為直接連結;主管專區 11 頁可見,「主管權限說明」4 個 Tab 與麵包屑正確;首頁兩欄卡片與最新公告(即時連線)正常;giga-observe `portal-web` 節點健康並收到事件。發布公告即時推送與 375px 實機未在測試區另行驗證(本機已驗)。
+
+**驗收後依需求方回饋調整**:首頁大項不摺疊;移除首頁「功能導覽」;首頁版面改依 old_PortalSolar(待辦事項、個人秘書、最新公告、公告輪播、集團動態)。
 
 同步更新:`PRD.md`(§6.5.1 代碼表、修訂紀錄)、`Gherkin/rbac/*`、`PROJECT-MAP.md`、`UI-GUIDE.md`、`DevelopmentProcess/NewFeatures.md`;架構資料 `GigaNexusAIPlan/architecture/` 若有關係變更一併改。
 

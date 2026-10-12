@@ -100,7 +100,7 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 | 權限 | **Gateway BFF 是唯一來源**:應用 / 選單 / Tab / 按鈕權限依角色、部門(含下層)、職級(職稱選配)由 BFF 計算,**由 GigaItApp 設定**(Gateway PRD §8.3.1–§8.3.3);按鈕權限代碼 = 其呼叫的 API 權限代碼 |
 | 開發專案名稱 | `giga-Portal`(`backend/package.json` 的 `gateway.project`,自動註冊時寫入 `x-gateway.project`) |
 | 風格 | 淺綠 / 科技綠(綠能:太陽能、儲能);使用者可切換**玻璃 / 扁平**與**明亮 / 黑暗**(PRD §6.6、UI-GUIDE) |
-| 狀態 | **M1 進行中**:`frontend/` 框架已建立(登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、應用切換、玻璃 / 扁平 × 明亮 / 黑暗);`backend/`(portal-api)自 M4 開始;需求見 `docs/PRD.md` |
+| 狀態 | **前端框架完成(2026-10-12 測試區驗收)**:對齊 GigaItApp 的登入、選單目錄、Tab / 按鈕權限、通知、前端監控(`docs/FRAMEWORK-PLAN.md`);各頁 Tab 內容為 mock;`backend/`(portal-api)為下一階段;**接手先讀 `docs/HANDOFF.md`**,需求見 `docs/PRD.md` |
 | 目錄 | `frontend/`(Vue 3 + Vite,已建立)、`deploy/`(`spa-portal` 發佈、Gateway 權限設定 `gateway-rbac.yaml`)、`docs/`;`backend/`(portal-api,Fastify)自 M4 建立;各目錄職責見 `docs/PROJECT-MAP.md` |
 
 ### 0.1 工作區與相依
@@ -246,6 +246,8 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 
 | 文件 | 路徑 | 說明 |
 | --- | --- | --- |
+| **交接** | `docs/HANDOFF.md` | 目前狀態、下一階段(portal-api)起點與待決 |
+| 框架對齊計畫 | `docs/FRAMEWORK-PLAN.md` | 選單 / Tab / 按鈕代碼規則與完整代碼表(附錄 A) |
 | **產品需求** | `docs/PRD.md` | 已定決策、需求編號 FR-x.y、配合修改(Gateway G1–G7、GigaItApp I1–I5)、待決事項 |
 | 專案地圖 | `docs/PROJECT-MAP.md` | 目錄與檔案職責、主要流程;**開發新功能後必須更新** |
 | 架構 | `docs/ARCHITECTURE.md` | 決策、請求流程、權限流程、風格切換、部署 |
