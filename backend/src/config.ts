@@ -10,7 +10,7 @@
  *   PORTAL_SRC_<KEY>  個別來源覆寫「資料庫.schema」(db/sources.ts)
  *   GOOGLE_MAPS_API_KEY(_FILE)  選用:通勤調查地址轉經緯度(Google Geocoding);未設定時通勤調查不能送出(503)
  *   BPM_DB_HOST / _PORT / _NAME / _USER / _PASSWORD(_FILE)  選用:BPM NaNa 唯讀(portal_bpm_ro;測試區 191、正式區 190);未設定時 /bpm/* 回 503
- *   BPM_COMPANIES     首頁 BPM 筆數只對這些公司(Token cos,逗號分隔)查詢(D-29 碩禾系限定);空白則首頁不顯示 BPM
+ *   BPM_COMPANIES     所有 BPM 查詢(首頁筆數、/bpm/*)只對這些公司(Token cos,逗號分隔)查詢(D-29 碩禾系限定);空白則任何人都不查 BPM
  *   BPM_WEB_URL       BPM 網站位址(深連結;與 BPM_DB_HOST 同一台,例 http://10.10.130.191:8080),設定 BPM_DB_HOST 時必填
  *   TALK_AUTHOR_KEY(_FILE)  選用:3691 作者加密金鑰(32 bytes base64,D-23);test / prod 只接受 _FILE。未設定時 3691 可瀏覽,不能發文 / 解碼(503)
  *   TALK_AUTHOR_KEY_ID      金鑰代號(預設 k1;換金鑰時改代號,舊代號的金鑰另設 TALK_AUTHOR_OLD_KEYS_FILE)
@@ -44,7 +44,7 @@ export interface Config {
   googleMapsApiKey: string | null;
   /** null = 未設定 BPM 資料來源 */
   bpm: { sql: SqlConfig; webUrl: string } | null;
-  /** D-29:首頁可查 BPM 的公司(Token cos) */
+  /** D-29:可查 BPM 的公司(Token cos;首頁與 /bpm/* 共用) */
   bpmCompanies: string[];
   /** null = 未設定,3691 不能發文 / 解碼 */
   talkKeys: { current: AuthorKey; old: AuthorKey[] } | null;

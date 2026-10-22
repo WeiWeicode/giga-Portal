@@ -28,6 +28,8 @@ import { LinkService } from './modules/links/links.js';
 import { AuthorCipher } from './modules/talk/author-cipher.js';
 import { MssqlTalkRepo } from './modules/talk/repo.js';
 import { TalkService } from './modules/talk/talk.js';
+import { DrizzleFormRepo } from './modules/forms/drizzle-repo.js';
+import { FormService } from './modules/forms/forms.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -63,7 +65,7 @@ const bpmRepo = config.bpm ? new NanaBpmRepo(config.bpm.sql) : null;
 const geocoder = config.googleMapsApiKey ? new GoogleGeocoder(config.googleMapsApiKey) : null;
 // 測試區開啟 SQL 2012 語法檢查(正式區不檢查,避免額外負擔)
 const db = createDb(pool, config.gateway.gwEnv !== 'prod');
-const bpm = bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl) : null;
+const bpm = bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl, config.bpmCompanies) : null;
 const notes = new NoteService(new DrizzleNoteRepo(db));
 const onboarding = new MssqlOnboardingRepo(pool, config.sources);
 const qa = new QaService(new MssqlQaRepo(pool, config.sources));
@@ -84,11 +86,12 @@ const app = await buildApp({
   onboarding,
   // 職級快速帶入待 Gateway 提供職級查詢介面(CONFIRM-NEEDED P2-2b),目前回 503
   qa,
-  dashboard: new DashboardService({ bpm, bpmCompanies: config.bpmCompanies, qa, onboarding, hireDates: homeLegacy, notes, links, news: homeLegacy, content }),
+  dashboard: new DashboardService({ bpm, qa, onboarding, hireDates: homeLegacy, notes, links, news: homeLegacy, content }),
   content,
   legacyNews: homeLegacy,
   links,
   talk: new TalkService(new MssqlTalkRepo(pool, config.sources), talkCipher),
+  forms: new FormService(new DrizzleFormRepo(db)),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };

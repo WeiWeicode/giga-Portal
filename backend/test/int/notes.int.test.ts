@@ -26,6 +26,7 @@ describe('個人提醒(SQL Server)', { skip: enabled ? false : 'PORTAL_TEST_DB_N
     try {
       await admin.request().batch(`
         IF DB_NAME() NOT LIKE N'%[_]poc[_]test' THROW 50001, N'不是整合測試專用庫,未清空', 1;
+        IF OBJECT_ID(N'portal.form_doc') IS NOT NULL DROP TABLE portal.form_doc; -- FK 參照 form_category,先刪(P4)
         DECLARE @stmt NVARCHAR(MAX) = N'';
         SELECT @stmt = @stmt + N'DROP TABLE ' + QUOTENAME(s.name) + N'.' + QUOTENAME(t.name) + N';' + CHAR(10)
         FROM sys.tables t JOIN sys.schemas s ON s.schema_id = t.schema_id WHERE s.name = N'portal';

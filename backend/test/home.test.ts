@@ -195,13 +195,12 @@ describe('首頁聚合', () => {
   const news = new MemoryNews();
   const notes = new MemoryNotes();
   const onboard = { status: async () => ({ readAt: null as string | null, passedAt: null as string | null }) };
-  let bpm = new BpmService(bpmRepo(2, 1), 'http://bpm.example:8080');
+  let bpm = new BpmService(bpmRepo(2, 1), 'http://bpm.example:8080', ['碩禾']);
   const call = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, payload?: object, emp = 'S112009', cos = ['碩禾']) =>
     t.app.inject({ method, url, ...(payload ? { payload } : {}), headers: { 'x-internal-token': await t.token({ sub: emp, emp, dept: 'S1800', cos }) } });
   const dashboard = () =>
     new DashboardService({
       bpm,
-      bpmCompanies: ['碩禾'],
       qa: { pending: async () => [{ qaNo: 'Q1', title: '滿意度調查', dept: null, startDate: '2026-10-01', endDate: '2026-10-31', questionCount: 3 }] } as never,
       onboarding: onboard,
       hireDates: news,
@@ -231,7 +230,7 @@ describe('首頁聚合', () => {
     news.hire = {};
     notes.rows = [];
     onboard.status = async () => ({ readAt: null, passedAt: null });
-    bpm = new BpmService(bpmRepo(2, 1), 'http://bpm.example:8080');
+    bpm = new BpmService(bpmRepo(2, 1), 'http://bpm.example:8080', ['碩禾']);
   });
 
   it('首屏聚合回應各區塊', async () => {
@@ -293,7 +292,7 @@ describe('首頁聚合', () => {
   });
 
   it('部分區塊失敗不影響其他區塊', async () => {
-    bpm = new BpmService(bpmRepo(0, 0, true), 'http://bpm.example:8080');
+    bpm = new BpmService(bpmRepo(0, 0, true), 'http://bpm.example:8080', ['碩禾']);
     news.fail = true;
     const r = await call('GET', '/v1/dashboard');
     assert.equal(r.statusCode, 200);
@@ -311,14 +310,14 @@ describe('首頁聚合', () => {
     assert.equal(r.secretary.bpm, null);
     assert.ok(r._meta.unavailable.includes('bpm'), '其他公司本機帳號不查 BPM(D-29)');
     assert.ok(!r.todos.items.some((x: { kind: string }) => x.kind.startsWith('bpm')));
-    const svc = new DashboardService({ bpm });
+    const svc = new DashboardService({ bpm: new BpmService(bpmRepo(2, 1), 'http://bpm.example:8080', []) });
     const d = await svc.build({ empNo: 'S1', name: null, dept: null, companies: ['碩禾'] }, { error: () => undefined });
     assert.ok(d._meta.unavailable.includes('bpm'), '未設定公司清單時不查');
   });
 
   it('沒有任何待辦', async () => {
-    bpm = new BpmService(bpmRepo(0, 0), 'http://bpm.example:8080');
-    const svc = new DashboardService({ bpm, bpmCompanies: ['碩禾'] });
+    bpm = new BpmService(bpmRepo(0, 0), 'http://bpm.example:8080', ['碩禾']);
+    const svc = new DashboardService({ bpm });
     const d = await svc.build({ empNo: 'S1', name: null, dept: null, companies: ['碩禾'] }, { error: () => undefined });
     assert.deepEqual(d.todos.items, []);
     assert.deepEqual(d._meta.unavailable, ['todos.consent', 'todos.qa', 'todos.onboarding', 'todos.notes', 'secretary.links', 'news', 'slides']);

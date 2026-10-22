@@ -168,7 +168,7 @@ flowchart LR
 | FR-4.2 | 今日出勤卡:上 / 下班打卡時間、打卡狀態標籤;特休剩餘、待我簽核、未讀公告數 | HRM、BPM、公告 | 同上 |
 | FR-4.3 | KPI 卡 ×4:本月出勤天數、本月加班時數、待簽核案件、教育訓練時數;含較上月變化 | HRM / BPM(模擬) | 同上 |
 | FR-4.4 | 常用功能:圖示格(請假、加班、薪資查詢、表單下載、分機查詢、統編查詢、集團系統、3691 開講),依權限顯示;使用者可自訂排序(v0.2) | 前端設定 + 權限 | 同上 |
-| FR-4.5 | 待我簽核:類別標籤、申請事由與單號、申請人、金額 / 時數;「核准」「退回」按鈕(`bpm.approval.approve` / `reject`)需確認,「全部」連到簽核頁 | BPM `/api/bpm/approvals` | `home/approval.feature` |
+| FR-4.5 | 待我簽核:表單名稱、主旨、申請人、送出時間、目前關卡;**不提供核准 / 退回**,改「前往簽核」深連結到 BPM 原畫面(D-24,2026-10-22 修訂);待簽核 / 已簽核 / 我送出的三個 Tab | portal-api `/api/portal/bpm/*`(NaNa 唯讀,D-6;限碩禾系 D-29) | `approval/approval.feature` |
 | FR-4.6 | 我的假期:特休已休 / 剩餘環形圖、補休與病假進度條 | HRM | `home/home.feature` |
 | FR-4.7 | 最新公告(未讀數、等級、發布單位與時間;頂列鈴鐺與即時推送,同 GigaItApp)、近期行程(時間、地點) | 公告:BFF 通知中心 `/api/notify/*`(Gateway NOTIFY-PLAN,2026-10-12 已接);行事曆:`portal-api` | 同上 |
 | FR-4.8 | 首頁以**聚合路由** `GET /api/portal/dashboard` 一次取得(Gateway 已有範例,§8.4);非必要區塊失敗時該區塊顯示「暫時無法取得」,其他區塊照常 | BFF aggregate | `home/home.feature`:部分區塊失敗 |

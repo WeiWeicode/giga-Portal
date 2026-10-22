@@ -52,8 +52,13 @@
 | GET / POST | `/api/portal/notes` | `portal.api.note.read` / `.write` | 本人個人提醒清單(未完成在前、依到期日)/ 新增(每人上限 500,409 `PORTAL_NOTE_LIMIT`) |
 | PATCH / DELETE | `/api/portal/notes/:id` | `portal.api.note.write` | 修改、標記完成 / 刪除;別人的提醒回 404 `PORTAL_NOTE_NOT_FOUND` |
 | GET | `/api/portal/assets/notes` | `portal.api.asset.read` | 本人在舊入口網填寫的保管資產備註(PortalSolar PersonalPropertyInfo;唯讀) |
-| GET | `/api/portal/bpm/pending` | `portal.api.bpm.read` | 本人 BPM 待簽核 `{ total, abnormal, hasAccount, items[{ subject, serialNumber, workItemName, abnormal, performUrl, traceUrl… }] }`;未設定 BPM 回 503 `PORTAL_BPM_UNAVAILABLE` |
-| GET | `/api/portal/bpm/requested?page=&pageSize=` | `portal.api.bpm.read` | 本人申請、進行中的單據(分頁,pageSize ≤ 100)與目前關卡、追蹤連結 |
+| GET | `/api/portal/bpm/pending` | `portal.api.bpm.read` | 本人 BPM 待簽核 `{ applicable, total, abnormal, hasAccount, truncated, items[{ processName, subject, serialNumber, workItemName(目前關卡), requesterId, requesterName, submittedAt, createdAt(派送), abnormal, performUrl, traceUrl… }] }`;未設定 BPM 回 503 `PORTAL_BPM_UNAVAILABLE`。**所有 `/bpm/*` 只對 Token 公司屬 `BPM_COMPANIES`(碩禾系)者查 NaNa,其他公司回 200、`applicable: false`、空清單(D-29,P4)** |
+| GET | `/api/portal/bpm/requested?page=&pageSize=&state=open|all` | `portal.api.bpm.read` | 我送出的(P1-3「未結案」/ P4「我送出的」):`state=open`(預設)只列流程進行中、`all` 全部狀態;分頁(pageSize ≤ 100),附目前關卡、追蹤連結 |
+| GET | `/api/portal/bpm/handled?page=&pageSize=` | `portal.api.bpm.read` | 已簽核 / 經辦過(P4;WorkItem.performerOID = 本人、currentState = 3):`{ applicable, total, page, pageSize, hasAccount, items[{ workItemName, completedAt, processName, subject, serialNumber, processState, currentActivities, requesterId, requesterName, submittedAt, traceUrl }] }`,簽核時間新到舊 |
+| GET | `/api/portal/forms` | `portal.api.form.read` | 表單下載(P4,D-25):`{ categories[{ id, name, sort }], items[{ id, categoryId, name, description, fileId, fileName, sort, active, updatedAt }] }`(只列啟用中);下載走 file-service `GET /api/file/files/:uuid/content` |
+| GET | `/api/portal/forms/admin` | `portal.api.form.edit` | 維護清單(含停用) |
+| POST / PUT / DELETE | `/api/portal/forms`、`/forms/:id` | `portal.api.form.edit` | 新增(201)/ 修改 / 刪除表單(按鈕 `portal.forms.edit`;`{ categoryId, name ≤ 100, description? ≤ 300, fileId(file-service UUID,sourceApp / refType `portal-forms`、refNo = 表單 id), fileName(pdf / doc(x) / xls(x) / ppt(x) / odt / ods / odp), sort, active }`);404 `PORTAL_FORM_NOT_FOUND`、分類不存在 404 `PORTAL_FORM_CATEGORY_NOT_FOUND` |
+| POST / PUT / DELETE | `/api/portal/forms/categories`、`/forms/categories/:id` | `portal.api.form.edit` | 表單分類維護 `{ name ≤ 30, sort }`;同名 409 `PORTAL_FORM_CATEGORY_DUPLICATE`、分類下仍有表單(含停用)不能刪 409 `PORTAL_FORM_CATEGORY_IN_USE` |
 | GET | `/api/portal/directory?q=` | `portal.api.directory.read` | 分機表查詢(1–2 個關鍵字、至少 2 字,最多 200 筆,`truncated`;不含 Email) |
 | GET | `/api/portal/hr/manager-agents` | `portal.api.hr.read` | 主管職務代理人名單 PDF(需登入) |
 | PUT | `/api/portal/directory/me/phone` | `portal.api.directory.write` | 更新本人分機(記錄 NotesPhoneTemp 後更新 NotesPhone);不在分機表回 404 `PORTAL_DIRECTORY_NOT_FOUND` |
@@ -153,5 +158,10 @@
 | `PORTAL_TALK_AUTHOR_LEGACY` | 409 | 舊入口網發文(舊 DES mark),新站不解碼 |
 | `PORTAL_TALK_AUTHOR_NOT_FOUND` | 404 | 發言沒有作者資料 |
 | `PORTAL_TALK_AUTHOR_DECRYPT_FAILED` | 500 | 作者資料解不開(金鑰不符或資料毀損) |
+| `PORTAL_BPM_UNAVAILABLE` | 503 | portal-api 未設定 BPM 資料來源 |
+| `PORTAL_FORM_NOT_FOUND` | 404 | 表單不存在 |
+| `PORTAL_FORM_CATEGORY_NOT_FOUND` | 404 | 表單分類不存在 |
+| `PORTAL_FORM_CATEGORY_DUPLICATE` | 409 | 已有同名的表單分類 |
+| `PORTAL_FORM_CATEGORY_IN_USE` | 409 | 分類下還有表單,不能刪除 |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

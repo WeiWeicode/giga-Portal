@@ -5,7 +5,9 @@
     - 正式區 10.10.130.190:正式區(2026-12)建立,密碼與測試區不同
 
   權限:只給待簽核 / 未結案查詢用到的 4 張表、且只到欄位層級的 SELECT(modules/bpm/nana-repo.ts),不加入 db_datareader;
-  Users 只給 OID、id、leaveDate(不讀密碼雜湊等欄位)。查詢新增欄位時要同步補授權。
+  Users 只給 OID、id、userName、leaveDate(不讀密碼雜湊等欄位)。查詢新增欄位時要同步補授權。
+  P4 待我簽核(2026-10-23)加了 Users.userName(申請人姓名)、WorkItem.performerOID / completedTime(已簽核);
+  已依舊版執行過本檔的主機改執行 04-bpm-readonly-p4.sql。
   執行前把 <請自訂強密碼> 換成實際密碼;執行後密碼放進主機 2 機密(deploy/host2-set-api-secrets.sh 的 bpm_db_password)
   與開發機 backend/.env 的 BPM_DB_PASSWORD(不進版控)。
 */
@@ -19,10 +21,11 @@ GO
 -- 2) NaNa 使用者與唯讀權限
 USE [NaNa];
 CREATE USER [portal_bpm_ro] FOR LOGIN [portal_bpm_ro] WITH DEFAULT_SCHEMA = [dbo];
-GRANT SELECT ON [dbo].[Users] ([OID], [id], [leaveDate]) TO [portal_bpm_ro];  -- 工號(id)→ OID;同工號多帳號時以離職日挑在職的一個
+GRANT SELECT ON [dbo].[Users] ([OID], [id], [userName], [leaveDate]) TO [portal_bpm_ro];  -- 工號(id)→ OID;同工號多帳號時以離職日挑在職的一個;申請人姓名
 GRANT SELECT ON [dbo].[LocalToDoWorkItem] ([userOID], [workItemOID], [subject], [processInstanceName], [createdTime]) TO [portal_bpm_ro];  -- 待辦收件匣
-GRANT SELECT ON [dbo].[WorkItem] ([OID], [contextOID], [workItemName], [currentState]) TO [portal_bpm_ro];  -- 關卡狀態與名稱
+GRANT SELECT ON [dbo].[WorkItem] ([OID], [contextOID], [workItemName], [currentState], [performerOID], [completedTime]) TO [portal_bpm_ro];  -- 關卡狀態與名稱;經辦人與完成時間(已簽核)
 GRANT SELECT ON [dbo].[ProcessInstance] ([OID], [contextOID], [serialNumber], [processInstanceName], [subject], [currentState], [createdTime], [requesterOID]) TO [portal_bpm_ro];  -- 單號、申請人、流程狀態
+DENY SELECT ON [dbo].[Users] ([password], [passwordWrongTimes], [lastUptPwdDate]) TO [portal_bpm_ro];  -- 縱深防禦:即使日後被加入讀取角色也讀不到密碼欄位(P4)
 GO
 
 -- 3) 驗證:可以查,不能寫入

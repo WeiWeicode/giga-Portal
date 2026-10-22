@@ -4,7 +4,7 @@
  * 舊庫(PortalSolar 等)的表不在此定義,以 mssql 參數化查詢存取(db/sources.ts)。
  */
 import { sql } from 'drizzle-orm';
-import { bigint, bit, date, datetime2, index, int, mssqlSchema, nvarchar, varchar } from 'drizzle-orm/mssql-core';
+import { bigint, bit, date, datetime2, index, int, mssqlSchema, nvarchar, uniqueIndex, varchar } from 'drizzle-orm/mssql-core';
 
 export const portal = mssqlSchema('portal').existing();
 
@@ -136,4 +136,42 @@ export const talkAudit = portal.table(
     createdAt: ts('created_at').notNull().default(utcNow),
   },
   (t) => [index('ix_talk_audit_sn').on(t.sn)],
+);
+
+// ───────────── P4 表單下載(FEATURE-PLAN §4「表單下載」、D-25;docs/Gherkin/approval/forms.feature)─────────────
+
+/** 表單分類:編輯者維護(portal.forms.edit);名稱不重複 */
+export const formCategory = portal.table(
+  'form_category',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    name: nvarchar('name', { length: 30 }).notNull(),
+    sort: int('sort').notNull().default(0),
+    updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+    updatedAt: ts('updated_at').notNull().default(utcNow),
+  },
+  (t) => [uniqueIndex('ux_form_category_name').on(t.name)],
+);
+
+/**
+ * 表單檔案:檔案本體由編輯者上傳到 giga-file-service(sourceApp / refType portal-forms、refNo = 表單 id),這裡只存 UUID 與顯示資訊;
+ * 所有員工可下載(file-service 下載權限 file.object.read)。停用(active = 0)的只在維護清單看得到。
+ */
+export const formDoc = portal.table(
+  'form_doc',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    categoryId: bigint('category_id', { mode: 'number' })
+      .notNull()
+      .references(() => formCategory.id),
+    name: nvarchar('name', { length: 100 }).notNull(),
+    description: nvarchar('description', { length: 300 }),
+    fileId: fileId('file_id').notNull(),
+    fileName: nvarchar('file_name', { length: 200 }).notNull(),
+    sort: int('sort').notNull().default(0),
+    active: bit('active').notNull().default(true),
+    updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+    updatedAt: ts('updated_at').notNull().default(utcNow),
+  },
+  (t) => [index('ix_form_doc_category').on(t.categoryId, t.active, t.sort)],
 );

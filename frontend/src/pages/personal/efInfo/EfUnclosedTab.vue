@@ -6,11 +6,14 @@
 import { computed, ref, watch } from 'vue';
 import { describeError } from '@/api/gateway';
 import { bpmRequested } from '@/api/portal';
+import { BPM_BLOCKER_TEXT, bpmBlocker } from '@/composables/bpm';
 import { useAsync } from '@/composables/useAsync';
 
 const PAGE_SIZE = 20;
 const page = ref(1);
 const { data, loading, error, reload } = useAsync(() => bpmRequested(page.value, PAGE_SIZE));
+// D-29:非碩禾系公司不適用、BPM 沒有帳號
+const blocker = computed(() => bpmBlocker(data.value));
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.total ?? 0) / PAGE_SIZE)));
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '—');
 /** 只開 http(s) 連結(縱深防禦;後端已限制 BPM_WEB_URL) */
@@ -42,8 +45,8 @@ function go(p: number) {
         <GButton icon="refresh" @click="reload">重試</GButton>
       </GEmpty>
     </GCard>
-    <GCard v-else-if="data && !data.hasAccount">
-      <GEmpty icon="user-x" title="BPM 沒有您的帳號" description="以工號在 BPM 找不到帳號,請洽資訊單位。" />
+    <GCard v-else-if="blocker">
+      <GEmpty icon="user-x" :title="BPM_BLOCKER_TEXT[blocker].title" :description="BPM_BLOCKER_TEXT[blocker].description" />
     </GCard>
     <template v-else-if="data">
       <div class="row head">

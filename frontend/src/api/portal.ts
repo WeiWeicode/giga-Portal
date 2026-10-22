@@ -94,12 +94,20 @@ export interface AssetNote {
 /** 個人資產備註(舊入口網填寫的 PortalSolar PersonalPropertyInfo;資產清單在 TIPTOP 轉移中) */
 export const assetNotes = () => http.get<{ items: AssetNote[] }>('/api/portal/assets/notes');
 
+/** BPM 申請人與送出時間(P4) */
+export interface BpmRequester {
+  requesterId: string | null;
+  requesterName: string | null;
+  submittedAt: string | null;
+}
 export interface BpmPending {
+  /** D-29:本人公司是否適用 BPM(碩禾系);false 時清單一律為空 */
+  applicable: boolean;
   total: number;
   abnormal: number;
   hasAccount: boolean;
   truncated: boolean;
-  items: {
+  items: ({
     workItemName: string | null;
     subject: string | null;
     processName: string | null;
@@ -109,9 +117,12 @@ export interface BpmPending {
     createdAt: string | null;
     performUrl: string | null;
     traceUrl: string | null;
-  }[];
+  } & BpmRequester)[];
 }
+export type BpmRequestedState = 'open' | 'all';
 export interface BpmRequested {
+  applicable: boolean;
+  state: BpmRequestedState;
   total: number;
   page: number;
   pageSize: number;
@@ -127,9 +138,29 @@ export interface BpmRequested {
   }[];
 }
 
-/** BPM 待簽核 / 我申請的未結案(NaNa 唯讀;連結開啟 BPM 原畫面) */
+export interface BpmHandled {
+  applicable: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
+  hasAccount: boolean;
+  items: ({
+    workItemName: string | null;
+    completedAt: string | null;
+    serialNumber: string | null;
+    processName: string | null;
+    subject: string | null;
+    processState: string;
+    currentActivities: string[];
+    traceUrl: string | null;
+  } & BpmRequester)[];
+}
+
+/** BPM 待簽核 / 我送出的 / 已簽核(NaNa 唯讀;簽核以深連結開啟 BPM 原畫面,D-24) */
 export const bpmPending = () => http.get<BpmPending>('/api/portal/bpm/pending');
-export const bpmRequested = (page = 1, pageSize = 20) => http.get<BpmRequested>(`/api/portal/bpm/requested?page=${page}&pageSize=${pageSize}`);
+export const bpmRequested = (page = 1, pageSize = 20, state: BpmRequestedState = 'open') =>
+  http.get<BpmRequested>(`/api/portal/bpm/requested?page=${page}&pageSize=${pageSize}&state=${state}`);
+export const bpmHandled = (page = 1, pageSize = 20) => http.get<BpmHandled>(`/api/portal/bpm/handled?page=${page}&pageSize=${pageSize}`);
 
 export interface DirectoryEntry {
   empNo: string;
@@ -355,6 +386,8 @@ export async function uploadFile(sourceApp: string, file: File): Promise<string>
 export const bindFiles = (refType: string, refNo: string, uuids: string[]) => http.post<{ bound: number }>('/api/file/files/bind', { uuids, refType, refNo });
 /** file-service 預覽 / 下載網址(Gateway 送 X-Frame-Options DENY,PDF 以新分頁開啟) */
 export const fileUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content?inline=1`;
+/** file-service 下載(附件形式,Content-Disposition 帶原檔名;P4 表單下載) */
+export const fileDownloadUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content`;
 
 export type TodoKind = 'bpm-pending' | 'bpm-unclosed' | 'qa' | 'onboarding-read' | 'onboarding-quiz' | 'note';
 export interface TodoItem {
@@ -488,3 +521,35 @@ export const talkLike = (sn: number) => http.post<{ likes: number }>(`/api/porta
 export const talkBlock = (sn: number, blocked: boolean) => http.put<void>(`/api/portal/talk/posts/${sn}/block`, { blocked });
 export const talkReveal = (sn: number, approvalNo: string, reason: string) =>
   http.post<{ sn: number; empNo: string }>(`/api/portal/talk/posts/${sn}/reveal`, { approvalNo, reason });
+
+// ───────────── P4 表單下載(FEATURE-PLAN §4、D-25;docs/Gherkin/approval/forms.feature)─────────────
+
+export interface FormCategory {
+  id: number;
+  name: string;
+  sort: number;
+}
+export interface FormDoc {
+  id: number;
+  categoryId: number;
+  name: string;
+  description: string | null;
+  fileId: string;
+  fileName: string;
+  sort: number;
+  active: boolean;
+  updatedAt: string;
+}
+export type FormDocInput = Omit<FormDoc, 'id' | 'updatedAt'>;
+export interface FormCatalog {
+  categories: FormCategory[];
+  items: FormDoc[];
+}
+/** admin = true:維護清單(含停用,需 portal.forms.edit) */
+export const listForms = (admin = false) => http.get<FormCatalog>(admin ? '/api/portal/forms/admin' : '/api/portal/forms');
+export const createForm = (body: FormDocInput) => http.post<FormDoc>('/api/portal/forms', body);
+export const updateForm = (id: number, body: FormDocInput) => http.put<FormDoc>(`/api/portal/forms/${id}`, body);
+export const deleteForm = (id: number) => http.delete<void>(`/api/portal/forms/${id}`);
+export const createFormCategory = (body: { name: string; sort: number }) => http.post<FormCategory>('/api/portal/forms/categories', body);
+export const updateFormCategory = (id: number, body: { name: string; sort: number }) => http.put<FormCategory>(`/api/portal/forms/categories/${id}`, body);
+export const deleteFormCategory = (id: number) => http.delete<void>(`/api/portal/forms/categories/${id}`);

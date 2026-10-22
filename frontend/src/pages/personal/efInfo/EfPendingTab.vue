@@ -3,11 +3,15 @@
  * BPM 簽核資訊 - 待簽核(old_PortalSolar EFInfo.aspx Tab1;docs/Gherkin/personal/bpm.feature)
  * 資料:GET /api/portal/bpm/pending(NaNa 唯讀);「簽核」「追蹤」以新視窗開啟 BPM 原畫面(入口網不代簽)。
  */
+import { computed } from 'vue';
 import { describeError } from '@/api/gateway';
 import { bpmPending } from '@/api/portal';
+import { BPM_BLOCKER_TEXT, bpmBlocker } from '@/composables/bpm';
 import { useAsync } from '@/composables/useAsync';
 
 const { data, loading, error, reload } = useAsync(() => bpmPending());
+// D-29:非碩禾系公司不適用、BPM 沒有帳號
+const blocker = computed(() => bpmBlocker(data.value));
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('zh-TW', { hour12: false, timeZone: 'Asia/Taipei' }) : '—');
 /** 只開 http(s) 連結(縱深防禦;後端已限制 BPM_WEB_URL) */
 function open(url: string | null) {
@@ -28,8 +32,8 @@ function open(url: string | null) {
         <GButton icon="refresh" @click="reload">重試</GButton>
       </GEmpty>
     </GCard>
-    <GCard v-else-if="data && !data.hasAccount">
-      <GEmpty icon="user-x" title="BPM 沒有您的帳號" description="以工號在 BPM 找不到帳號,請洽資訊單位。" />
+    <GCard v-else-if="blocker">
+      <GEmpty icon="user-x" :title="BPM_BLOCKER_TEXT[blocker].title" :description="BPM_BLOCKER_TEXT[blocker].description" />
     </GCard>
     <template v-else-if="data">
       <div class="row head">

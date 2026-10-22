@@ -1,133 +1,101 @@
 <script setup lang="ts">
 /**
- * 我送出的單據分頁 (表單與簽核)
+ * 待我簽核 › 我送出的(P4;FEATURE-PLAN §4;docs/Gherkin/approval/approval.feature)
+ * 資料:GET /api/portal/bpm/requested(分頁;預設只列進行中 = 未結案,可切換「全部」);「追蹤」以新視窗開啟 BPM 原畫面。
  */
-import { ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard } from '@/ui';
+import { computed, ref, watch } from 'vue';
+import { describeError } from '@/api/gateway';
+import { bpmRequested, type BpmRequestedState } from '@/api/portal';
+import { BPM_BLOCKER_TEXT, bpmBlocker, fmtBpmTime, openBpmLink } from '@/composables/bpm';
+import { useAsync } from '@/composables/useAsync';
+import type { Column } from '@/ui/components/GTable.vue';
 
-interface SentItem {
-  id: string;
-  formType: string;
-  submitTime: string;
-  subject: string;
-  currentStep: string;
-  currentSigner: string;
-  status: string;
-}
-
-const sentList: SentItem[] = [
-  {
-    id: 'EF-20261002-0008',
-    formType: 'IT 權限異動申請單',
-    submitTime: '2026/10/02 08:30',
-    subject: '申請 GitLab Runner 測試主機 WSL root 權限授權',
-    currentStep: '處長核決',
-    currentSigner: '李處長',
-    status: '簽核中',
-  },
-  {
-    id: 'EF-20260925-0042',
-    formType: '公務費用報支申請單',
-    submitTime: '2026/09/25 11:20',
-    subject: '2026 年 Q3 雲端開發套件維護合約年費報支',
-    currentStep: '財務審核',
-    currentSigner: '張會計',
-    status: '簽核中',
-  },
-  {
-    id: 'EF-20260915-0089',
-    formType: '未刷卡證明單',
-    submitTime: '2026/09/15 09:00',
-    subject: '09/14 下班忘刷卡補卡申報',
-    currentStep: '流程結案',
-    currentSigner: '系統自動結案',
-    status: '已結案',
-  },
+const PAGE_SIZE = 20;
+const page = ref(1);
+const state = ref<string>('open');
+const STATE_OPTIONS = [
+  { label: '進行中', value: 'open' },
+  { label: '全部', value: 'all' },
+];
+const { data, loading, error, reload } = useAsync(() => bpmRequested(page.value, PAGE_SIZE, state.value as BpmRequestedState));
+watch(page, () => void reload());
+watch(state, () => {
+  if (page.value === 1) void reload();
+  else page.value = 1;
+});
+const blocker = computed(() => bpmBlocker(data.value));
+const rows = computed(() => (data.value?.items ?? []).map((i, k) => ({ ...i, key: k })));
+const columns: Column[] = [
+  { key: 'processName', label: '表單名稱' },
+  { key: 'subject', label: '主旨' },
+  { key: 'createdAt', label: '送出時間', mono: true, hideSm: true },
+  { key: 'current', label: '目前關卡 / 狀態' },
+  { key: 'acts', label: '', align: 'right' },
 ];
 </script>
 
 <template>
-  <div class="approval-sent-tab stack">
-    <GCard title="我發起的申請單據進度" icon="send" class="glass">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>申請單號 / 送審時間</th>
-              <th>表單類型</th>
-              <th>主旨內容</th>
-              <th>目前關卡</th>
-              <th>當前審核人</th>
-              <th>單據狀態</th>
-              <th class="text-center">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in sentList" :key="item.id">
-              <td>
-                <div class="mono font-bold">{{ item.id }}</div>
-                <div class="small faint mono">{{ item.submitTime }}</div>
-              </td>
-              <td><GBadge tone="storage">{{ item.formType }}</GBadge></td>
-              <td><strong>{{ item.subject }}</strong></td>
-              <td><GBadge tone="neutral">{{ item.currentStep }}</GBadge></td>
-              <td>{{ item.currentSigner }}</td>
-              <td>
-                <GBadge :tone="item.status === '已結案' ? 'primary' : 'alert'">
-                  {{ item.status }}
-                </GBadge>
-              </td>
-              <td class="text-center">
-                <GButton
-                  v-if="item.status !== '已結案'"
-                  variant="ghost"
-                  size="sm"
-                  icon="bell"
-                >
-                  催簽通知
-                </GButton>
-                <span v-else class="small faint">已完成</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="stack">
+    <GCard v-if="loading && !data"><GSkeleton :lines="4" /></GCard>
+    <GCard v-else-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得我送出的單據" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
     </GCard>
+    <GCard v-else-if="blocker">
+      <GEmpty icon="user-x" :title="BPM_BLOCKER_TEXT[blocker].title" :description="BPM_BLOCKER_TEXT[blocker].description" />
+    </GCard>
+    <template v-else-if="data">
+      <div class="row head">
+        <GSegmented v-model="state" :options="STATE_OPTIONS" size="sm" />
+        <GBadge tone="storage" icon="send">{{ state === 'open' ? '進行中' : '全部' }} {{ data.total }} 筆</GBadge>
+        <div class="spacer" />
+        <GButton variant="ghost" size="sm" icon="refresh" :loading="loading" @click="reload">重新整理</GButton>
+      </div>
+      <GCard>
+        <GTable
+          v-model:page="page"
+          :columns="columns"
+          :rows="rows"
+          row-key="key"
+          :page-size="PAGE_SIZE"
+          :total="data.total"
+          :loading="loading"
+          :empty-title="state === 'open' ? '沒有進行中的申請單' : '沒有送出過的申請單'"
+        >
+          <template #cell-processName="{ row }">
+            <div>{{ row.processName ?? '—' }}</div>
+            <div class="xs faint mono">{{ row.serialNumber ?? '' }}</div>
+          </template>
+          <template #cell-subject="{ row }">
+            <span class="subject">{{ row.subject ?? '—' }}</span>
+          </template>
+          <template #cell-createdAt="{ row }">{{ fmtBpmTime(row.createdAt) }}</template>
+          <template #cell-current="{ row }">
+            <template v-if="row.currentActivities.length">{{ row.currentActivities.join('、') }}</template>
+            <GBadge v-else>{{ row.processState || '—' }}</GBadge>
+          </template>
+          <template #cell-acts="{ row }">
+            <GButton v-if="row.traceUrl" variant="ghost" size="sm" icon="eye" @click="openBpmLink(row.traceUrl)">追蹤</GButton>
+          </template>
+        </GTable>
+      </GCard>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.head {
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
-.table-wrap {
-  overflow-x: auto;
+.spacer {
+  flex: 1;
 }
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-sm);
-}
-.data-table th,
-.data-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-}
-.data-table th {
-  font-weight: 600;
-  color: var(--text-2);
-  background: var(--glass-soft);
-  text-align: left;
-}
-.text-center {
-  text-align: center;
-}
-.mono {
-  font-family: var(--font-mono, monospace);
-}
-.font-bold {
-  font-weight: 700;
+.subject {
+  display: inline-block;
+  min-width: 180px;
+  overflow-wrap: anywhere;
 }
 </style>

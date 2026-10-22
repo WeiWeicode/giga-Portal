@@ -7,6 +7,8 @@
 
   # PORTAL-API-PLAN §3.3、D-6、D-13;查詢規則同 BPM 快速開發工具包 6_todo_viewer(docs/待辦狀態語意.md)。
   # 舊程式 EFInfo.aspx(LOS 預存程序 SP_EFInfoUnProcess_*);資料 NaNa(測試區 191 / 正式區 190),唯讀帳號 portal_bpm_ro。
+  # P4 起:D-29 只對碩禾系公司(設定 BPM_COMPANIES)查詢,其他公司回 applicable = false 與空清單(場景見 approval/approval.feature「非碩禾系公司不查 BPM」);
+  # 待簽核每筆另附申請人與送出時間;「未結案」= GET /api/portal/bpm/requested(state=open)。
 
   @auto
   場景: 查看待簽核
@@ -53,7 +55,7 @@
   場景: 同工號多帳號時只認唯一在職的一個
     那麼 只有一筆就用;多筆時只有一個在職(無離職日)才用,否則視為沒有帳號
 
-  # 帳號對應:工號與 NaNa Users.id 逐字元比對(大小寫須相同);191 測試區離職日多半過期,不以離職日排除單一帳號;非碩禾系本機帳號工號通常不在 BPM,顯示「BPM 沒有您的帳號」。
+  # 帳號對應:工號與 NaNa Users.id 逐字元比對(大小寫須相同);191 測試區離職日多半過期,不以離職日排除單一帳號;非碩禾系本機帳號不查 BPM,顯示「BPM 簽核資訊不適用」(D-29)。
 
   @manual
   場景: 與 BPM 待辦數一致

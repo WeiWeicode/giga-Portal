@@ -28,7 +28,7 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.note.read', name: '入口網 API:個人提醒查詢' },
   { code: 'portal.api.note.write', name: '入口網 API:個人提醒新增 / 修改 / 刪除' },
   { code: 'portal.api.asset.read', name: '入口網 API:個人資產備註查詢' },
-  { code: 'portal.api.bpm.read', name: '入口網 API:BPM 待簽核 / 未結案查詢' },
+  { code: 'portal.api.bpm.read', name: '入口網 API:BPM 待簽核 / 我送出的 / 已簽核查詢' },
   { code: 'portal.api.directory.read', name: '入口網 API:分機表查詢' },
   { code: 'portal.api.directory.write', name: '入口網 API:更新本人分機' },
   { code: 'portal.api.job.read', name: '入口網 API:內部職缺查詢' },
@@ -53,6 +53,8 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.talk.write', name: '入口網 API:3691 發文 / 回覆 / 按讚' },
   { code: 'portal.api.talk.moderate', name: '入口網 API:3691 屏蔽與管理檢視' },
   { code: 'portal.api.talk.reveal', name: '入口網 API:3691 解碼作者(需核准文號、留稽核)' },
+  { code: 'portal.api.form.read', name: '入口網 API:表單下載清單' },
+  { code: 'portal.api.form.edit', name: '入口網 API:表單與分類維護' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

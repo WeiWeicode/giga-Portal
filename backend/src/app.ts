@@ -33,10 +33,12 @@ import type { DashboardService } from './modules/home/dashboard.js';
 import type { LegacyNewsRepo } from './modules/home/legacy-repo.js';
 import type { LinkService } from './modules/links/links.js';
 import type { TalkService } from './modules/talk/talk.js';
+import type { FormService } from './modules/forms/forms.js';
 import { calendarRoutes } from './routes/calendar.js';
 import { homeRoutes } from './routes/home.js';
 import { linkRoutes } from './routes/links.js';
 import { talkRoutes } from './routes/talk.js';
+import { formRoutes } from './routes/forms.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -72,6 +74,8 @@ export interface AppOptions {
   legacyNews?: LegacyNewsRepo | null;
   links?: LinkService | null;
   talk?: TalkService | null;
+  /** P4 表單下載 */
+  forms?: FormService | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -155,5 +159,6 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(calendarRoutes(opts.content ?? null));
   await app.register(linkRoutes(opts.links ?? null));
   await app.register(talkRoutes(opts.talk ?? null));
+  await app.register(formRoutes(opts.forms ?? null));
   return app;
 }

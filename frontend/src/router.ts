@@ -301,12 +301,12 @@ const appPages: RouteRecordRaw[] = [
       group: 'approval',
       permission: 'portal.approval.read',
       milestone: 'M5',
-      description: 'BPM 流程表單簽核：核准、退回與單據歷程審查',
+      description: 'BPM 待簽核、已簽核與我送出的單據;核准 / 退回以「前往簽核」到 BPM 原畫面完成',
     },
     [
-      { key: 'pending', label: '待簽核', path: '', icon: 'inbox', component: () => import('./pages/approval/ApprovalPendingTab.vue') },
-      { key: 'done', label: '已簽核', path: 'done', icon: 'check', component: () => import('./pages/approval/ApprovalDoneTab.vue') },
-      { key: 'sent', label: '我送出的', path: 'sent', icon: 'send', component: () => import('./pages/approval/ApprovalSentTab.vue') },
+      { key: 'pending', label: '待簽核', path: '', icon: 'inbox', requires: ['portal.api.bpm.read'], component: () => import('./pages/approval/ApprovalPendingTab.vue') },
+      { key: 'done', label: '已簽核', path: 'done', icon: 'check', requires: ['portal.api.bpm.read'], component: () => import('./pages/approval/ApprovalDoneTab.vue') },
+      { key: 'sent', label: '我送出的', path: 'sent', icon: 'send', requires: ['portal.api.bpm.read'], component: () => import('./pages/approval/ApprovalSentTab.vue') },
     ],
   ),
   page(
@@ -318,10 +318,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'approval',
       permission: 'portal.form.read',
       milestone: 'M5',
-      description: '依部門分類下載各類人事、總務、財務與工安申請表單',
+      description: '依分類下載各類人事、總務、財務與工安申請表單',
     },
     [
-      { key: 'list', label: '表單清單', path: '', icon: 'download', component: () => import('./pages/approval/FormsPage.vue') },
+      { key: 'list', label: '表單清單', path: '', icon: 'download', requires: ['portal.api.form.read'], component: () => import('./pages/approval/FormsPage.vue') },
     ],
   ),
   // 行政資源

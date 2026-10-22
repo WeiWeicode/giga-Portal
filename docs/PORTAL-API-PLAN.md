@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.9(2026-10-23,P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.10(2026-10-23,**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -35,7 +35,7 @@
 | D-26 | (Q-F10)部門預算可看範圍沿用 Budget 庫 `UserInfo.Competence`(以 Token 工號查),且須同時具 `portal-manager` |
 | D-27 | (Q-F2、Q-F5、Q-F9、Q-F12)**退場 / 不做**:薪資金鑰重置、新人缺繳資料 HRNewPay、資安演練點擊紀錄(spam / spamview);舊站高風險頁(ForgetPassword、LoginNewAccount、EipLogin 等)不在 giga-Portal 範圍,另行通報 IT |
 | D-28 | (Q-F4)並行期新建問卷的題目圖片存 file-service,舊站顯示不出,接受 |
-| D-29 | (Q-D13)BPM 查詢**限定碩禾系**:只有 Token 公司屬碩禾系者才查 NaNa(公司清單以設定提供,不寫死),其他公司本機帳號回空清單;修正 P1-3 既有查詢,隨 P4 一併實作(P3 首頁聚合已先套用:設定 `BPM_COMPANIES`) |
+| D-29 | (Q-D13)BPM 查詢**限定碩禾系**:只有 Token 公司屬碩禾系者才查 NaNa(公司清單以設定提供,不寫死),其他公司本機帳號回空清單;修正 P1-3 既有查詢,隨 P4 一併實作(P3 首頁聚合已先套用:設定 `BPM_COMPANIES`)。**P4 已實作:所有 `/bpm/*` 回 `applicable`** |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -167,7 +167,16 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 
 ### P4 表單與簽核
 
-待我簽核(待簽核 / 已簽核 / 我送出的)以 §3.3 直讀 NaNa;表單下載。
+**P4 已實作(2026-10-23,工作分支 `feature/portal-p4-approval`,由 P3 切出;未合併、未上測試區;待確認見 `CONFIRM-NEEDED.md` P4)**:
+
+| 項目 | 資料 | 做法 |
+| --- | --- | --- |
+| 待我簽核 › 待簽核 | NaNa `LocalToDoWorkItem` + `WorkItem` + `ProcessInstance` + `Users`(申請人) | 沿用 `GET /bpm/pending`,加申請人、送出時間;「前往簽核」深連結(D-24,不寫 NaNa) |
+| 待我簽核 › 已簽核 | NaNa `WorkItem.performerOID = 本人、currentState = 3` | 新 `GET /bpm/handled`(分頁,簽核時間新到舊;進行中流程列目前關卡) |
+| 待我簽核 › 我送出的 | NaNa `ProcessInstance.requesterOID = 本人` | `GET /bpm/requested` 加 `state=open|all`(預設 open = 未結案) |
+| D-29 | 設定 `BPM_COMPANIES` | `BpmService.applies`:所有 `/bpm/*` 與首頁聚合共用;非碩禾系回 200 `applicable: false` 空清單、不查 NaNa |
+| 表單下載 | `portal.form_category`、`portal.form_doc`(migration `20261022224624_p4_forms`)+ file-service | `/forms`(員工)、`/forms/admin`、`/forms*` 與 `/forms/categories*` 維護(`portal.api.form.edit`,按鈕 `portal.forms.edit`,D-25) |
+| BPM 唯讀授權 | 191 `portal_bpm_ro` | 新增欄位 Users.userName、WorkItem.performerOID / completedTime;191 實測為表層級 SELECT,`db/dba/04-bpm-readonly-p4.sql` 改回欄位層級並 DENY 密碼欄位(使用者執行) |
 
 ### P5 主管專區
 
@@ -200,8 +209,8 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 | Q-D8 | 舊庫觸發程序是否有寫入副作用 | ✅ 只有 `PortalSolar.dbo.TEST` 有觸發程序,不影響;預存程序不複製,用到時改寫 |
 | Q12 | 薪資類二次驗證 | 依 D-1 暫緩(薪資頁轉移中) |
 | Q15 | 舊系統未對應頁面 | ✅ D-8:有 URL、不在選單(P7) |
-| Q-D11 | BPM「未結案」定義(我申請且 ProcessInstance.currentState = 1)尚未與舊 LOS 預存程序 `SP_EFInfoUnProcess_ByCreateUserID_Solar` 比對(SP 本體不在 repo) | 191 帳號建立後,對同一人比對 SP 與新查詢筆數 |
-| Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | 待確認 |
+| Q-D11 | BPM「未結案」定義(我申請且 ProcessInstance.currentState = 1)尚未與舊 LOS 預存程序 `SP_EFInfoUnProcess_ByCreateUserID_Solar` 比對(SP 本體不在 repo) | ⏳ P4 時仍取不到:`portal_app` 無 220 LOS 權限、src_* 不含預存程序;請使用者提供 `sp_helptext` 或筆數比對(CONFIRM-NEEDED P4),新站先依 6_todo_viewer 規則 |
+| Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | ⏳ 待 BPM 管理者確認(P4 沿用既有格式,列入 CONFIRM-NEEDED P4) |
 | Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方 | ✅ D-29 限定碩禾系 |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
 | Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 未用到(舊公告編輯不做);P5 前確認 |

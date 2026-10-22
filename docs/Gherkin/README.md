@@ -33,7 +33,8 @@
 | `personal/bpm.feature` | BPM 簽核資訊(待簽核 / 未結案) | PORTAL-API-PLAN §3.3、D-13 | P1 |
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |
-| `home/approval.feature` | 待我簽核:核准 / 退回、權限 | §6.4 FR-4.5 | M4 / M5 |
+| `approval/approval.feature` | 待我簽核(待簽核 / 已簽核 / 我送出的,「前往簽核」深連結;非碩禾系不查 BPM) | FEATURE-PLAN §4、PORTAL-API-PLAN D-6、D-24、D-29 | P4 |
+| `approval/forms.feature` | 表單下載(分類、file-service 檔案、編輯者維護) | FEATURE-PLAN §4、PORTAL-API-PLAN D-25 | P4 |
 
 ## 標籤慣例
 

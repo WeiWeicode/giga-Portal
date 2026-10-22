@@ -10,7 +10,7 @@
  *   ④ 待簽同意書(P7 未實作,unavailable: todos.consent)
  *   ⑤ 個人提醒中今天到期且未完成者
  * 只依本人(Token 工號 / 部門)資料;不檢查舊系統的 IsBoss 等旗標。
- * BPM 只對 Token 公司屬碩禾系者查詢(D-29:公司清單由設定 BPM_COMPANIES 提供,不寫死;未設定或不屬於清單時 BPM 列為 unavailable),
+ * BPM 只對 Token 公司屬碩禾系者查詢(D-29:公司清單由設定 BPM_COMPANIES 提供,判斷在 BpmService.applies;未設定或不屬於清單時 BPM 列為 unavailable),
  * 避免其他公司本機帳號工號與 BPM 帳號撞號時看到別人的筆數。
  */
 import type { BpmService } from '../bpm/bpm.js';
@@ -60,8 +60,6 @@ export interface Dashboard {
 
 export interface DashboardDeps {
   bpm?: BpmService | null;
-  /** D-29:可查 BPM 的公司(Token cos);空 = 不查 */
-  bpmCompanies?: readonly string[];
   qa?: QaService | null;
   onboarding?: { status(empNo: string): Promise<OnboardingStatus> } | null;
   hireDates?: HireDateRepo | null;
@@ -101,9 +99,9 @@ export class DashboardService {
     };
 
     const [bpm, qa, onboarding, notes, links, news, slides] = await Promise.all([
-      d.bpm && (d.bpmCompanies ?? []).some((c) => me.companies.includes(c))
+      d.bpm && d.bpm.applies(me.companies)
         ? attempt('bpm', async () => {
-            const [p, r] = await Promise.all([d.bpm!.pending(me.empNo), d.bpm!.requested(me.empNo, 1, 1)]);
+            const [p, r] = await Promise.all([d.bpm!.pending(me), d.bpm!.requested(me, 1, 1)]);
             return { pending: p.total, abnormal: p.abnormal, unclosed: r.total, hasAccount: p.hasAccount, homeUrl: d.bpm!.homeUrl };
           })
         : skip('bpm'),

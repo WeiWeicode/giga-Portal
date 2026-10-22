@@ -11,7 +11,7 @@
 #      IT 管理系統管理員(it-admin)可查看全部入口網選單與 Tab,登記在 GigaItApp 的 gateway-rbac.yaml(本檔需先套用)
 #   新增的排序值與前一頁相同時,入口網依前端路由順序排列(composables/menu.ts)
 # 測試區與正式區設定不互通(Gateway PRD Q3),兩區各自套用。
-# BPM 簽核 API(bpm.approval.*)由 BPM 的 OpenAPI 登記後,再於選單管理綁定到「待我簽核」「BPM 簽核資訊」(PRD Q8)。
+# BPM 簽核:「待我簽核」「BPM 簽核資訊」都由 portal-api 唯讀查 NaNa(portal.api.bpm.read);核准 / 退回以深連結回 BPM 完成(D-6、D-24)。
 permissions:
   # 應用(kind=app,Gateway PRD §8.3.3);it.app.access 與 GigaItApp 相同(兩邊需一致)
   - { code: portal.app.access, name: 員工入口網使用權限, kind: app, sort: 10 }
@@ -68,11 +68,11 @@ permissions:
   - { code: portal.note.read, name: 個人提醒, kind: menu, parent: portal.group.personal, sort: 45 }
   - { code: portal.note.list, name: 個人備忘, kind: tab, parent: portal.note.read, sort: 10, includes: [portal.api.note.read] }
   - { code: portal.approval.read, name: 待我簽核, kind: menu, parent: portal.group.approval, sort: 60 }
-  - { code: portal.approval.pending, name: 待簽核, kind: tab, parent: portal.approval.read, sort: 10 }
-  - { code: portal.approval.done, name: 已簽核, kind: tab, parent: portal.approval.read, sort: 20 }
-  - { code: portal.approval.sent, name: 我送出的, kind: tab, parent: portal.approval.read, sort: 30 }
+  - { code: portal.approval.pending, name: 待簽核, kind: tab, parent: portal.approval.read, sort: 10, includes: [portal.api.bpm.read] }
+  - { code: portal.approval.done, name: 已簽核, kind: tab, parent: portal.approval.read, sort: 20, includes: [portal.api.bpm.read] }
+  - { code: portal.approval.sent, name: 我送出的, kind: tab, parent: portal.approval.read, sort: 30, includes: [portal.api.bpm.read] }
   - { code: portal.form.read, name: 表單下載, kind: menu, parent: portal.group.approval, sort: 60 }
-  - { code: portal.form.list, name: 表單清單, kind: tab, parent: portal.form.read, sort: 10 }
+  - { code: portal.form.list, name: 表單清單, kind: tab, parent: portal.form.read, sort: 10, includes: [portal.api.form.read] }
   - { code: portal.ga.read, name: 總務專區, kind: menu, parent: portal.group.resources, sort: 75 }
   - { code: portal.ga.service, name: 總務服務項目, kind: tab, parent: portal.ga.read, sort: 10 }
   - { code: portal.ga.apply, name: 申請專區, kind: tab, parent: portal.ga.read, sort: 20 }
@@ -165,6 +165,8 @@ permissions:
   - { code: portal.talk.post, name: 發文 / 回覆 / 按讚, kind: button, parent: portal.talk.board, sort: 10, includes: [portal.api.talk.write] }
   - { code: portal.talk.moderate, name: 屏蔽發言, kind: button, parent: portal.talk.board, sort: 20, includes: [portal.api.talk.moderate] }
   - { code: portal.talk.reveal, name: 解碼作者(需核准文號), kind: button, parent: portal.talk.board, sort: 30, includes: [portal.api.talk.reveal] }
+  # P4 表單下載(FEATURE-PLAN §4、D-25):編輯者上傳 file-service、維護分類
+  - { code: portal.forms.edit, name: 維護表單與分類, kind: button, parent: portal.form.list, sort: 10, includes: [portal.api.form.edit] }
 
 roles:
   - code: employee
@@ -313,7 +315,7 @@ roles:
   - code: portal-editor
     name: 入口網內容維護(人資 / 行政)
     permissions:
-      [portal.news.publish, portal.onboarding.edit, portal.job.edit, portal.survey.manage, portal.qa.edit, portal.qa.admin, portal.home.edit, portal.calendar.edit, portal.links.edit]
+      [portal.news.publish, portal.onboarding.edit, portal.job.edit, portal.survey.manage, portal.qa.edit, portal.qa.admin, portal.home.edit, portal.calendar.edit, portal.links.edit, portal.forms.edit]
   # 3691 管理(D-23):屏蔽取代舊系統寫死的 5 個工號;解碼作者另一角色,成員須經人資 / 法務核定(CONFIRM-NEEDED P3)
   - code: portal-talk-moderator
     name: 入口網 3691 管理(屏蔽)

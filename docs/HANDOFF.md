@@ -1,7 +1,7 @@
 # giga-Portal 交接(HANDOFF)
 
 > 新的工作階段(人或 AI)接手時先讀這份,再讀 `AGENT.md`、`docs/PROJECT-MAP.md`。時程以 NexusPlan 甘特圖為準,本文件只記狀態。
-> **最後更新:2026-10-23**(P2-2a 新人導覽、P2-2b 問卷調查、**P3 首頁聚合與集團公告**已實作於工作分支 `feature/portal-p2-2a-onboarding` → `feature/portal-p2-2b-qa` → `feature/portal-p3-home`,10/27 後依序合併驗收;P3 的 3691 作者解碼上線前需人資 / 法務確認;下一批 P4 待我簽核)
+> **最後更新:2026-10-23**(P2-2a 新人導覽、P2-2b 問卷調查、P3 首頁聚合與集團公告、**P4 待我簽核與表單下載**已實作於工作分支 `feature/portal-p2-2a-onboarding` → `feature/portal-p2-2b-qa` → `feature/portal-p3-home` → `feature/portal-p4-approval`,10/27 後依序合併驗收;P3 的 3691 作者解碼上線前需人資 / 法務確認;P4 合併前需在 191 執行 `04-bpm-readonly-p4.sql`;下一批 P5 主管專區)
 
 ## 1. 目前狀態
 
@@ -11,8 +11,8 @@
 | 選單 / Tab 權限資料 | ✅ 測試區已登記 | `deploy/gateway-rbac.yaml`:大項 `portal.group.*` 7、menu 44、tab 76、按鈕 3;CI `rbac-test` 套用。舊代碼已由 `deploy/sql/2026-10-12-portal-menu-realign.sql` 整理(使用者 2026-10-12 執行) |
 | 角色 | ✅ | `employee`、`portal-approver`、`portal-manager`、`portal-esh-admin`、`portal-editor`、`it-app-user`;`it-admin`(GigaItApp yaml)可查看全部 menu + tab。**yaml 套用順序:Portal 先、GigaItApp 後** |
 | 首頁 | 🔨 P3 已實作(未合併) | 聚合路由 `GET /api/portal/dashboard`:待辦(BPM 待簽核 / 未結案、未填問卷、到職 90 天內新人導覽、今天到期提醒)、個人秘書(BPM 筆數、常用連結)、最新公告(通知中心 + 舊入口網公告唯讀,D-21)、公告輪播 / 集團動態(file-service 圖片,編輯者維護);單一區塊失敗只該區塊顯示「暫時無法取得」 |
-| 各功能頁 Tab 內容 | ⏳ mock(逐批替換) | 已串接真實資料:P1 個人資訊、P2-1 行政資源、P2-2a 新人導覽、P2-2b 問卷調查(我的問卷 / 問卷維護)、P3 集團與公告(最新公告、行事曆、集團系統、3691 全民開講);其餘 Tab 仍是排版用 mock |
-| portal-api(`backend/`) | ✅ 測試區運作中(部分) | P0、P1、P2-1 已驗收;**P2-2a 新人導覽、P2-2b 問卷調查已實作**(分支 `feature/portal-p2-2a-onboarding`、`feature/portal-p2-2b-qa`(由 2a 切出),未合併 / 未部署;合併後 CI rbac-test 套用 yaml,另需授予 file-service 權限;驗收步驟與待確認見 `docs/CONFIRM-NEEDED.md`);**P3 首頁聚合與集團公告已實作**(分支 `feature/portal-p3-home`,由 2b 切出;新 Drizzle migration `20261022134559_p3_home_group` 未對測試區執行;合併前需重跑主機 2 `host2-set-api-secrets.sh` 產生 secret `talk_author_key`,否則 CI 部署失敗;見 `docs/CONFIRM-NEEDED.md` P3);下一批 P4,順序見 `docs/FEATURE-PLAN.md` §11 |
+| 各功能頁 Tab 內容 | ⏳ mock(逐批替換) | 已串接真實資料:P1 個人資訊、P2-1 行政資源、P2-2a 新人導覽、P2-2b 問卷調查(我的問卷 / 問卷維護)、P3 集團與公告(最新公告、行事曆、集團系統、3691 全民開講)、P4 表單與簽核(待我簽核三個 Tab、表單下載);其餘 Tab 仍是排版用 mock |
+| portal-api(`backend/`) | ✅ 測試區運作中(部分) | P0、P1、P2-1 已驗收;**P2-2a 新人導覽、P2-2b 問卷調查已實作**(分支 `feature/portal-p2-2a-onboarding`、`feature/portal-p2-2b-qa`(由 2a 切出),未合併 / 未部署;合併後 CI rbac-test 套用 yaml,另需授予 file-service 權限;驗收步驟與待確認見 `docs/CONFIRM-NEEDED.md`);**P3 首頁聚合與集團公告已實作**(分支 `feature/portal-p3-home`,由 2b 切出;新 Drizzle migration `20261022134559_p3_home_group` 未對測試區執行;合併前需重跑主機 2 `host2-set-api-secrets.sh` 產生 secret `talk_author_key`,否則 CI 部署失敗;見 `docs/CONFIRM-NEEDED.md` P3);**P4 待我簽核與表單下載已實作**(分支 `feature/portal-p4-approval`,由 P3 切出;BPM 新增 `/bpm/handled`、`/bpm/requested?state=`、申請人欄位,所有 `/bpm/*` 套用 D-29 `BPM_COMPANIES`;表單下載新 migration `20261022224624_p4_forms` 未對測試區執行;合併前使用者需在 191 以 sa 執行 `backend/db/dba/04-bpm-readonly-p4.sql`(191 帳號目前是表層級 SELECT,含 Users.password);Q-D11 SP 定義取不到、Q-D12 待 BPM 管理者;見 `docs/CONFIRM-NEEDED.md` P4);下一批 P5,順序見 `docs/FEATURE-PLAN.md` §11 |
 
 ## 2. 下一階段:portal-api 規劃起點
 

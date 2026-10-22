@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-23**(P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
+> **最後更新: 2026-10-23**(P4 待我簽核與表單下載:`routes/{bpm,forms}.ts`、`modules/bpm/`(已簽核、我送出的 state、申請人、D-29 `applies`)、`modules/forms/`、`db/dba/04-bpm-readonly-p4.sql`、前端 `pages/approval/*` 與 `composables/{bpm,forms}.ts` 改真實資料;P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
 > 0. 2026-10-12:框架對齊 GigaItApp(`docs/FRAMEWORK-PLAN.md`):web-kit 改 npm Registry;側欄大項 `portal.group.*` 與名稱 / 排序 / 圖示以 BFF 為準(`composables/menu.ts`);每個 Tab 有權限代碼(`router.ts` `tabCode`);一頁一碼;移除隱藏的 M1 頁;`ui/icons.ts`;通知(`components/notify/`、`composables/notify.ts`)與首頁最新公告。
 > 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
 > 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
@@ -47,7 +47,7 @@ giga-Portal/
 │  │  ├─ components/notify/       NotifyHost (連線、Toast、公告閱讀對話框)、NotifyBell (頂列鈴鐺)、LatestAnnouncements (首頁卡片,含舊入口網公告);同 GigaItApp;
 │  │  │                           NotifyFeedList (公告頁收件匣分頁)、LegacyNewsList (舊入口網公告唯讀,D-21)
 │  │  ├─ components/home/         HomeCarousel (首頁輪播)、PersonalLinksDialog (個人常用連結維護)、SlideManageDialog (輪播維護,file-service 上傳)
-│  │  ├─ composables/             apps (應用切換 / 應用層守衛)、menu (依 BFF 目錄 / 名稱 / 排序組側欄)、notify (收件匣 app=portal)、home (首頁區塊狀態、輪播、集團系統分組、行事曆年度)、talk (3691 樹狀與欄位檢查)、redirect (安全導回)、
+│  │  ├─ composables/             apps (應用切換 / 應用層守衛)、menu (依 BFF 目錄 / 名稱 / 排序組側欄)、notify (收件匣 app=portal)、home (首頁區塊狀態、輪播、集團系統分組、行事曆年度)、talk (3691 樹狀與欄位檢查)、bpm (BPM 深連結安全開啟、不適用 / 沒有帳號提示)、forms (表單分組篩選、副檔名)、redirect (安全導回)、
 │  │  │                           session (me 5 分鐘更新)、theme / themeRules (明暗 × 風格)、greeting、useAsync、usePaged
 │  │  ├─ layouts/                 AppLayout (側欄、頂列、應用切換、帳號)、TabbedPage (頁籤容器)、AuthLayout、ChangePasswordModal
 │  │  ├─ pages/                   各功能模組頁面 (對齊 old_PortalSolar):
@@ -67,8 +67,8 @@ giga-Portal/
 │  │  │  │  ├─ annualCourses/     年度必上課程 portal.course.read
 │  │  │  │  └─ notes/             個人提醒 portal.note.read
 │  │  │  ├─ approval/             【表單與簽核】(2 頁)
-│  │  │  │  ├─ Approval*Tab.vue   待我簽核 portal.approval.read (3 Tabs: 待簽核/已簽核/我送出的)
-│  │  │  │  └─ FormsPage.vue      表單下載 portal.form.read
+│  │  │  │  ├─ Approval*Tab.vue   待我簽核 portal.approval.read (3 Tabs: 待簽核/已簽核/我送出的;/api/portal/bpm/*,「前往簽核」深連結 BPM,P4)
+│  │  │  │  └─ FormsPage.vue      表單下載 portal.form.read(/api/portal/forms,file-service 下載;按鈕 portal.forms.edit 上傳 / 分類維護,P4)
 │  │  │  ├─ resources/            【行政資源】(7 頁)
 │  │  │  │  ├─ generalAffairs/    總務專區 portal.ga.read (5 Tabs: 服務項目/申請專區/個人資產/外送資產/湖口廠停車)
 │  │  │  │  ├─ hr/                人資專區 portal.hr.read (2 Tabs: 團體保險 / 主管職務代理人)
@@ -116,12 +116,12 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode、onboarding 測驗題目與計分、
+   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk、forms)、modules/(courses、commute、notes、bpm NaNa 唯讀(待簽核 / 我送出的 / 已簽核,D-29 限碩禾系)、forms(表單下載分類與檔案登記)、geocode、onboarding 測驗題目與計分、
    │                              qa 問卷:rules 純邏輯、qa 服務(擁有者 / 代管範圍)、repo 舊表 QAAnnual*、html 白名單、export Excel)、
    │                              home(dashboard 聚合、content 輪播 / 行事曆、legacy-repo 舊公告 ContentX 與 LOS 到職日)、links(集團系統、個人常用連結)、
    │                              talk(author-cipher AES-256-GCM、talk 服務、repo 舊表 Talk3691* + portal.talk_author / talk_audit)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
-   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro(使用者以 sa 執行)
+   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro、04 P4 補欄位並改回欄位層級授權(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
    └─ Dockerfile、.env.example
 ```
