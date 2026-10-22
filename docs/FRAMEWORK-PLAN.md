@@ -141,7 +141,7 @@ group 排序 10、20…;頁的 sort 依表中順序 10、20…;Tab sort 依表�
 
 | 大項(group) | 頁(路由) | menu 代碼 | Tab 代碼(`portal.` 省略) |
 | --- | --- | --- | --- |
-| 首頁 `portal.group.home` | `/` | `portal.home.read` | (無 Tab) |
+| 首頁 `portal.group.home` | `/` | `portal.home.read` | (無 Tab;按鈕 `portal.home.edit` 輪播維護、`portal.home.link-edit` 常用連結,P3) |
 | 個人資訊 `portal.group.personal` | `personal/profile` | `portal.profile.read` | `profile.basic`、`profile.pension`、`profile.health-family`、`profile.tax-dependents`、`profile.insurance-bracket`、`profile.commute` |
 | | `personal/query` | ★`portal.query.read`(原 `attendance.read`) | `query.card`、`query.attendance`、`query.overtime`、`query.leave`、`query.schedule`、`query.comp-time`、`query.annual-leave`、`query.insurance-detail`、`query.nhi2` |
 | | `personal/salary` | `portal.salary.read` | `salary.slip`、`salary.bonus` |
@@ -165,9 +165,9 @@ group 排序 10、20…;頁的 sort 依表中順序 10、20…;Tab sort 依表�
 | | `directory` | `portal.directory.read` | `directory.extension`、`directory.contact` |
 | | `gui-number` | `portal.gui-number.read` | `gui-number.list` |
 | 集團與公告 `portal.group.news` | `news` | `portal.news.read` | `news.all`、`news.unread` |
-| | `calendar` | `portal.calendar.read` | `calendar.month`、`calendar.list` |
-| | `links` | `portal.links.read` | `links.list` |
-| | `talk` | `portal.talk.read` | `talk.board` |
+| | `calendar` | `portal.calendar.read` | `calendar.month`(2026-10-23 P3 改名「年度行事曆」)、`calendar.list`(按鈕 `portal.calendar.edit`) |
+| | `links` | `portal.links.read` | `links.list`(按鈕 `portal.links.edit`) |
+| | `talk` | `portal.talk.read` | `talk.board`(按鈕 `portal.talk.post`、`portal.talk.moderate`、`portal.talk.reveal`;P3) |
 | 主管專區 `portal.group.manager` | `manager/rights` | `portal.mgr.rights.read` | `mgr.rights.level1` ~ `level4` |
 | | `manager/shift` | `portal.mgr.shift.read` | `mgr.shift.upload` |
 | | `manager/boss-trace` | `portal.mgr.boss-trace.read` | `mgr.boss-trace.trace` |

@@ -19,6 +19,15 @@ import { MssqlJobRepo } from './routes/jobs.js';
 import { MssqlOnboardingRepo } from './routes/onboarding.js';
 import { QaService } from './modules/qa/qa.js';
 import { MssqlQaRepo } from './modules/qa/repo.js';
+import { ContentService } from './modules/home/content.js';
+import { DashboardService } from './modules/home/dashboard.js';
+import { DrizzleContentRepo } from './modules/home/drizzle-repo.js';
+import { MssqlHomeLegacyRepo } from './modules/home/legacy-repo.js';
+import { DrizzleLinkRepo } from './modules/links/drizzle-repo.js';
+import { LinkService } from './modules/links/links.js';
+import { AuthorCipher } from './modules/talk/author-cipher.js';
+import { MssqlTalkRepo } from './modules/talk/repo.js';
+import { TalkService } from './modules/talk/talk.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -52,19 +61,34 @@ async function checks(): Promise<Check[]> {
 // BPM NaNa 連線延遲到第一次查詢,連不上不影響啟動
 const bpmRepo = config.bpm ? new NanaBpmRepo(config.bpm.sql) : null;
 const geocoder = config.googleMapsApiKey ? new GoogleGeocoder(config.googleMapsApiKey) : null;
+// 測試區開啟 SQL 2012 語法檢查(正式區不檢查,避免額外負擔)
+const db = createDb(pool, config.gateway.gwEnv !== 'prod');
+const bpm = bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl) : null;
+const notes = new NoteService(new DrizzleNoteRepo(db));
+const onboarding = new MssqlOnboardingRepo(pool, config.sources);
+const qa = new QaService(new MssqlQaRepo(pool, config.sources));
+const content = new ContentService(new DrizzleContentRepo(db));
+const links = new LinkService(new DrizzleLinkRepo(db));
+const homeLegacy = new MssqlHomeLegacyRepo(pool, config.sources, config.legacyPortalUrl);
+// 3691 作者金鑰只從 secret 讀(D-23);未設定時可瀏覽、不能發文 / 解碼
+const talkCipher = config.talkKeys ? new AuthorCipher(config.talkKeys.current, config.talkKeys.old) : null;
 const app = await buildApp({
   config,
   courses: new MssqlCourseRepo(pool, config.sources),
   commute: new CommuteService(new MssqlCommuteRepo(pool, config.sources), geocoder),
-  // 測試區開啟 SQL 2012 語法檢查(正式區不檢查,避免額外負擔)
-  notes: new NoteService(new DrizzleNoteRepo(createDb(pool, config.gateway.gwEnv !== 'prod'))),
+  notes,
   assets: new MssqlAssetNoteRepo(pool, config.sources),
-  bpm: bpmRepo && config.bpm ? new BpmService(bpmRepo, config.bpm.webUrl) : null,
+  bpm,
   directory: new MssqlDirectoryRepo(pool, config.sources),
   jobs: new MssqlJobRepo(pool, config.sources),
-  onboarding: new MssqlOnboardingRepo(pool, config.sources),
+  onboarding,
   // 職級快速帶入待 Gateway 提供職級查詢介面(CONFIRM-NEEDED P2-2b),目前回 503
-  qa: new QaService(new MssqlQaRepo(pool, config.sources)),
+  qa,
+  dashboard: new DashboardService({ bpm, bpmCompanies: config.bpmCompanies, qa, onboarding, hireDates: homeLegacy, notes, links, news: homeLegacy, content }),
+  content,
+  legacyNews: homeLegacy,
+  links,
+  talk: new TalkService(new MssqlTalkRepo(pool, config.sources), talkCipher),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
@@ -84,6 +108,9 @@ app.log.info(
     monitor: config.monitor.enabled,
     geocode: geocoder !== null,
     bpm: config.bpm?.sql.server ?? null,
+    bpmCompanies: config.bpmCompanies,
+    talkKey: config.talkKeys?.current.id ?? null,
+    legacyPortalUrl: config.legacyPortalUrl,
   },
   '服務已啟動',
 );

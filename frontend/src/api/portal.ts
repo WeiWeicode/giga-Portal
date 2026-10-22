@@ -338,3 +338,153 @@ export const qaBindImages = (qaNo: string, uuids: string[]) =>
   http.post<{ bound: number }>('/api/file/files/bind', { uuids, refType: 'portal-qa', refNo: qaNo });
 /** 題目圖片網址(file-service 預覽) */
 export const qaImageUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content?inline=1`;
+
+// ───────────── P3 首頁聚合與集團公告(FEATURE-PLAN §1、§5;docs/Gherkin/home/home.feature、group/*.feature)─────────────
+
+/** 上傳到 giga-file-service(POST /api/file/files,需 file.object.upload);回傳檔案 UUID(暫存,需再綁定) */
+export async function uploadFile(sourceApp: string, file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append('sourceApp', sourceApp);
+  fd.append('file', file);
+  const r = await http.post<{ items?: { fileUuid: string }[] }>('/api/file/files', fd);
+  const id = r.items?.[0]?.fileUuid;
+  if (!id) throw new Error('附件服務沒有回傳檔案編號');
+  return id;
+}
+/** 綁定暫存檔到單據(file-service API.md §2;未綁定 24 小時後被清除) */
+export const bindFiles = (refType: string, refNo: string, uuids: string[]) => http.post<{ bound: number }>('/api/file/files/bind', { uuids, refType, refNo });
+/** file-service 預覽 / 下載網址(Gateway 送 X-Frame-Options DENY,PDF 以新分頁開啟) */
+export const fileUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content?inline=1`;
+
+export type TodoKind = 'bpm-pending' | 'bpm-unclosed' | 'qa' | 'onboarding-read' | 'onboarding-quiz' | 'note';
+export interface TodoItem {
+  kind: TodoKind;
+  title: string;
+  count: number | null;
+  date: string | null;
+  /** 站內路徑 */
+  to: string | null;
+  /** 外部連結(BPM) */
+  href: string | null;
+}
+export interface PersonalLink {
+  id: number;
+  name: string;
+  url: string;
+  sort: number;
+}
+export interface LegacyNews {
+  id: string;
+  title: string;
+  type: string;
+  date: string | null;
+  /** 舊入口網公告頁;未設定舊站網址時為 null */
+  url: string | null;
+}
+export type SlideKind = 'policy' | 'gallery';
+export interface Slide {
+  id: number;
+  kind: SlideKind;
+  title: string;
+  fileId: string;
+  linkUrl: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  sort: number;
+  active: boolean;
+}
+export type SlideInput = Omit<Slide, 'id'>;
+export interface Dashboard {
+  todos: { items: TodoItem[] };
+  secretary: {
+    bpm: { pending: number; abnormal: number; unclosed: number; hasAccount: boolean; homeUrl: string } | null;
+    links: PersonalLink[] | null;
+  };
+  news: { total: number; items: LegacyNews[] } | null;
+  slides: { policy: Slide[]; gallery: Slide[] } | null;
+  /** errors:失敗的區塊(bpm、todos.qa、todos.onboarding、todos.notes、secretary.links、news、slides);unavailable:未設定 / 未實作 */
+  _meta: { errors: { section: string; message: string }[]; unavailable: string[] };
+}
+
+/** 首頁聚合(FR-4.8:首屏只呼叫 /api/auth/me 與本支) */
+export const dashboard = () => http.get<Dashboard>('/api/portal/dashboard');
+
+/** 舊入口網公告(D-21 唯讀併入,標來源「舊入口網」) */
+export function legacyNews(opts: { q?: string; page?: number; pageSize?: number } = {}) {
+  const p = new URLSearchParams();
+  if (opts.q) p.set('q', opts.q);
+  p.set('page', String(opts.page ?? 1));
+  p.set('pageSize', String(opts.pageSize ?? 20));
+  return http.get<{ items: LegacyNews[]; total: number; page: number; pageSize: number }>(`/api/portal/news/legacy?${p}`);
+}
+
+/** 首頁輪播維護(portal.home.edit) */
+export const listSlides = () => http.get<{ items: Slide[] }>('/api/portal/home/slides');
+export const createSlide = (body: SlideInput) => http.post<Slide>('/api/portal/home/slides', body);
+export const updateSlide = (id: number, body: SlideInput) => http.put<Slide>(`/api/portal/home/slides/${id}`, body);
+export const deleteSlide = (id: number) => http.delete<void>(`/api/portal/home/slides/${id}`);
+
+/** 個人常用連結(本人) */
+export const listPersonalLinks = () => http.get<{ items: PersonalLink[] }>('/api/portal/personal-links');
+export const createPersonalLink = (body: { name: string; url: string }) => http.post<PersonalLink>('/api/portal/personal-links', body);
+export const updatePersonalLink = (id: number, body: { name: string; url: string }) => http.put<PersonalLink>(`/api/portal/personal-links/${id}`, body);
+export const deletePersonalLink = (id: number) => http.delete<void>(`/api/portal/personal-links/${id}`);
+export const reorderPersonalLinks = (ids: number[]) => http.put<{ items: PersonalLink[] }>('/api/portal/personal-links/order', { ids });
+
+export interface CalendarPdf {
+  year: number;
+  fileId: string;
+  fileName: string;
+  updatedAt: string;
+}
+/** 年度行事曆 PDF(編輯者上傳 file-service 後登記;portal.calendar.edit) */
+export const listCalendars = () => http.get<{ items: CalendarPdf[] }>('/api/portal/calendar');
+export const saveCalendar = (year: number, fileId: string, fileName: string) => http.put<CalendarPdf>(`/api/portal/calendar/${year}`, { fileId, fileName });
+export const deleteCalendar = (year: number) => http.delete<void>(`/api/portal/calendar/${year}`);
+
+export interface SystemLink {
+  id: number;
+  name: string;
+  description: string | null;
+  category: string;
+  /** legacyDes 時一律 null(D-22) */
+  url: string | null;
+  openMode: 'new' | 'same';
+  legacyDes: boolean;
+  sort: number;
+  active: boolean;
+}
+export type SystemLinkInput = Omit<SystemLink, 'id'>;
+/** 集團系統(portal.links.edit 維護) */
+export const listSystemLinks = (admin = false) => http.get<{ items: SystemLink[] }>(admin ? '/api/portal/links/admin' : '/api/portal/links');
+export const createSystemLink = (body: SystemLinkInput) => http.post<SystemLink>('/api/portal/links', body);
+export const updateSystemLink = (id: number, body: SystemLinkInput) => http.put<SystemLink>(`/api/portal/links/${id}`, body);
+export const deleteSystemLink = (id: number) => http.delete<void>(`/api/portal/links/${id}`);
+
+export interface TalkPost {
+  sn: number;
+  parentSn: number | null;
+  type: string;
+  title: string;
+  content: string;
+  /** 伺服器當地時間 yyyy-MM-dd HH:mm:ss */
+  createdAt: string | null;
+  blocked: boolean;
+  likes: number;
+  likedByMe: boolean;
+}
+export interface TalkList {
+  items: TalkPost[];
+  types: string[];
+  /** false:作者加密金鑰未設定,不能發文 */
+  canPost: boolean;
+}
+/** 3691 全民開講(作者不回傳;moderation = portal.talk.moderate 管理檢視) */
+export const talkPosts = (type: string | null, moderation = false) =>
+  http.get<TalkList>(`/api/portal/talk/${moderation ? 'moderation/' : ''}posts${type ? `?type=${enc(type)}` : ''}`);
+export const talkPost = (body: { parentSn?: number | null; type?: string; title?: string; content: string }) =>
+  http.post<{ sn: number }>('/api/portal/talk/posts', body);
+export const talkLike = (sn: number) => http.post<{ likes: number }>(`/api/portal/talk/posts/${sn}/like`, {});
+export const talkBlock = (sn: number, blocked: boolean) => http.put<void>(`/api/portal/talk/posts/${sn}/block`, { blocked });
+export const talkReveal = (sn: number, approvalNo: string, reason: string) =>
+  http.post<{ sn: number; empNo: string }>(`/api/portal/talk/posts/${sn}/reveal`, { approvalNo, reason });

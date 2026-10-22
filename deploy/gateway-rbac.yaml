@@ -25,7 +25,7 @@ permissions:
   - { code: portal.group.manager, name: 主管專區, kind: group, parent: portal.app.access, sort: 60, icon: user-check }
   - { code: portal.group.esh, name: ESH證照管理, kind: group, parent: portal.app.access, sort: 70, icon: shield }
   # 功能頁(kind menu,一頁一碼,FRAMEWORK-PLAN §3.2)與 Tab(kind tab,代碼 = 選單代碼去掉 .read + key;frontend/src/router.ts tabCode)
-  - { code: portal.home.read, name: 首頁, kind: menu, parent: portal.group.home, sort: 10 }
+  - { code: portal.home.read, name: 首頁, kind: menu, parent: portal.group.home, sort: 10, includes: [portal.api.home.read, portal.api.personal-link.read] }
   - { code: portal.profile.read, name: 個人基本資料, kind: menu, parent: portal.group.personal, sort: 20 }
   - { code: portal.profile.basic, name: 基本資料, kind: tab, parent: portal.profile.read, sort: 10 }
   - { code: portal.profile.pension, name: 勞退新制資料, kind: tab, parent: portal.profile.read, sort: 20 }
@@ -96,15 +96,15 @@ permissions:
   - { code: portal.gui-number.read, name: 集團統編資訊, kind: menu, parent: portal.group.resources, sort: 100 }
   - { code: portal.gui-number.list, name: 集團統編, kind: tab, parent: portal.gui-number.read, sort: 10 }
   - { code: portal.news.read, name: 最新公告, kind: menu, parent: portal.group.news, sort: 110 }
-  - { code: portal.news.all, name: 全部, kind: tab, parent: portal.news.read, sort: 10 }
+  - { code: portal.news.all, name: 全部, kind: tab, parent: portal.news.read, sort: 10, includes: [portal.api.news.read] }
   - { code: portal.news.unread, name: 未讀, kind: tab, parent: portal.news.read, sort: 20 }
   - { code: portal.calendar.read, name: 行事曆, kind: menu, parent: portal.group.news, sort: 120 }
-  - { code: portal.calendar.month, name: 月曆視圖, kind: tab, parent: portal.calendar.read, sort: 10 }
-  - { code: portal.calendar.list, name: 年度清單, kind: tab, parent: portal.calendar.read, sort: 20 }
+  - { code: portal.calendar.month, name: 年度行事曆, kind: tab, parent: portal.calendar.read, sort: 10, includes: [portal.api.calendar.read] }
+  - { code: portal.calendar.list, name: 年度清單, kind: tab, parent: portal.calendar.read, sort: 20, includes: [portal.api.calendar.read] }
   - { code: portal.links.read, name: 集團系統, kind: menu, parent: portal.group.news, sort: 130 }
-  - { code: portal.links.list, name: 系統入口, kind: tab, parent: portal.links.read, sort: 10 }
+  - { code: portal.links.list, name: 系統入口, kind: tab, parent: portal.links.read, sort: 10, includes: [portal.api.link.read] }
   - { code: portal.talk.read, name: 3691 全民開講, kind: menu, parent: portal.group.news, sort: 140 }
-  - { code: portal.talk.board, name: 討論看板, kind: tab, parent: portal.talk.read, sort: 10 }
+  - { code: portal.talk.board, name: 討論看板, kind: tab, parent: portal.talk.read, sort: 10, includes: [portal.api.talk.read] }
   - { code: portal.mgr.rights.read, name: 主管權限說明, kind: menu, parent: portal.group.manager, sort: 200 }
   - { code: portal.mgr.rights.level1, name: 課級主管 (Level 1), kind: tab, parent: portal.mgr.rights.read, sort: 10 }
   - { code: portal.mgr.rights.level2, name: 理級主管 (Level 2), kind: tab, parent: portal.mgr.rights.read, sort: 20 }
@@ -157,6 +157,14 @@ permissions:
   - { code: portal.onboarding.edit, name: 維護新人導覽, kind: button, parent: portal.onboarding.tips, sort: 10 }
   - { code: portal.onboarding.confirm, name: 我已閱讀完畢, kind: button, parent: portal.onboarding.tips, sort: 20, includes: [portal.api.onboarding.write] }
   - { code: portal.onboarding.submit, name: 送出驗收測驗, kind: button, parent: portal.onboarding.quiz, sort: 10, includes: [portal.api.onboarding.write] }
+  # P3 首頁與集團公告(FEATURE-PLAN §1、§5;3691 屏蔽 / 解碼取代舊系統寫死工號,D-23)
+  - { code: portal.home.edit, name: 維護首頁輪播, kind: button, parent: portal.home.read, sort: 10, includes: [portal.api.home.edit] }
+  - { code: portal.home.link-edit, name: 維護個人常用連結, kind: button, parent: portal.home.read, sort: 20, includes: [portal.api.personal-link.write] }
+  - { code: portal.calendar.edit, name: 上傳年度行事曆, kind: button, parent: portal.calendar.list, sort: 10, includes: [portal.api.calendar.edit] }
+  - { code: portal.links.edit, name: 維護集團系統, kind: button, parent: portal.links.list, sort: 10, includes: [portal.api.link.edit] }
+  - { code: portal.talk.post, name: 發文 / 回覆 / 按讚, kind: button, parent: portal.talk.board, sort: 10, includes: [portal.api.talk.write] }
+  - { code: portal.talk.moderate, name: 屏蔽發言, kind: button, parent: portal.talk.board, sort: 20, includes: [portal.api.talk.moderate] }
+  - { code: portal.talk.reveal, name: 解碼作者(需核准文號), kind: button, parent: portal.talk.board, sort: 30, includes: [portal.api.talk.reveal] }
 
 roles:
   - code: employee
@@ -165,6 +173,7 @@ roles:
     permissions:
       - portal.app.access
       - portal.home.read
+      - portal.home.link-edit
       - portal.profile.read
       - portal.profile.basic
       - portal.profile.pension
@@ -242,6 +251,7 @@ roles:
       - portal.links.list
       - portal.talk.read
       - portal.talk.board
+      - portal.talk.post
       - portal.esh.chemical.read
       - portal.esh.chemical.regulated
       - portal.esh.chemical.unregulated
@@ -302,7 +312,15 @@ roles:
       - portal.esh.manager.list
   - code: portal-editor
     name: 入口網內容維護(人資 / 行政)
-    permissions: [portal.news.publish, portal.onboarding.edit, portal.job.edit, portal.survey.manage, portal.qa.edit, portal.qa.admin]
+    permissions:
+      [portal.news.publish, portal.onboarding.edit, portal.job.edit, portal.survey.manage, portal.qa.edit, portal.qa.admin, portal.home.edit, portal.calendar.edit, portal.links.edit]
+  # 3691 管理(D-23):屏蔽取代舊系統寫死的 5 個工號;解碼作者另一角色,成員須經人資 / 法務核定(CONFIRM-NEEDED P3)
+  - code: portal-talk-moderator
+    name: 入口網 3691 管理(屏蔽)
+    permissions: [portal.talk.moderate]
+  - code: portal-talk-auditor
+    name: 入口網 3691 作者調閱(需核准文號)
+    permissions: [portal.talk.reveal]
   - code: it-app-user
     name: IT 管理系統使用者
     permissions: [it.app.access]

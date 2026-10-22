@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.8(2026-10-22,P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.9(2026-10-23,P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -35,7 +35,7 @@
 | D-26 | (Q-F10)部門預算可看範圍沿用 Budget 庫 `UserInfo.Competence`(以 Token 工號查),且須同時具 `portal-manager` |
 | D-27 | (Q-F2、Q-F5、Q-F9、Q-F12)**退場 / 不做**:薪資金鑰重置、新人缺繳資料 HRNewPay、資安演練點擊紀錄(spam / spamview);舊站高風險頁(ForgetPassword、LoginNewAccount、EipLogin 等)不在 giga-Portal 範圍,另行通報 IT |
 | D-28 | (Q-F4)並行期新建問卷的題目圖片存 file-service,舊站顯示不出,接受 |
-| D-29 | (Q-D13)BPM 查詢**限定碩禾系**:只有 Token 公司屬碩禾系者才查 NaNa(公司清單以設定提供,不寫死),其他公司本機帳號回空清單;修正 P1-3 既有查詢,隨 P4 一併實作 |
+| D-29 | (Q-D13)BPM 查詢**限定碩禾系**:只有 Token 公司屬碩禾系者才查 NaNa(公司清單以設定提供,不寫死),其他公司本機帳號回空清單;修正 P1-3 既有查詢,隨 P4 一併實作(P3 首頁聚合已先套用:設定 `BPM_COMPANIES`) |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -154,7 +154,16 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 
 ### P3 集團與公告 + 首頁
 
-最新公告(BFF 通知中心;`ContentX` 舊公告是否顯示待確認)、行事曆(`PCalendar`)、集團系統(`PersonalSystemLink` / `ImageLink`)、3691 全民開講(`Talk3691*`,寫入)、首頁聚合 `/api/portal/dashboard`(BPM 待簽核數、公告、個人連結;TIPTOP 卡片轉移中)。
+**P3 已實作(2026-10-23,工作分支 `feature/portal-p3-home`,未合併、未上測試區;待確認見 `CONFIRM-NEEDED.md` P3)**:
+
+| 項目 | 資料 | 做法 |
+| --- | --- | --- |
+| 首頁聚合 `GET /dashboard` | BPM(NaNa)、QAAnnual*、NewPepR / HRNewPtest + LOS `EmployeeInfo.JobDate`、`portal.personal_note`、`portal.personal_link`、ContentX、`portal.home_slide` | 各來源各自 try/catch(`_meta.errors` / `unavailable`);待簽同意書 P7;BPM 只對 `BPM_COMPANIES` 公司查(D-29 首頁部分) |
+| 最新公告 | Gateway 通知中心 + PortalSolar `ContentX`(唯讀) | `GET /news/legacy`,條件同舊首頁(D-21);入口網不做發布頁 |
+| 行事曆 | `portal.calendar_pdf`(file-service PDF) | 年度 PDF,編輯者上傳;PCalendar 不沿用 |
+| 集團系統 | `portal.system_link` | 編輯者維護;10 個舊 DES 跳轉系統只顯示「DES 跳轉(待重構)」(D-22);舊 `PersonalSystemLink` / `ImageLink` 不沿用 |
+| 個人常用連結 | `portal.personal_link` | 本人 CRUD + 排序 |
+| 3691 全民開講 | PortalSolar `Talk3691Data` / `Talk3691Like`(寫入)、`portal.talk_author`、`portal.talk_audit` | 作者 AES-256-GCM 加密(secret)、mark 留 NULL、解碼需 `portal.talk.reveal` + 核准文號 + 稽核(D-23,**上線前需人資 / 法務確認**) |
 
 ### P4 表單與簽核
 
@@ -195,4 +204,4 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 | Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | 待確認 |
 | Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方 | ✅ D-29 限定碩禾系 |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
-| Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 / P5 前確認 |
+| Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 未用到(舊公告編輯不做);P5 前確認 |

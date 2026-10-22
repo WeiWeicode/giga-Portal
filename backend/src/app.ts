@@ -28,6 +28,15 @@ import { noteRoutes } from './routes/notes.js';
 import { onboardingRoutes, type OnboardingRepo } from './routes/onboarding.js';
 import { qaRoutes } from './routes/qa.js';
 import type { QaService } from './modules/qa/qa.js';
+import type { ContentService } from './modules/home/content.js';
+import type { DashboardService } from './modules/home/dashboard.js';
+import type { LegacyNewsRepo } from './modules/home/legacy-repo.js';
+import type { LinkService } from './modules/links/links.js';
+import type { TalkService } from './modules/talk/talk.js';
+import { calendarRoutes } from './routes/calendar.js';
+import { homeRoutes } from './routes/home.js';
+import { linkRoutes } from './routes/links.js';
+import { talkRoutes } from './routes/talk.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -57,6 +66,12 @@ export interface AppOptions {
   jobs?: JobRepo | null;
   onboarding?: OnboardingRepo | null;
   qa?: QaService | null;
+  /** P3 首頁聚合與集團公告 */
+  dashboard?: DashboardService | null;
+  content?: ContentService | null;
+  legacyNews?: LegacyNewsRepo | null;
+  links?: LinkService | null;
+  talk?: TalkService | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -136,5 +151,9 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(hrRoutes());
   await app.register(onboardingRoutes(opts.onboarding ?? null));
   await app.register(qaRoutes(opts.qa ?? null));
+  await app.register(homeRoutes(opts.dashboard ?? null, opts.content ?? null, opts.legacyNews ?? null));
+  await app.register(calendarRoutes(opts.content ?? null));
+  await app.register(linkRoutes(opts.links ?? null));
+  await app.register(talkRoutes(opts.talk ?? null));
   return app;
 }

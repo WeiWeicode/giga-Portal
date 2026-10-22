@@ -10,12 +10,18 @@
  *   PORTAL_SRC_<KEY>  個別來源覆寫「資料庫.schema」(db/sources.ts)
  *   GOOGLE_MAPS_API_KEY(_FILE)  選用:通勤調查地址轉經緯度(Google Geocoding);未設定時通勤調查不能送出(503)
  *   BPM_DB_HOST / _PORT / _NAME / _USER / _PASSWORD(_FILE)  選用:BPM NaNa 唯讀(portal_bpm_ro;測試區 191、正式區 190);未設定時 /bpm/* 回 503
+ *   BPM_COMPANIES     首頁 BPM 筆數只對這些公司(Token cos,逗號分隔)查詢(D-29 碩禾系限定);空白則首頁不顯示 BPM
  *   BPM_WEB_URL       BPM 網站位址(深連結;與 BPM_DB_HOST 同一台,例 http://10.10.130.191:8080),設定 BPM_DB_HOST 時必填
+ *   TALK_AUTHOR_KEY(_FILE)  選用:3691 作者加密金鑰(32 bytes base64,D-23);test / prod 只接受 _FILE。未設定時 3691 可瀏覽,不能發文 / 解碼(503)
+ *   TALK_AUTHOR_KEY_ID      金鑰代號(預設 k1;換金鑰時改代號,舊代號的金鑰另設 TALK_AUTHOR_OLD_KEYS_FILE)
+ *   TALK_AUTHOR_OLD_KEYS_FILE  選用:換金鑰後的舊金鑰檔,每行「代號:base64」,只用來解碼舊發文
+ *   LEGACY_PORTAL_URL 選用:舊入口網網站根網址(例 http://10.10.130.166/PortalSolar),首頁舊公告連結用;未設定則不帶連結(D-21)
  *   DEV_SKIP_TOKEN    dev 專用:不驗證 X-Internal-Token(本機直連);非 dev 設定即啟動失敗
  */
 import { readFileSync } from 'node:fs';
 import { isGatewayPort, loadGatewayEnv, loadMonitorEnv, type GatewayEnv, type MonitorEnv } from '@giganexus/backend-sdk';
 import { Sources, type SourceMode } from './db/sources.js';
+import { AuthorKeyError, parseAuthorKey, type AuthorKey } from './modules/talk/author-cipher.js';
 
 export interface SqlConfig {
   server: string;
@@ -38,6 +44,12 @@ export interface Config {
   googleMapsApiKey: string | null;
   /** null = 未設定 BPM 資料來源 */
   bpm: { sql: SqlConfig; webUrl: string } | null;
+  /** D-29:首頁可查 BPM 的公司(Token cos) */
+  bpmCompanies: string[];
+  /** null = 未設定,3691 不能發文 / 解碼 */
+  talkKeys: { current: AuthorKey; old: AuthorKey[] } | null;
+  /** 舊入口網根網址(不含結尾 /);null = 舊公告不帶連結 */
+  legacyPortalUrl: string | null;
   devSkipToken: boolean;
 }
 
@@ -94,6 +106,59 @@ function bpmConfig(env: NodeJS.ProcessEnv, strictFile: boolean): Config['bpm'] {
   };
 }
 
+/** 3691 作者金鑰(D-23):金鑰只從 secret / 環境變數讀,不寫死;格式錯誤啟動失敗 */
+function talkKeys(env: NodeJS.ProcessEnv, strictFile: boolean): Config['talkKeys'] {
+  const raw = secret(env, 'TALK_AUTHOR_KEY', strictFile);
+  if (!raw) return null;
+  try {
+    const current = parseAuthorKey(env.TALK_AUTHOR_KEY_ID?.trim() || 'k1', raw);
+    const old: AuthorKey[] = [];
+    const file = env.TALK_AUTHOR_OLD_KEYS_FILE;
+    if (file) {
+      let text: string;
+      try {
+        text = readFileSync(file, 'utf8');
+      } catch (err) {
+        throw new ConfigError(`無法讀取 TALK_AUTHOR_OLD_KEYS_FILE:${(err as Error).message}`);
+      }
+      for (const [n, line] of text
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .entries()) {
+        // 錯誤訊息只寫行號,不回顯內容(避免金鑰寫反時印進啟動日誌)
+        const i = line.indexOf(':');
+        try {
+          if (i <= 0) throw new AuthorKeyError('format');
+          old.push(parseAuthorKey(line.slice(0, i), line.slice(i + 1)));
+        } catch {
+          throw new ConfigError(`TALK_AUTHOR_OLD_KEYS_FILE 第 ${n + 1} 個金鑰格式錯誤(每行「代號:base64」,代號英數字 - _、金鑰 32 bytes)`);
+        }
+      }
+    }
+    if (old.some((k) => k.id === current.id)) throw new ConfigError('TALK_AUTHOR_OLD_KEYS_FILE 的代號不可與 TALK_AUTHOR_KEY_ID 相同');
+    return { current, old };
+  } catch (err) {
+    if (err instanceof AuthorKeyError) throw new ConfigError(err.message);
+    throw err;
+  }
+}
+
+/** 舊入口網根網址:只接受 http(s)、不含帳密、查詢字串 */
+function legacyPortalUrl(raw: string | undefined): string | null {
+  const v = raw?.trim();
+  if (!v) return null;
+  let u: URL;
+  try {
+    u = new URL(v);
+  } catch {
+    throw new ConfigError(`LEGACY_PORTAL_URL 格式錯誤:${v}`);
+  }
+  if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash)
+    throw new ConfigError(`LEGACY_PORTAL_URL 必須為 http(s)://主機[/路徑],不含帳密與查詢字串:${v}`);
+  return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): Config {
   const gateway = loadGatewayEnv(env, cwd);
   const isDev = gateway.gwEnv === 'dev';
@@ -138,6 +203,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     sources,
     googleMapsApiKey: secret(env, 'GOOGLE_MAPS_API_KEY', !isDev) ?? null,
     bpm: bpmConfig(env, !isDev),
+    bpmCompanies: (env.BPM_COMPANIES ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    talkKeys: talkKeys(env, !isDev),
+    legacyPortalUrl: legacyPortalUrl(env.LEGACY_PORTAL_URL),
     devSkipToken,
   };
 }

@@ -40,6 +40,19 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.qa.write', name: '入口網 API:送出問卷作答' },
   { code: 'portal.api.qa.edit', name: '入口網 API:問卷維護(本人建立的問卷、統計、匯出)' },
   { code: 'portal.api.qa.admin', name: '入口網 API:問卷代管(全部出題者)' },
+  { code: 'portal.api.home.read', name: '入口網 API:首頁聚合' },
+  { code: 'portal.api.home.edit', name: '入口網 API:首頁輪播維護' },
+  { code: 'portal.api.news.read', name: '入口網 API:舊入口網公告查詢' },
+  { code: 'portal.api.calendar.read', name: '入口網 API:年度行事曆查詢' },
+  { code: 'portal.api.calendar.edit', name: '入口網 API:年度行事曆上傳 / 刪除' },
+  { code: 'portal.api.link.read', name: '入口網 API:集團系統查詢' },
+  { code: 'portal.api.link.edit', name: '入口網 API:集團系統維護' },
+  { code: 'portal.api.personal-link.read', name: '入口網 API:個人常用連結查詢' },
+  { code: 'portal.api.personal-link.write', name: '入口網 API:個人常用連結新增 / 修改 / 刪除' },
+  { code: 'portal.api.talk.read', name: '入口網 API:3691 瀏覽' },
+  { code: 'portal.api.talk.write', name: '入口網 API:3691 發文 / 回覆 / 按讚' },
+  { code: 'portal.api.talk.moderate', name: '入口網 API:3691 屏蔽與管理檢視' },
+  { code: 'portal.api.talk.reveal', name: '入口網 API:3691 解碼作者(需核准文號、留稽核)' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

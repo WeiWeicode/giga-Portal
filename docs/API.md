@@ -74,9 +74,29 @@
 | 同上 | `/api/portal/qa/admin/surveys[/:qaNo[/copy\|/stats\|/export]]` | `portal.api.qa.admin` | 代管全部出題者(按鈕 `portal.qa.admin`;清單另可 `creator` 篩選);不改原建立者 |
 | GET | `/api/portal/qa/org/departments` | `portal.api.qa.edit` | 設定對象用的部門清單(LOS DeptInfo `{ code, name, parent }`),畫面展開下層 |
 | GET | `/api/portal/qa/org/job-tier?tier=section\|manager` | `portal.api.qa.edit` | 職級快速帶入(課級 / 理級以上工號);Gateway 尚未提供職級查詢,目前回 503 `PORTAL_JOB_TIER_UNAVAILABLE`(CONFIRM-NEEDED P2-2b) |
+| GET | `/api/portal/dashboard` | `portal.api.home.read` | 首頁聚合(P3,§4):`{ todos.items[{ kind, title, count, date, to, href }], secretary{ bpm{ pending, abnormal, unclosed, hasAccount, homeUrl } \| null, links[] \| null }, news{ total, items } \| null, slides{ policy[], gallery[] } \| null, _meta{ errors[{ section, message }], unavailable[] } }`;單一來源失敗只標在 `_meta.errors`(區塊代碼 `bpm`、`todos.qa`、`todos.onboarding`、`todos.notes`、`secretary.links`、`news`、`slides`),未設定 / 未實作列在 `_meta.unavailable`(`todos.consent` P7;BPM 只對 `BPM_COMPANIES` 公司查詢,D-29) |
+| GET | `/api/portal/home/slides` | `portal.api.home.edit` | 首頁輪播維護清單(含停用、過期) |
+| POST / PUT / DELETE | `/api/portal/home/slides`、`/home/slides/:id` | `portal.api.home.edit` | 新增 / 修改 / 刪除輪播(按鈕 `portal.home.edit`;`{ kind: policy\|gallery, title, fileId(file-service UUID), linkUrl?, startDate?, endDate?, sort, active }`);404 `PORTAL_SLIDE_NOT_FOUND` |
+| GET | `/api/portal/news/legacy?q=&page=&pageSize=` | `portal.api.news.read` | 舊入口網公告(ContentX 唯讀,D-21;條件同舊首頁;`url` 為舊站公告頁,未設定 `LEGACY_PORTAL_URL` 時 null) |
+| GET | `/api/portal/calendar` | `portal.api.calendar.read` | 年度行事曆 `{ items[{ year, fileId, fileName, updatedAt }] }` |
+| PUT / DELETE | `/api/portal/calendar/:year` | `portal.api.calendar.edit` | 登記 / 取代(`{ fileId, fileName(.pdf) }`)/ 刪除年度行事曆(按鈕 `portal.calendar.edit`);404 `PORTAL_CALENDAR_NOT_FOUND` |
+| GET | `/api/portal/links` | `portal.api.link.read` | 啟用中的集團系統;`legacyDes = true` 的 `url` 一律 null(D-22) |
+| GET | `/api/portal/links/admin` | `portal.api.link.edit` | 全部集團系統(含停用) |
+| POST / PUT / DELETE | `/api/portal/links`、`/links/:id` | `portal.api.link.edit` | 維護集團系統(按鈕 `portal.links.edit`;網址只接受 http(s) 或站內路徑);404 `PORTAL_LINK_NOT_FOUND` |
+| GET / POST | `/api/portal/personal-links` | `portal.api.personal-link.read` / `.write` | 本人常用連結 / 新增(每人 20 筆,409 `PORTAL_LINK_LIMIT`) |
+| PUT / DELETE | `/api/portal/personal-links/:id` | `portal.api.personal-link.write` | 修改 / 刪除本人的(別人的 404);按鈕 `portal.home.link-edit` |
+| PUT | `/api/portal/personal-links/order` | `portal.api.personal-link.write` | `{ ids }` 依序重設排序(必須是本人全部連結) |
+| GET | `/api/portal/talk/posts?type=` | `portal.api.talk.read` | 3691 主題與回覆(扁平,`parentSn` 組樹;不含作者;屏蔽的遮蔽內容、回覆不列);`types`、`canPost`(金鑰是否設定) |
+| GET | `/api/portal/talk/moderation/posts?type=` | `portal.api.talk.moderate` | 管理檢視(含屏蔽原文與回覆,不含作者) |
+| POST | `/api/portal/talk/posts` | `portal.api.talk.write` | 發新主題(`type`、`title`、`content`)或回覆(`parentSn`、`content`,分類沿用上層);作者加密存 `portal.talk_author`(D-23);`< >` 轉全形;屏蔽的(含上層)409 `PORTAL_TALK_BLOCKED`;金鑰未設定 503 `PORTAL_TALK_KEY_UNAVAILABLE`;**不寫 Gateway 存取紀錄**(x-audit-level none) |
+| POST | `/api/portal/talk/posts/:sn/like` | `portal.api.talk.write` | 按讚(每人每則一次)`{ likes }` |
+| PUT | `/api/portal/talk/posts/:sn/block` | `portal.api.talk.moderate` | `{ blocked }` 屏蔽 / 取消屏蔽並寫稽核(按鈕 `portal.talk.moderate`) |
+| POST | `/api/portal/talk/posts/:sn/reveal` | `portal.api.talk.reveal` | `{ approvalNo(必填 ≤ 50), reason? }` → `{ sn, empNo }`;每次嘗試都寫 `portal.talk_audit`;舊站發文 409 `PORTAL_TALK_AUTHOR_LEGACY`、無資料 404 `PORTAL_TALK_AUTHOR_NOT_FOUND`、解不開 500 `PORTAL_TALK_AUTHOR_DECRYPT_FAILED`(按鈕 `portal.talk.reveal`;**上線前需人資 / 法務確認**) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案
+
+> P3 決定:公告一律由 Gateway 通知中心(GigaItApp 發布)提供,下表 `/api/portal/news*` 發布類草案**不實作**(FEATURE-PLAN §5);集團系統、行事曆已實作(§3.0)。
 
 | 方法 | 對外路徑 | 權限 | 說明 |
 | --- | --- | --- | --- |
@@ -86,11 +106,13 @@
 | PATCH / DELETE | `/api/portal/news/:id` | `portal.news.publish` | 修改 / 下架(只能管理自己部門發布的,主管理角色除外) |
 | GET | `/api/portal/resources?category=` | `portal.resource.read` | 行政資源(文件、連結、說明) |
 | PUT | `/api/portal/resources/:id` | `portal.resource.edit` | 維護行政資源 |
-| GET | `/api/portal/links` | `portal.links.read` | 集團系統 / 外部連結(含舊單一入口) |
-| GET | `/api/portal/calendar?from=&to=` | `portal.calendar.read` | 公司行事曆與個人行程(個人部分待資料來源) |
 | GET | `/v1/healthz`、`/v1/readyz`、`/openapi.json` | 無(不經 BFF 對外) | 健康檢查、規格 |
 
-## 4. 首頁聚合回應(草案)
+## 4. 首頁聚合回應
+
+> **P3 已實作為 portal-api 自己的 `GET /api/portal/dashboard`**(回應格式見 §3.0;不是 BFF aggregate)。出勤、假期、KPI 等 TIPTOP / HRM 區塊不提供(D-1);下方為 PRD 初版草案,保留供人事系統上線後參考。
+
+### 4.1 初版草案(未實作)
 
 ```jsonc
 // GET /api/portal/dashboard
@@ -121,5 +143,15 @@
 | `PORTAL_QA_INVALID` | 400 | 問卷設定或作答內容不合規則(`details` 逐欄 / 逐題) |
 | `PORTAL_QA_CONFLICT` | 409 | 新問卷編號連續重複(同一秒大量建立) |
 | `PORTAL_JOB_TIER_UNAVAILABLE` | 503 | 職級快速帶入的資料來源(Gateway)尚未提供 |
+| `PORTAL_SLIDE_NOT_FOUND` | 404 | 首頁輪播圖片不存在 |
+| `PORTAL_CALENDAR_NOT_FOUND` | 404 | 該年度沒有行事曆 |
+| `PORTAL_LINK_NOT_FOUND` | 404 | 集團系統 / 個人常用連結不存在(或不是本人的) |
+| `PORTAL_LINK_LIMIT` | 409 | 個人常用連結已達上限(20) |
+| `PORTAL_TALK_NOT_FOUND` | 404 | 3691 發言不存在 |
+| `PORTAL_TALK_BLOCKED` | 409 | 發言(或其上層)已屏蔽,不能回覆或按讚 |
+| `PORTAL_TALK_KEY_UNAVAILABLE` | 503 | 3691 作者加密金鑰未設定,不能發文 / 解碼 |
+| `PORTAL_TALK_AUTHOR_LEGACY` | 409 | 舊入口網發文(舊 DES mark),新站不解碼 |
+| `PORTAL_TALK_AUTHOR_NOT_FOUND` | 404 | 發言沒有作者資料 |
+| `PORTAL_TALK_AUTHOR_DECRYPT_FAILED` | 500 | 作者資料解不開(金鑰不符或資料毀損) |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

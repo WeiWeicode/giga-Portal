@@ -150,6 +150,10 @@ export const ICONS: Record<string, Component> = {
   'trending-up': L.TrendingUp,
   truck: L.Truck,
   wrench: L.Wrench,
+  // P3 首頁與集團公告(3691 按讚、個人常用連結排序)
+  'thumbs-up': L.ThumbsUp,
+  'arrow-up': L.ArrowUp,
+  'arrow-down': L.ArrowDown,
 };
 
 export const ICON_NAMES = Object.keys(ICONS).sort();

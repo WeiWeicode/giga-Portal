@@ -91,7 +91,7 @@ const appPages: RouteRecordRaw[] = [
   {
     path: '',
     component: () => import('./pages/home/Home.vue'),
-    meta: { title: '首頁', subtitle: 'Home', icon: 'home', group: 'home', permission: 'portal.home.read', milestone: 'M4' },
+    meta: { title: '首頁', subtitle: 'Home', icon: 'home', group: 'home', permission: 'portal.home.read' },
   },
   // 個人資訊 (對齊 old_PortalSolar)
   page(
@@ -447,8 +447,7 @@ const appPages: RouteRecordRaw[] = [
       icon: 'megaphone',
       group: 'group',
       permission: 'portal.news.read',
-      milestone: 'M4',
-      description: '公司全體公告、行政公告、人事發布與 IT 維護通知',
+      description: '公司公告(通知中心)與舊入口網公告(唯讀)',
     },
     [
       { key: 'all', label: '全部', path: '', icon: 'list', component: () => import('./pages/group/news/NewsAllTab.vue') },
@@ -463,12 +462,11 @@ const appPages: RouteRecordRaw[] = [
       icon: 'calendar',
       group: 'group',
       permission: 'portal.calendar.read',
-      milestone: 'M4',
-      description: '年度人事行政總處放假日曆、公司廠慶、盤點日與補班排程',
+      description: '公司年度行事曆 PDF(放假、補班、廠慶等),依年度切換',
     },
     [
-      { key: 'month', label: '月曆視圖', path: '', icon: 'calendar', component: () => import('./pages/group/calendar/CalendarMonthTab.vue') },
-      { key: 'list', label: '年度清單', path: 'list', icon: 'list', component: () => import('./pages/group/calendar/CalendarListTab.vue') },
+      { key: 'month', label: '年度行事曆', path: '', icon: 'calendar', requires: ['portal.api.calendar.read'], component: () => import('./pages/group/calendar/CalendarMonthTab.vue') },
+      { key: 'list', label: '年度清單', path: 'list', icon: 'list', requires: ['portal.api.calendar.read'], component: () => import('./pages/group/calendar/CalendarListTab.vue') },
     ],
   ),
   page(
@@ -479,11 +477,10 @@ const appPages: RouteRecordRaw[] = [
       icon: 'external',
       group: 'group',
       permission: 'portal.links.read',
-      milestone: 'M4',
-      description: '單一簽入 (SSO) 快速跳轉至集團 17 個核心營運外部系統',
+      description: '集團外部系統入口;舊站 DES 跳轉的系統待重構',
     },
     [
-      { key: 'list', label: '系統入口', path: '', icon: 'external', component: () => import('./pages/group/LinksPage.vue') },
+      { key: 'list', label: '系統入口', path: '', icon: 'external', requires: ['portal.api.link.read'], component: () => import('./pages/group/LinksPage.vue') },
     ],
   ),
   page(
@@ -494,11 +491,10 @@ const appPages: RouteRecordRaw[] = [
       icon: 'message',
       group: 'group',
       permission: 'portal.talk.read',
-      milestone: 'M5',
-      description: '同仁自由交流討論看板、經驗分享與不法侵害申訴管道',
+      description: '同仁匿名交流討論看板(發言者身分加密,調閱須核准並留稽核)',
     },
     [
-      { key: 'board', label: '討論看板', path: '', icon: 'message', component: () => import('./pages/group/TalkPage.vue') },
+      { key: 'board', label: '討論看板', path: '', icon: 'message', requires: ['portal.api.talk.read'], component: () => import('./pages/group/TalkPage.vue') },
     ],
   ),
   // 主管專區 (Manager Menu)

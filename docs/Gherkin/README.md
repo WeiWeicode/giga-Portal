@@ -17,7 +17,7 @@
 | `ui/navigation.feature` | 兩層選單、Tab、403、收合、手機寬度 | §6.3、§6.6 | M1 |
 | `ui/theme.feature` | 玻璃 / 扁平 × 明亮 / 黑暗切換與記憶、自動扁平 | §6.6 FR-6.2–6.4 | M1 |
 | `ui/search.feature` | 全域搜尋(有權限的功能) | §6.6 FR-6.8 | M4 |
-| `home/home.feature` | 首頁區塊、聚合路由、部分失敗、模擬標示 | §6.4 | M4 |
+| `home/home.feature` | 首頁聚合(待辦、個人秘書與常用連結、舊公告、輪播與維護)、部分失敗 | §6.4、FEATURE-PLAN §1 | P3 |
 | `api/skeleton.feature` | portal-api 骨架:內部 Token、`/me`、OpenAPI、舊庫來源前綴 | PORTAL-API-PLAN §3 | P0 |
 | `personal/courses.feature` | 年度必上課程(照舊規則) | PORTAL-API-PLAN D-9 | P1 |
 | `personal/notes.feature` | 個人提醒(portal.personal_note) | PORTAL-API-PLAN P1-2 | P1 |
@@ -26,6 +26,10 @@
 | `resources/jobs.feature` | 內部職缺 | PORTAL-API-PLAN D-15 | P2 |
 | `resources/onboarding.feature` | 新人導覽(小叮嚀已讀、驗收測驗) | FEATURE-PLAN §3.5、PORTAL-API-PLAN D-20 | P2 |
 | `resources/qa.feature` | 問卷調查(我的問卷、填答、出題 / 代管、統計、匯出) | FEATURE-PLAN §3.4、PORTAL-API-PLAN D-18、D-19、D-28 | P2 |
+| `group/news.feature` | 最新公告(通知中心、舊入口網公告唯讀併入) | FEATURE-PLAN §5、PORTAL-API-PLAN D-21 | P3 |
+| `group/calendar.feature` | 年度行事曆 PDF(依年度切換、編輯者上傳) | FEATURE-PLAN §5 | P3 |
+| `group/links.feature` | 集團系統(DES 跳轉系統只顯示待重構) | FEATURE-PLAN §5、§6.3、PORTAL-API-PLAN D-22 | P3 |
+| `group/talk.feature` | 3691 全民開講(匿名發文、屏蔽、作者加密與授權解碼稽核) | FEATURE-PLAN §5.1、PORTAL-API-PLAN D-23 | P3 |
 | `personal/bpm.feature` | BPM 簽核資訊(待簽核 / 未結案) | PORTAL-API-PLAN §3.3、D-13 | P1 |
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |

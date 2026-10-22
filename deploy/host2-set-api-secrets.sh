@@ -6,7 +6,8 @@
 #                                    gw_api_key(Gateway CLI client:create --code portal-api;自動註冊 OpenAPI 草稿用)、
 #                                    monitor_api_key(giga-observe ingest Key,服務 portal-api)、
 #                                    google_maps_api_key(通勤調查地址轉經緯度,隱藏輸入;可留空,留空則通勤調查不能送出)、
-#                                    bpm_db_password(BPM 191 唯讀帳號 portal_bpm_ro,隱藏輸入;可留空,留空則 BPM 簽核資訊不可用)
+#                                    bpm_db_password(BPM 191 唯讀帳號 portal_bpm_ro,隱藏輸入;可留空,留空則 BPM 簽核資訊不可用)、
+#                                    talk_author_key(3691 作者加密金鑰,自動產生 32 bytes;遺失則新站發文的作者無法解碼,需另行備份)
 #   /srv/giganexus/deploy/portal.env 補上 portal-api 的 Compose 變數(既有的 SPA 變數保留;範本 test.env.example)
 set -eu
 # 暫存檔(含 Key)只有本人可讀,結束或中斷時刪除;中斷輸入密碼時恢復終端機回顯
@@ -61,6 +62,14 @@ if [ ! -f "$D/bpm_db_password" ]; then
   unset b
 fi
 
+# ---------- 3691 作者加密金鑰(D-23;自動產生,不經開發機,不可覆寫:覆寫後舊發文的作者無法解碼) ----------
+if [ ! -f "$D/talk_author_key" ]; then
+  k="$(openssl rand -base64 32 | tr -d '\r\n')"
+  [ -n "$k" ] || { echo "openssl 產生金鑰失敗,未寫入 talk_author_key" >&2; exit 1; }
+  printf '%s' "$k" > "$D/talk_author_key"; unset k
+  echo "已產生 talk_author_key;請依公司規定另行備份(遺失則新入口網發文的作者無法解碼)"
+fi
+
 # 只限縮檔案(目錄需讓 CI 的 docker compose 讀得到 secret 路徑)
 chown 1000:1000 "$D"/*; chmod 400 "$D"/*
 
@@ -77,6 +86,8 @@ add PORTAL_SECRETS_DIR "$D"
 if [ -s "$D/bpm_db_password" ]; then
   add BPM_DB_HOST 10.10.130.191
   add BPM_WEB_URL http://10.10.130.191:8080
+  # D-29 碩禾系公司(Token cos 名稱;清單待確認,見 CONFIRM-NEEDED P3)
+  add BPM_COMPANIES 碩禾,碩禾電子材料
 fi
 
 ls -l "$D"

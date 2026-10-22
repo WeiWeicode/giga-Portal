@@ -10,7 +10,8 @@
 #   網路:加入 Gateway 的 Docker 網路(GW_NETWORK),別名 portal-api → BFF 以 http://portal-api:51271 轉入 /api/portal/*
 #   機密(PORTAL_SECRETS_DIR,uid 1000 可讀;deploy/host2-set-api-secrets.sh 產生):
 #     portal_db_password(portal_app)、gw_api_key(Gateway CLI client:create --code portal-api)、monitor_api_key(giga-observe 服務 portal-api)、
-#     google_maps_api_key(通勤調查;可為空白)、bpm_db_password(portal_bpm_ro;可為空白)
+#     google_maps_api_key(通勤調查;可為空白)、bpm_db_password(portal_bpm_ro;可為空白)、
+#     talk_author_key(3691 作者加密金鑰 32 bytes base64,腳本自動產生;空白則 3691 不能發文 / 解碼,D-23)
 name: giganexus-portal
 
 services:
@@ -59,10 +60,17 @@ services:
       BPM_DB_USER: ${BPM_DB_USER:-portal_bpm_ro}
       BPM_DB_PASSWORD_FILE: /run/secrets/bpm_db_password
       BPM_WEB_URL: ${BPM_WEB_URL:-}
+      # 首頁 BPM 筆數只對這些公司查詢(Token cos,逗號分隔;D-29 碩禾系限定);空白則首頁不顯示 BPM
+      BPM_COMPANIES: ${BPM_COMPANIES:-}
+      # 3691 作者加密金鑰(D-23;只放 secret,不可寫進映像或 env 檔);換金鑰時改 TALK_AUTHOR_KEY_ID
+      TALK_AUTHOR_KEY_FILE: /run/secrets/talk_author_key
+      TALK_AUTHOR_KEY_ID: ${TALK_AUTHOR_KEY_ID:-k1}
+      # 舊入口網根網址(首頁舊公告連結,D-21);空白則舊公告不帶連結
+      LEGACY_PORTAL_URL: ${LEGACY_PORTAL_URL:-}
       MONITOR_URL: ${MONITOR_URL:-http://observe-api:51202}
       MONITOR_API_KEY_FILE: /run/secrets/monitor_api_key
       RELEASE_SHA: ${RELEASE_SHA:-dev}
-    secrets: [gw_api_key, portal_db_password, monitor_api_key, google_maps_api_key, bpm_db_password]
+    secrets: [gw_api_key, portal_db_password, monitor_api_key, google_maps_api_key, bpm_db_password, talk_author_key]
     networks:
       gateway:
         aliases: [portal-api]
@@ -81,6 +89,8 @@ secrets:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/google_maps_api_key
   bpm_db_password:
     file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/bpm_db_password
+  talk_author_key:
+    file: ${PORTAL_SECRETS_DIR:-/srv/giganexus/portal-secrets}/talk_author_key
 
 networks:
   gateway:

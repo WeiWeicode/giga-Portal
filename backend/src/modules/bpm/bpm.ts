@@ -102,6 +102,11 @@ export class BpmService {
     private readonly webUrl: string,
   ) {}
 
+  /** BPM 首頁(首頁個人秘書「前往 BPM」;D-24 簽核一律回 BPM 完成) */
+  get homeUrl(): string {
+    return `${this.webUrl}/NaNaWeb/`;
+  }
+
   /** 只是產生給人點的連結,不對 BPM 發出請求;缺材料回 null(不給半條網址) */
   performUrl(userId: string, workItemOid: string): string | null {
     if (!userId || !workItemOid) return null;
