@@ -1,7 +1,7 @@
 # giga-Portal 交接(HANDOFF)
 
 > 新的工作階段(人或 AI)接手時先讀這份,再讀 `AGENT.md`、`docs/PROJECT-MAP.md`。時程以 NexusPlan 甘特圖為準,本文件只記狀態。
-> **最後更新:2026-10-12**(框架對齊 GigaItApp 完成並通過測試區驗收;下一階段:規劃 portal-api)
+> **最後更新:2026-10-22**(功能邏輯企劃與待決 Q-F1~Q-F10、Q-F12 決議 D-21~D-29;下一批 P2-2a 新人導覽)
 
 ## 1. 目前狀態
 
@@ -12,11 +12,11 @@
 | 角色 | ✅ | `employee`、`portal-approver`、`portal-manager`、`portal-esh-admin`、`portal-editor`、`it-app-user`;`it-admin`(GigaItApp yaml)可查看全部 menu + tab。**yaml 套用順序:Portal 先、GigaItApp 後** |
 | 首頁 | ✅ 框架 | 版面依 `old_PortalSolar/MainFormX.aspx` 兩欄卡片;「最新公告」為 BFF 通知中心真實資料,其餘卡片標示「待串接」 |
 | 各功能頁 Tab 內容 | ⏳ mock | 43 頁的 Tab 內容是排版用 mock(畫面不呼叫 API);串接真實資料屬 M4 / M5 |
-| portal-api(`backend/`) | ⏳ 未開始 | **下一階段**,在新的討論串規劃 |
+| portal-api(`backend/`) | ✅ 測試區運作中(部分) | P0、P1、P2-1 已驗收;下一批 P2-2a 新人導覽,順序見 `docs/FEATURE-PLAN.md` §11 |
 
 ## 2. 下一階段:portal-api 規劃起點
 
-> **2026-10-22 功能邏輯企劃:`docs/FEATURE-PLAN.md`**(每頁業務規則、不照抄清單、待決 Q-F1~Q-F12、實作順序 P2-2a → P7);舊系統實際行為見 `../old_PortalSolar/docs/behavior/`。
+> **2026-10-22 功能邏輯企劃:`docs/FEATURE-PLAN.md`**(每頁業務規則、不照抄清單、實作順序 P2-2a → P7;待決 Q-F1~Q-F10、Q-F12 已決為 D-21~D-29,剩 Q-F11 於 P7 前查舊報表);舊系統實際行為見 `../old_PortalSolar/docs/behavior/`。
 
 > **2026-10-12 規劃 v0.2:`docs/PORTAL-API-PLAN.md`**(決議 D-1~D-7:人事 / TIPTOP 暫不做、顯示「系統轉移中」;220 舊庫複製到 `giganexus_gw_test` 的 `src_*`;新表放 `giganexus_gw[_test].portal`;2027-01 上線時正式區直接讀寫原庫)。
 > 進度:`01-create-schema.sql` 已執行;`02-refresh-test-data.sql` 已複製完成(10 庫 899 表、0 失敗,`giganexus_gw_test` 的 `src_*`)。**P0 完成(2026-10-12)**:portal-api 測試區上線(容器 `giganexus-portal-portal-api-1`,機密 `/srv/giganexus/portal-secrets`,變數在 `portal.env`);`/api/portal/me` 已發佈(Gateway v43);人事 7 頁顯示「系統轉移中」。**P1-1(2026-10-12)**:年度必上課程、通勤調查(Google 地址轉座標)、個人基本資料其餘 Tab 轉移中;部署前主機 2 需重跑 `deploy/host2-set-api-secrets.sh` 補 `google_maps_api_key`(可留空,留空則通勤調查不能送出),否則 CI deploy-api-test 會失敗。**P1-2**:個人提醒(`portal.personal_note`,首個 Drizzle migration)、個人資產備註、郵件審核退場(GigaItApp yaml 同步移除;測試區代碼刪除 SQL 由使用者執行)。部署前使用者需以 `portal_migrate` 執行 `npm run db:migrate`(backend/.env)。P1-2 migration 已套用、整合測試通過。**P1-3**:BPM 待簽核 / 未結案(NaNa 唯讀,規則同 BPM 快速開發 6_todo_viewer);部署前使用者需在 191 執行 `backend/db/dba/03-create-bpm-readonly.sql`,再重跑主機 2 `host2-set-api-secrets.sh` 填 `portal_bpm_ro` 密碼(會補 `BPM_DB_HOST` / `BPM_WEB_URL`),否則 CI 缺 `bpm_db_password` 會失敗。**P1 已驗收**。**P2-1**:行政資源靜態內容照搬(舊站文件放 `frontend/public/legacy-docs/`)、總務專區、分機表、內部職缺;P2-1 已發佈驗收(2026-10-12)。**下一批 P2-2 問卷調查、新人導覽**,盤點見 PORTAL-API-PLAN §4「P2-2 盤點」;待決已由使用者決定(D-18~D-20,2026-10-12):先 P2-2a 新人導覽、再 P2-2b 問卷。Q15 已決(D-8:臨時服務有 URL 不在選單)。以下 Q14 等待決項以 PORTAL-API-PLAN 為準。

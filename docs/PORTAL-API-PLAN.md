@@ -1,9 +1,9 @@
 # portal-api 規劃
 
-> 版本:v0.5(2026-10-12,P0 完成;P1 決議 D-9~D-13;P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.6(2026-10-22,功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
-## 0. 已定決議(2026-10-12)
+## 0. 已定決議(2026-10-12 起)
 
 | # | 決議 |
 | --- | --- |
@@ -27,6 +27,15 @@
 | D-18 | 問卷作答**人事屬性留空**:`QAAnnualC` 的 `CPF*` / `CPK02` 寫 NULL,即舊程式查不到 TIPTOP 時的寫法(`QuestView.aspx.cs` 533 行 else 分支:`INSERT INTO QAAnnualC (QANo, LgNo, No, Answer, QATimes)`);統計依人事屬性分組的部分顯示「系統轉移中」 |
 | D-19 | 問卷建立 / 維護 / 統計改按鈕權限 `portal.qa.edit`(角色 portal-editor;舊系統任何人都能建),只看自己建立的(`CLgNo` = 本人);舊系統寫死 S094009 的「代查他人問卷」改為 `portal.qa.admin`(portal-editor) |
 | D-20 | 新人驗收測驗**照搬**:20 題是非題、每題 5 分、滿分才通過並寫入 `HRNewPtest`(先刪本人舊紀錄,同舊系統),不及格不寫;正解只放 portal-api、由後端計分;不寄通知信(舊系統已註解) |
+| D-21 | (2026-10-22,Q-F1)並行期舊站 `ContentX` 公告**唯讀併入**首頁「最新公告」,標來源「舊入口網」;舊站下線後移除 |
+| D-22 | (Q-F3)舊站以 DES 金鑰跳轉的外部系統(訂便當、E-Learning、ERMS、福委會、WebApp、NotesApp、年考核、環安衛資料庫、好書分享、健康系統)過渡期**只顯示「DES 跳轉(待重構)」,無任何功能**(不產生 token、不帶連結)。使用者向主管取得原始檔後再分:小功能(如訂便當、福委會)日後在 giga-Portal 實作;邏輯複雜者(如 E-Learning、預約資源)為獨立應用 |
+| D-23 | (Q-F8)3691 作者以伺服器密鑰加密(secret),解碼需 `portal.talk.reveal` + 核准文號 + 稽核紀錄;**實作前需人資 / 法務確認** |
+| D-24 | (Q-F6)首頁 / 待我簽核不提供「核准 / 退回」,改「前往簽核」深連結到 BPM(維持 D-6) |
+| D-25 | (Q-F7)表單下載:編輯者上傳到 giga-file-service、分類維護(`portal.forms.edit`,portal-editor) |
+| D-26 | (Q-F10)部門預算可看範圍沿用 Budget 庫 `UserInfo.Competence`(以 Token 工號查),且須同時具 `portal-manager` |
+| D-27 | (Q-F2、Q-F5、Q-F9、Q-F12)**退場 / 不做**:薪資金鑰重置、新人缺繳資料 HRNewPay、資安演練點擊紀錄(spam / spamview);舊站高風險頁(ForgetPassword、LoginNewAccount、EipLogin 等)不在 giga-Portal 範圍,另行通報 IT |
+| D-28 | (Q-F4)並行期新建問卷的題目圖片存 file-service,舊站顯示不出,接受 |
+| D-29 | (Q-D13)BPM 查詢**限定碩禾系**:只有 Token 公司屬碩禾系者才查 NaNa(公司清單以設定提供,不寫死),其他公司本機帳號回空清單;修正 P1-3 既有查詢,隨 P4 一併實作 |
 
 ## 1. 盤點發現(補充 DATABASE-MAP)
 
@@ -184,6 +193,6 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 | Q15 | 舊系統未對應頁面 | ✅ D-8:有 URL、不在選單(P7) |
 | Q-D11 | BPM「未結案」定義(我申請且 ProcessInstance.currentState = 1)尚未與舊 LOS 預存程序 `SP_EFInfoUnProcess_ByCreateUserID_Solar` 比對(SP 本體不在 repo) | 191 帳號建立後,對同一人比對 SP 與新查詢筆數 |
 | Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | 待確認 |
-| Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方;目前以逐字元比對 + 在職唯一降低風險,是否再依公司限定只查碩禾系 | 待決 |
+| Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方 | ✅ D-29 限定碩禾系 |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
 | Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 / P5 前確認 |
