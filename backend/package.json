@@ -28,16 +28,24 @@
     "@fastify/swagger": "9.9.1",
     "@giganexus/backend-sdk": "^0.3.0",
     "drizzle-orm": "1.0.0-rc.4",
+    "exceljs": "4.4.0",
     "fastify": "5.12.5",
-    "mssql": "11.0.2"
+    "mssql": "11.0.2",
+    "sanitize-html": "2.18.0"
   },
   "devDependencies": {
     "@types/mssql": "9.1.11",
     "@types/node": "22.20.4",
+    "@types/sanitize-html": "2.16.2",
     "drizzle-kit": "1.0.0-rc.4",
     "jose": "6.2.12",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
     "typescript": "6.0.3"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   }
 }

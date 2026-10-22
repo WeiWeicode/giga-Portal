@@ -1,276 +1,127 @@
 <script setup lang="ts">
 /**
- * 問卷調查與滿意度評估 (對齊 old_PortalSolar QA/MyQAList.aspx)
+ * 問卷調查 › 我的問卷(old_PortalSolar 首頁待辦 + QA/QuestView.aspx;FEATURE-PLAN §3.4;docs/Gherkin/resources/qa.feature)
+ * 列出待填問卷(資格與是否已填由 portal-api 判斷),填答後整份送出;送出按鈕 v-can="portal.survey.submit"。
  */
-import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GModal, GSelect } from '@/ui';
+import { ref } from 'vue';
+import { describeError } from '@/api/gateway';
+import { qaForFill, qaPending, qaSubmit, type QaPendingItem, type QaSurveyView } from '@/api/portal';
+import { emptyFill, fillErrors, toAnswers, type FillAnswer } from '@/composables/qa';
+import { useAsync } from '@/composables/useAsync';
+import { toast } from '@/ui/feedback';
+import QaFillView from './QaFillView.vue';
 
-interface SurveyItem {
-  id: string;
-  title: string;
-  publisher: string;
-  startDate: string;
-  endDate: string;
-  status: '待填寫' | '已完成' | '已截止';
-  questionsCount: number;
-}
+const { data, loading, error, reload } = useAsync(() => qaPending());
 
-const surveys = ref<SurveyItem[]>([
-  {
-    id: 'QA-2026-01',
-    title: '2026 年度集團員工工作環境與滿意度綜合調查',
-    publisher: '人力資源部',
-    startDate: '2026-10-01',
-    endDate: '2026-10-31',
-    status: '待填寫',
-    questionsCount: 5,
-  },
-  {
-    id: 'QA-2026-02',
-    title: '115 年度湖口廠區員工餐廳供餐與便當滿意度問卷',
-    publisher: '總務安全組',
-    startDate: '2026-09-15',
-    endDate: '2026-10-15',
-    status: '已完成',
-    questionsCount: 4,
-  },
-  {
-    id: 'QA-2026-03',
-    title: '職場母性健康保護與人因危害自主檢核評估表',
-    publisher: '職業安全衛生室',
-    startDate: '2026-09-01',
-    endDate: '2026-10-20',
-    status: '待填寫',
-    questionsCount: 3,
-  },
-  {
-    id: 'QA-2025-08',
-    title: '2025 年終尾牙晚會滿意度與禮品偏好調查',
-    publisher: '職工福利委員會',
-    startDate: '2025-12-01',
-    endDate: '2025-12-25',
-    status: '已截止',
-    questionsCount: 6,
-  },
-]);
+const modal = ref(false);
+const survey = ref<QaSurveyView | null>(null);
+const state = ref<Record<number, FillAnswer>>({});
+const opening = ref('');
+const errors = ref<string[]>([]);
+const sending = ref(false);
 
-const fillModal = ref(false);
-const activeSurvey = ref<SurveyItem | null>(null);
-
-// 問卷題目模擬
-const answers = ref({
-  q1: '5', // 單選評分
-  q2: '4',
-  q3: ['彈性工時調整', '員工進修補助'], // 複選
-  q4: '', // 開放回饋
-});
-
-function openSurvey(s: SurveyItem) {
-  activeSurvey.value = s;
-  fillModal.value = true;
-}
-
-function submitSurvey() {
-  if (activeSurvey.value) {
-    activeSurvey.value.status = '已完成';
+async function open(item: QaPendingItem) {
+  opening.value = item.qaNo;
+  try {
+    const s = await qaForFill(item.qaNo);
+    survey.value = s;
+    state.value = emptyFill(s.questions);
+    errors.value = [];
+    modal.value = true;
+  } catch (e) {
+    toast.fromError(e, '無法開啟問卷');
+    await reload();
+  } finally {
+    opening.value = '';
   }
-  fillModal.value = false;
+}
+
+async function submit() {
+  if (!survey.value) return;
+  errors.value = fillErrors(survey.value.questions, state.value);
+  if (errors.value.length) return;
+  sending.value = true;
+  try {
+    await qaSubmit(survey.value.qaNo, toAnswers(survey.value.questions, state.value));
+    modal.value = false;
+    toast.success('問卷已送出,謝謝您的填寫!');
+    await reload();
+  } catch (e) {
+    const d = (e as { details?: { message: string }[] }).details;
+    if (Array.isArray(d) && d.length) errors.value = d.map((x) => x.message);
+    toast.fromError(e, '送出失敗');
+    if ((e as { code?: string }).code === 'PORTAL_QA_ANSWERED') {
+      modal.value = false;
+      await reload();
+    }
+  } finally {
+    sending.value = false;
+  }
 }
 </script>
 
 <template>
-  <div class="qa-list-page stack">
-    <GCard class="glass banner-card">
-      <div class="banner-top">
-        <div>
-          <h3 class="banner-title">📋 企業問卷調查與意見回饋專區</h3>
-          <p class="banner-desc faint">
-            您的寶貴意見是公司持續改善管理制度與工作環境的最佳動力。請依規定完成待填寫問卷，作答過程均採匿名統計分析。
-          </p>
+  <div class="stack qa-mine">
+    <GCard v-if="loading && !data"><GEmpty icon="clock" title="載入中…" /></GCard>
+    <GCard v-else-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得問卷" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <GCard v-else-if="data && !data.items.length">
+      <GEmpty icon="check-circle" title="目前沒有待填寫的問卷" description="開放中且您在填寫對象內的問卷會列在這裡;填寫完成後即不再顯示。" />
+    </GCard>
+    <template v-else-if="data">
+      <GCard v-for="s in data.items" :key="s.qaNo" :title="s.title" icon="trello">
+        <div class="row meta">
+          <GBadge tone="warning">待填寫</GBadge>
+          <GBadge v-if="s.dept" tone="neutral">{{ s.dept }}</GBadge>
+          <span class="small faint mono">{{ s.startDate }} ~ {{ s.endDate }}</span>
+          <span class="small faint">{{ s.questionCount }} 題</span>
         </div>
-      </div>
-    </GCard>
+        <div class="row acts">
+          <GButton variant="primary" icon="edit" :loading="opening === s.qaNo" @click="open(s)">填寫問卷</GButton>
+        </div>
+      </GCard>
+    </template>
 
-    <!-- 問卷列表表格 -->
-    <GCard class="glass table-wrapper">
-      <table class="qa-table">
-        <thead>
-          <tr>
-            <th>問卷編號</th>
-            <th>調查主題名稱</th>
-            <th>發起主辦單位</th>
-            <th>調查起訖期間</th>
-            <th class="text-center">題目數</th>
-            <th class="text-center">作答狀態</th>
-            <th class="text-center">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in surveys" :key="s.id">
-            <td class="mono font-bold">{{ s.id }}</td>
-            <td class="font-bold">{{ s.title }}</td>
-            <td>
-              <GBadge tone="storage">{{ s.publisher }}</GBadge>
-            </td>
-            <td class="mono small faint">{{ s.startDate }} ~ {{ s.endDate }}</td>
-            <td class="text-center mono">{{ s.questionsCount }} 題</td>
-            <td class="text-center">
-              <GBadge :tone="s.status === '待填寫' ? 'warning' : s.status === '已完成' ? 'healthy' : 'neutral'">
-                {{ s.status }}
-              </GBadge>
-            </td>
-            <td class="text-center">
-              <GButton
-                size="sm"
-                :tone="s.status === '待填寫' ? 'primary' : 'secondary'"
-                :disabled="s.status === '已截止'"
-                @click="openSurvey(s)"
-              >
-                {{ s.status === '待填寫' ? '填寫問卷' : '檢視結果' }}
-              </GButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </GCard>
-
-    <!-- 填寫問卷 Modal -->
-    <GModal v-model="fillModal" :title="activeSurvey?.title ?? '問卷填寫'" width="620px">
-      <div v-if="activeSurvey" class="survey-form-stack">
-        <GAlert tone="neutral" icon="info">
-          本問卷由「{{ activeSurvey.publisher }}」主辦，統計資料僅供內部改善參考，請安心填答。
+    <GModal v-model:open="modal" :title="survey?.title ?? '問卷'" icon="trello" width="760px">
+      <div v-if="survey" class="stack">
+        <QaFillView :survey="survey" :state="state" />
+        <GAlert v-if="errors.length" tone="danger" title="請確認作答">
+          <ul class="errs">
+            <li v-for="m in errors" :key="m">{{ m }}</li>
+          </ul>
         </GAlert>
-
-        <div class="question-block">
-          <label class="q-label font-bold">1. 整體而言，您對目前部門工作氣氛與團隊協作的滿意程度？</label>
-          <div class="radio-group">
-            <label class="radio-label"><input v-model="answers.q1" type="radio" value="5" /> 非常滿意 (5分)</label>
-            <label class="radio-label"><input v-model="answers.q1" type="radio" value="4" /> 滿意 (4分)</label>
-            <label class="radio-label"><input v-model="answers.q1" type="radio" value="3" /> 普通 (3分)</label>
-            <label class="radio-label"><input v-model="answers.q1" type="radio" value="2" /> 不滿意 (2分)</label>
-            <label class="radio-label"><input v-model="answers.q1" type="radio" value="1" /> 非常不滿意 (1分)</label>
-          </div>
-        </div>
-
-        <div class="question-block">
-          <label class="q-label font-bold">2. 您對目前廠區各項辦公設施、衛生環境與餐飲供餐的滿意度？</label>
-          <div class="radio-group">
-            <label class="radio-label"><input v-model="answers.q2" type="radio" value="5" /> 非常滿意 (5分)</label>
-            <label class="radio-label"><input v-model="answers.q2" type="radio" value="4" /> 滿意 (4分)</label>
-            <label class="radio-label"><input v-model="answers.q2" type="radio" value="3" /> 普通 (3分)</label>
-            <label class="radio-label"><input v-model="answers.q2" type="radio" value="2" /> 不滿意 (2分)</label>
-            <label class="radio-label"><input v-model="answers.q2" type="radio" value="1" /> 非常不滿意 (1分)</label>
-          </div>
-        </div>
-
-        <div class="question-block">
-          <label class="q-label font-bold">3. 您希望公司未來優先加強或新增哪些員工福利政策？(可複選)</label>
-          <div class="checkbox-group">
-            <label class="cb-label"><input v-model="answers.q3" type="checkbox" value="彈性工時調整" /> 彈性上下班工時調配</label>
-            <label class="cb-label"><input v-model="answers.q3" type="checkbox" value="員工進修補助" /> 外部專業證照進修費用補助</label>
-            <label class="cb-label"><input v-model="answers.q3" type="checkbox" value="運動社團補助" /> 廠內健身運動器材與社團活動經費</label>
-            <label class="cb-label"><input v-model="answers.q3" type="checkbox" value="自選式福利金" /> 彈性特約商店自選式福利點數</label>
-          </div>
-        </div>
-
-        <div class="question-block">
-          <label class="q-label font-bold">4. 其他具體建言或對公司未來發展的意見回饋：</label>
-          <textarea
-            v-model="answers.q4"
-            rows="3"
-            class="qa-textarea"
-            placeholder="歡迎留下您的寶貴建議..."
-          />
+        <div class="row modal-actions">
+          <GButton @click="modal = false">取消</GButton>
+          <GButton v-can="'portal.survey.submit'" variant="primary" icon="send" :loading="sending" @click="submit">送出問卷</GButton>
         </div>
       </div>
-      <template #footer>
-        <GButton variant="secondary" @click="fillModal = false">取消</GButton>
-        <GButton tone="primary" @click="submitSurvey">確認送出問卷</GButton>
-      </template>
     </GModal>
   </div>
 </template>
 
 <style scoped>
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.qa-mine {
+  --gap: 16px;
 }
-.banner-card {
-  padding: 16px 20px;
-}
-.banner-title {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-}
-.banner-desc {
-  margin: 0;
-  font-size: 14px;
-}
-.table-wrapper {
-  overflow-x: auto;
-  padding: 0;
-}
-.qa-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-.qa-table th,
-.qa-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--color-border);
-}
-.qa-table th {
-  background: var(--color-surface-hover);
-  text-align: left;
-  font-weight: 600;
-  font-size: 13px;
-}
-.survey-form-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.question-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.q-label {
-  font-size: 14px;
-  line-height: 1.4;
-}
-.radio-group,
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-left: 8px;
-}
-.radio-label,
-.cb-label {
-  display: flex;
+.meta {
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
+}
+.acts,
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 8px;
   gap: 8px;
-  font-size: 13.5px;
-  cursor: pointer;
 }
-.qa-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
+.small {
+  font-size: var(--fs-sm);
 }
-.text-center {
-  text-align: center;
-}
-.font-bold {
-  font-weight: 600;
+.errs {
+  margin: 0;
+  padding-left: 18px;
 }
 </style>

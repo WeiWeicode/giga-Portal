@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.7(2026-10-22,P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.8(2026-10-22,P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -135,10 +135,10 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | 總務專區 | 服務項目 / 申請專區 / 停車:靜態;個人資產:PersonalPropertyInfo 備註;外送資產:TIPTOP | **P2-1 完成**(D-14、D-16) |
 | 分機表 | PortalSolar `NotesPhone`(查詢)、`NotesPhoneTemp`(異動紀錄) | **P2-1 完成**:`GET /directory`、`PUT /directory/me/phone` |
 | 內部職缺 | PortalSolar `EnlistTB`(2023-06 後無開放職缺) | **P2-1 完成**(D-15):`/jobs` CRUD |
-| 問卷調查 | PortalSolar `QAAnnual*`(寫入) | P2-2 |
+| 問卷調查 | PortalSolar `QAAnnual*`(寫入)、LOS `DeptInfo` / `EmployeeInfo`(唯讀) | **P2-2b 已實作(2026-10-22,工作分支 `feature/portal-p2-2b-qa`,未合併、未上測試區)**:`/qa/pending*`(待填、填答、送出)、`/qa/surveys*`(本人出題 CRUD、複製、統計、Excel 匯出)、`/qa/admin/surveys*`(代管)、`/qa/org/departments`、`/qa/org/job-tier`(待 Gateway 職級介面,目前 503);題目圖片經 file-service(Item = `#題號`);待確認見 `CONFIRM-NEEDED.md` P2-2b |
 | 新人導覽 | PortalSolar `NewPepR`、`HRNewPtest`(寫入) | **P2-2a 已實作(2026-10-22,工作分支 `feature/portal-p2-2a-onboarding`,未合併、未上測試區)**:`GET /onboarding/status`、`POST /onboarding/read`、`GET / POST /onboarding/quiz`;小叮嚀內容照搬到前端;待確認見 `CONFIRM-NEEDED.md` |
 
-#### P2-2 盤點(2026-10-12,尚未實作)
+#### P2-2 盤點(2026-10-12;P2-2a、P2-2b 已於 2026-10-22 實作)
 
 | 舊程式 | 行數 | 資料(測試區複本筆數) | 重點 |
 | --- | --- | --- | --- |

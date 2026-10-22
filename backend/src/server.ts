@@ -17,6 +17,8 @@ import { MssqlAssetNoteRepo } from './routes/assets.js';
 import { MssqlDirectoryRepo } from './routes/directory.js';
 import { MssqlJobRepo } from './routes/jobs.js';
 import { MssqlOnboardingRepo } from './routes/onboarding.js';
+import { QaService } from './modules/qa/qa.js';
+import { MssqlQaRepo } from './modules/qa/repo.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -61,6 +63,8 @@ const app = await buildApp({
   directory: new MssqlDirectoryRepo(pool, config.sources),
   jobs: new MssqlJobRepo(pool, config.sources),
   onboarding: new MssqlOnboardingRepo(pool, config.sources),
+  // 職級快速帶入待 Gateway 提供職級查詢介面(CONFIRM-NEEDED P2-2b),目前回 503
+  qa: new QaService(new MssqlQaRepo(pool, config.sources)),
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };

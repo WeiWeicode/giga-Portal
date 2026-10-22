@@ -63,6 +63,17 @@
 | POST | `/api/portal/onboarding/read` | `portal.api.onboarding.write` | 小叮嚀「我已閱讀完畢」(按鈕 `portal.onboarding.confirm`):寫 NewPepR(LgTime yyyy/MM/dd,同一天不重複),回應狀態 |
 | GET | `/api/portal/onboarding/quiz` | `portal.api.onboarding.read` | 驗收測驗 20 題題目 `{ questions[{ no, text }], passScore }`(不含答案) |
 | POST | `/api/portal/onboarding/quiz` | `portal.api.onboarding.write` | 送出驗收測驗(按鈕 `portal.onboarding.submit`)`{ answers: boolean[20], comment? ≤ 500 }` → `{ correct, total, score, passed, passedAt }`;後端計分,全對才在同一交易先刪本人舊紀錄再寫 HRNewPtest(D-20) |
+| GET | `/api/portal/qa/pending` | `portal.api.qa.read` | 我的待填問卷(啟用、今天在起訖日內、在對象內:全集團 / Token 部門**完整比對** / 工號,且未作答);P2-2b |
+| GET | `/api/portal/qa/pending/:qaNo` | `portal.api.qa.read` | 填答內容 `{ qaNo, title, dept, intro, outro, startDate, endDate, questions[{ no, type: single/multi/text/null, text, options, limit, required, image, legacyImage }] }`(前言 / 結語白名單清洗);不符資格 404 `PORTAL_QA_NOT_FOUND`、已作答 409 `PORTAL_QA_ANSWERED` |
+| POST | `/api/portal/qa/pending/:qaNo/answers` | `portal.api.qa.write` | 送出作答(按鈕 `portal.survey.submit`)`{ answers[{ no, choices?, text? }] }` → 201 `{ answeredAt }`;後端再驗資格、必填、單選一項、複選上限,整份一個交易寫 QAAnnualC(複選每個勾選項一列、人事屬性 NULL,D-18);400 `PORTAL_QA_INVALID`(details 逐題)、409 `PORTAL_QA_ANSWERED` |
+| GET / POST | `/api/portal/qa/surveys` | `portal.api.qa.edit` | 本人建立的問卷清單(`q`、`current`、分頁)/ 新增(按鈕 `portal.qa.edit`;編號 Q + yyyyMMddHHmmss + 工號,201 `{ qaNo }`) |
+| GET / PUT / DELETE | `/api/portal/qa/surveys/:qaNo` | `portal.api.qa.edit` | 內容(含 `targets`、`respondents`、`locked`;亦供預覽)/ 修改(已有作答時結構鎖定,409 `PORTAL_QA_LOCKED`)/ 軟刪(IsActive = 0);他人的問卷 403 `PORTAL_DATA_ACCESS_DENIED` |
+| POST | `/api/portal/qa/surveys/:qaNo/copy` | `portal.api.qa.edit` | 複製主檔、題目、圖片(不含作答),建立者 = 操作者,標題加 Copy;201 `{ qaNo }` |
+| GET | `/api/portal/qa/surveys/:qaNo/stats` | `portal.api.qa.edit` | 每題答案人數與百分比(分母 = 作答人數);`unavailable: ["hr"]` 人事屬性分組系統轉移中 |
+| GET | `/api/portal/qa/surveys/:qaNo/export` | `portal.api.qa.edit` | 作答明細 .xlsx(部門、工號、姓名、題號、題目、答案、填答時間) |
+| 同上 | `/api/portal/qa/admin/surveys[/:qaNo[/copy\|/stats\|/export]]` | `portal.api.qa.admin` | 代管全部出題者(按鈕 `portal.qa.admin`;清單另可 `creator` 篩選);不改原建立者 |
+| GET | `/api/portal/qa/org/departments` | `portal.api.qa.edit` | 設定對象用的部門清單(LOS DeptInfo `{ code, name, parent }`),畫面展開下層 |
+| GET | `/api/portal/qa/org/job-tier?tier=section\|manager` | `portal.api.qa.edit` | 職級快速帶入(課級 / 理級以上工號);Gateway 尚未提供職級查詢,目前回 503 `PORTAL_JOB_TIER_UNAVAILABLE`(CONFIRM-NEEDED P2-2b) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案
@@ -104,5 +115,11 @@
 | `PORTAL_NOT_FOUND` | 404 | 公告、資源不存在 |
 | `PORTAL_DATA_ACCESS_DENIED` | 403 | 不在可見 / 可管理範圍(例:管理其他部門的公告) |
 | `PORTAL_CONFLICT` | 409 | 同時編輯(版本不符) |
+| `PORTAL_QA_NOT_FOUND` | 404 | 問卷不存在、已刪除,或(填答)不在期間 / 不在對象內 |
+| `PORTAL_QA_ANSWERED` | 409 | 本人已作答過此問卷 |
+| `PORTAL_QA_LOCKED` | 409 | 問卷已有作答,題目結構不可變更(`details` 列出變更項目) |
+| `PORTAL_QA_INVALID` | 400 | 問卷設定或作答內容不合規則(`details` 逐欄 / 逐題) |
+| `PORTAL_QA_CONFLICT` | 409 | 新問卷編號連續重複(同一秒大量建立) |
+| `PORTAL_JOB_TIER_UNAVAILABLE` | 503 | 職級快速帶入的資料來源(Gateway)尚未提供 |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

@@ -160,7 +160,7 @@ group 排序 10、20…;頁的 sort 依表中順序 10、20…;Tab sort 依表�
 | 行政資源 `portal.group.resources` | `resources` | ★`portal.ga.read`(總務專區) | `ga.service`、`ga.apply`、`ga.property`、`ga.outbound`、`ga.parking` |
 | | `resources/hr` | ★`portal.hr.read` | `hr.welfare`、`hr.agent` |
 | | `resources/job-opening` | ★`portal.job.read` | `job.list` |
-| | `resources/qa` | `portal.survey.read` | `survey.list` |
+| | `resources/qa` | `portal.survey.read` | `survey.list`(我的問卷)、`survey.manage`(問卷維護,2026-10-22 P2-2b 新增;按鈕 `portal.survey.submit`、`portal.qa.edit`、`portal.qa.admin`) |
 | | `onboarding` | `portal.onboarding.read` | `onboarding.tips`、`onboarding.quiz` |
 | | `directory` | `portal.directory.read` | `directory.extension`、`directory.contact` |
 | | `gui-number` | `portal.gui-number.read` | `gui-number.list` |

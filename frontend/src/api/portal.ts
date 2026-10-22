@@ -187,3 +187,154 @@ export const markOnboardingRead = () => http.post<OnboardingStatus>('/api/portal
 export const onboardingQuiz = () => http.get<OnboardingQuiz>('/api/portal/onboarding/quiz');
 export const submitOnboardingQuiz = (answers: boolean[], comment: string) =>
   http.post<OnboardingQuizResult>('/api/portal/onboarding/quiz', { answers, comment });
+
+// ───────────── 問卷調查(/api/portal/qa/*;FEATURE-PLAN §3.4、docs/Gherkin/resources/qa.feature)─────────────
+
+export type QaQuestionType = 'single' | 'multi' | 'text';
+export interface QaImage {
+  /** giga-file-service 檔案 UUID */
+  fileId: string;
+  position: 'before' | 'after';
+  width: number;
+  height: number;
+}
+export interface QaQuestion {
+  no: number;
+  /** null = 舊資料題型空白(只顯示文字,不作答) */
+  type: QaQuestionType | null;
+  text: string;
+  options: string[];
+  /** 複選上限;null = 不限 */
+  limit: number | null;
+  required: boolean;
+  image: QaImage | null;
+  /** 舊站上傳的圖片(新入口網不顯示) */
+  legacyImage: boolean;
+}
+export interface QaPendingItem {
+  qaNo: string;
+  title: string;
+  dept: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  questionCount: number;
+}
+export interface QaSurveyView {
+  qaNo: string;
+  title: string;
+  dept: string | null;
+  /** 後端已白名單清洗的 HTML;顯示前再以 web-kit sanitizeHtml 清洗 */
+  intro: string;
+  outro: string;
+  startDate: string | null;
+  endDate: string | null;
+  questions: QaQuestion[];
+}
+export interface QaAnswer {
+  no: number;
+  choices?: string[];
+  text?: string;
+}
+export interface QaTargets {
+  all: boolean;
+  depts: string[];
+  emps: string[];
+}
+export interface QaSurveyDetail extends QaSurveyView {
+  creator: string | null;
+  active: boolean;
+  targets: QaTargets;
+  respondents: number;
+  locked: boolean;
+}
+export interface QaListItem {
+  qaNo: string;
+  title: string;
+  dept: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  creator: string | null;
+  active: boolean;
+  questionCount: number;
+  respondents: number;
+  locked: boolean;
+}
+export interface QaQuestionInput {
+  type: QaQuestionType;
+  text: string;
+  options?: string[];
+  limit?: number | null;
+  required: boolean;
+  image?: QaImage | null;
+}
+export interface QaSurveyInput {
+  title: string;
+  dept: string;
+  intro: string;
+  outro: string;
+  startDate: string;
+  endDate: string;
+  targets: QaTargets;
+  questions: QaQuestionInput[];
+}
+export interface QaStats {
+  qaNo: string;
+  title: string;
+  respondents: number;
+  /** 含 hr:依人事屬性分組系統轉移中(D-18) */
+  unavailable: string[];
+  questions: { no: number; text: string; type: QaQuestionType | null; answered: number; items: { answer: string; count: number; percent: number }[] }[];
+}
+export interface QaDept {
+  code: string;
+  name: string | null;
+  parent: string | null;
+}
+
+const qaBase = (admin: boolean) => (admin ? '/api/portal/qa/admin/surveys' : '/api/portal/qa/surveys');
+const enc = encodeURIComponent;
+
+/** 填答者 */
+export const qaPending = () => http.get<{ items: QaPendingItem[] }>('/api/portal/qa/pending');
+export const qaForFill = (qaNo: string) => http.get<QaSurveyView>(`/api/portal/qa/pending/${enc(qaNo)}`);
+export const qaSubmit = (qaNo: string, answers: QaAnswer[]) => http.post<{ answeredAt: string }>(`/api/portal/qa/pending/${enc(qaNo)}/answers`, { answers });
+
+/** 出題者(admin = portal.qa.admin 代管全部) */
+export function qaList(admin: boolean, opts: { q?: string; current?: boolean; creator?: string; page?: number; pageSize?: number }) {
+  const p = new URLSearchParams();
+  if (opts.q) p.set('q', opts.q);
+  if (opts.current) p.set('current', 'true');
+  if (admin && opts.creator) p.set('creator', opts.creator);
+  p.set('page', String(opts.page ?? 1));
+  p.set('pageSize', String(opts.pageSize ?? 20));
+  return http.get<{ items: QaListItem[]; total: number; page: number; pageSize: number }>(`${qaBase(admin)}?${p}`);
+}
+export const qaDetail = (admin: boolean, qaNo: string) => http.get<QaSurveyDetail>(`${qaBase(admin)}/${enc(qaNo)}`);
+export const qaCreate = (body: QaSurveyInput) => http.post<{ qaNo: string }>('/api/portal/qa/surveys', body);
+export const qaUpdate = (admin: boolean, qaNo: string, body: QaSurveyInput) => http.put<void>(`${qaBase(admin)}/${enc(qaNo)}`, body);
+export const qaDelete = (admin: boolean, qaNo: string) => http.delete<void>(`${qaBase(admin)}/${enc(qaNo)}`);
+export const qaCopy = (admin: boolean, qaNo: string) => http.post<{ qaNo: string }>(`${qaBase(admin)}/${enc(qaNo)}/copy`, {});
+export const qaStats = (admin: boolean, qaNo: string) => http.get<QaStats>(`${qaBase(admin)}/${enc(qaNo)}/stats`);
+/** 匯出 Excel:瀏覽器直接下載(GET,Cookie 驗證) */
+export const qaExportUrl = (admin: boolean, qaNo: string) => `${qaBase(admin)}/${enc(qaNo)}/export`;
+export const qaDepartments = () => http.get<{ items: QaDept[] }>('/api/portal/qa/org/departments');
+export const qaJobTier = (tier: 'section' | 'manager') => http.get<{ emps: string[] }>(`/api/portal/qa/org/job-tier?tier=${tier}`);
+
+/**
+ * 題目圖片上傳到 giga-file-service(POST /api/file/files,需 file.object.upload;D-28)。
+ * 上傳後為暫存檔,問卷存檔後要呼叫 qaBindImages 綁定,否則 24 小時後被附件服務清除(file-service API.md §2)。
+ */
+export async function uploadQaImage(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append('sourceApp', 'portal-qa');
+  fd.append('file', file);
+  const r = await http.post<{ items?: { fileUuid: string }[] }>('/api/file/files', fd);
+  const id = r.items?.[0]?.fileUuid;
+  if (!id) throw new Error('附件服務沒有回傳檔案編號');
+  return id;
+}
+/** 把本次上傳的題目圖片綁定到問卷(refType portal-qa、refNo = 問卷編號;只能綁自己上傳的) */
+export const qaBindImages = (qaNo: string, uuids: string[]) =>
+  http.post<{ bound: number }>('/api/file/files/bind', { uuids, refType: 'portal-qa', refNo: qaNo });
+/** 題目圖片網址(file-service 預覽) */
+export const qaImageUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content?inline=1`;

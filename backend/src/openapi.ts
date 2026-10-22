@@ -36,6 +36,10 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.hr.read', name: '入口網 API:人資專區文件下載' },
   { code: 'portal.api.onboarding.read', name: '入口網 API:新人導覽狀態與測驗題目' },
   { code: 'portal.api.onboarding.write', name: '入口網 API:新人導覽閱讀紀錄與送出測驗' },
+  { code: 'portal.api.qa.read', name: '入口網 API:我的待填問卷與填答內容' },
+  { code: 'portal.api.qa.write', name: '入口網 API:送出問卷作答' },
+  { code: 'portal.api.qa.edit', name: '入口網 API:問卷維護(本人建立的問卷、統計、匯出)' },
+  { code: 'portal.api.qa.admin', name: '入口網 API:問卷代管(全部出題者)' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

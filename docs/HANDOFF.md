@@ -1,7 +1,7 @@
 # giga-Portal 交接(HANDOFF)
 
 > 新的工作階段(人或 AI)接手時先讀這份,再讀 `AGENT.md`、`docs/PROJECT-MAP.md`。時程以 NexusPlan 甘特圖為準,本文件只記狀態。
-> **最後更新:2026-10-22**(P2-2a 新人導覽已實作於工作分支 `feature/portal-p2-2a-onboarding`,10/27 後合併驗收;下一批 P2-2b 問卷調查)
+> **最後更新:2026-10-22**(P2-2a 新人導覽、P2-2b 問卷調查已實作於工作分支 `feature/portal-p2-2a-onboarding` → `feature/portal-p2-2b-qa`,10/27 後依序合併驗收;下一批 P3 首頁聚合與集團公告)
 
 ## 1. 目前狀態
 
@@ -11,8 +11,8 @@
 | 選單 / Tab 權限資料 | ✅ 測試區已登記 | `deploy/gateway-rbac.yaml`:大項 `portal.group.*` 7、menu 44、tab 76、按鈕 3;CI `rbac-test` 套用。舊代碼已由 `deploy/sql/2026-10-12-portal-menu-realign.sql` 整理(使用者 2026-10-12 執行) |
 | 角色 | ✅ | `employee`、`portal-approver`、`portal-manager`、`portal-esh-admin`、`portal-editor`、`it-app-user`;`it-admin`(GigaItApp yaml)可查看全部 menu + tab。**yaml 套用順序:Portal 先、GigaItApp 後** |
 | 首頁 | ✅ 框架 | 版面依 `old_PortalSolar/MainFormX.aspx` 兩欄卡片;「最新公告」為 BFF 通知中心真實資料,其餘卡片標示「待串接」 |
-| 各功能頁 Tab 內容 | ⏳ mock | 43 頁的 Tab 內容是排版用 mock(畫面不呼叫 API);串接真實資料屬 M4 / M5 |
-| portal-api(`backend/`) | ✅ 測試區運作中(部分) | P0、P1、P2-1 已驗收;**P2-2a 新人導覽已實作**(分支 `feature/portal-p2-2a-onboarding`,未合併 / 未部署;合併後 CI rbac-test 套用 yaml,驗收步驟與待確認見 `docs/CONFIRM-NEEDED.md`);下一批 P2-2b 問卷,順序見 `docs/FEATURE-PLAN.md` §11 |
+| 各功能頁 Tab 內容 | ⏳ mock(逐批替換) | 已串接真實資料:P1 個人資訊、P2-1 行政資源、P2-2a 新人導覽、P2-2b 問卷調查(我的問卷 / 問卷維護);其餘 Tab 仍是排版用 mock |
+| portal-api(`backend/`) | ✅ 測試區運作中(部分) | P0、P1、P2-1 已驗收;**P2-2a 新人導覽、P2-2b 問卷調查已實作**(分支 `feature/portal-p2-2a-onboarding`、`feature/portal-p2-2b-qa`(由 2a 切出),未合併 / 未部署;合併後 CI rbac-test 套用 yaml,另需授予 file-service 權限;驗收步驟與待確認見 `docs/CONFIRM-NEEDED.md`);下一批 P3,順序見 `docs/FEATURE-PLAN.md` §11 |
 
 ## 2. 下一階段:portal-api 規劃起點
 

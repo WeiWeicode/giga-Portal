@@ -387,7 +387,8 @@ const appPages: RouteRecordRaw[] = [
       description: '企業滿意度、員工健康保護與各項活動意見調查',
     },
     [
-      { key: 'list', label: '問卷清單', path: '', icon: 'trello', component: () => import('./pages/resources/qa/QaListPage.vue') },
+      { key: 'list', label: '我的問卷', path: '', icon: 'trello', requires: ['portal.api.qa.read'], component: () => import('./pages/resources/qa/QaListPage.vue') },
+      { key: 'manage', label: '問卷維護', path: 'manage', icon: 'edit', requires: ['portal.api.qa.edit'], component: () => import('./pages/resources/qa/QaManageTab.vue') },
     ],
   ),
   page(
