@@ -59,6 +59,10 @@
 | PUT | `/api/portal/directory/me/phone` | `portal.api.directory.write` | 更新本人分機(記錄 NotesPhoneTemp 後更新 NotesPhone);不在分機表回 404 `PORTAL_DIRECTORY_NOT_FOUND` |
 | GET | `/api/portal/jobs?all=` | `portal.api.job.read` | 內部職缺(預設開放中) |
 | POST / PUT / DELETE | `/api/portal/jobs`、`/jobs/:no` | `portal.api.job.write` | 維護職缺(按鈕 `portal.job.edit`,portal-editor);不存在回 404 `PORTAL_JOB_NOT_FOUND` |
+| GET | `/api/portal/onboarding/status` | `portal.api.onboarding.read` | 本人新人導覽完成狀態 `{ readAt, passedAt }`(YYYY-MM-DD 或 null;passedAt 只認 HRNewPtest PGrade 100),供首頁待辦 |
+| POST | `/api/portal/onboarding/read` | `portal.api.onboarding.write` | 小叮嚀「我已閱讀完畢」(按鈕 `portal.onboarding.confirm`):寫 NewPepR(LgTime yyyy/MM/dd,同一天不重複),回應狀態 |
+| GET | `/api/portal/onboarding/quiz` | `portal.api.onboarding.read` | 驗收測驗 20 題題目 `{ questions[{ no, text }], passScore }`(不含答案) |
+| POST | `/api/portal/onboarding/quiz` | `portal.api.onboarding.write` | 送出驗收測驗(按鈕 `portal.onboarding.submit`)`{ answers: boolean[20], comment? ≤ 500 }` → `{ correct, total, score, passed, passedAt }`;後端計分,全對才在同一交易先刪本人舊紀錄再寫 HRNewPtest(D-20) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案
@@ -71,8 +75,6 @@
 | PATCH / DELETE | `/api/portal/news/:id` | `portal.news.publish` | 修改 / 下架(只能管理自己部門發布的,主管理角色除外) |
 | GET | `/api/portal/resources?category=` | `portal.resource.read` | 行政資源(文件、連結、說明) |
 | PUT | `/api/portal/resources/:id` | `portal.resource.edit` | 維護行政資源 |
-| GET | `/api/portal/onboarding` | `portal.onboarding.read` | 新人導覽內容 |
-| PUT | `/api/portal/onboarding` | `portal.onboarding.edit` | 維護新人導覽 |
 | GET | `/api/portal/links` | `portal.links.read` | 集團系統 / 外部連結(含舊單一入口) |
 | GET | `/api/portal/calendar?from=&to=` | `portal.calendar.read` | 公司行事曆與個人行程(個人部分待資料來源) |
 | GET | `/v1/healthz`、`/v1/readyz`、`/openapi.json` | 無(不經 BFF 對外) | 健康檢查、規格 |

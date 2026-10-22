@@ -34,6 +34,8 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.job.read', name: '入口網 API:內部職缺查詢' },
   { code: 'portal.api.job.write', name: '入口網 API:內部職缺維護' },
   { code: 'portal.api.hr.read', name: '入口網 API:人資專區文件下載' },
+  { code: 'portal.api.onboarding.read', name: '入口網 API:新人導覽狀態與測驗題目' },
+  { code: 'portal.api.onboarding.write', name: '入口網 API:新人導覽閱讀紀錄與送出測驗' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

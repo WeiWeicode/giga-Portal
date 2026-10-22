@@ -16,7 +16,7 @@
     "start": "node dist/src/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/*.test.ts",
-    "test:int": "tsx --env-file-if-exists=.env --test test/int/*.int.test.ts",
+    "test:int": "tsx --env-file-if-exists=.env --test --test-concurrency=1 test/int/*.int.test.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "tsx --env-file-if-exists=.env src/migrate.ts",
     "db:check-2012": "tsx scripts/check-sql2012.ts",

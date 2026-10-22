@@ -163,3 +163,27 @@ export const listJobs = (all = false) => http.get<{ items: Job[] }>(`/api/portal
 export const createJob = (body: JobInput) => http.post<{ no: number }>('/api/portal/jobs', body);
 export const updateJob = (no: number, body: JobInput) => http.put<void>(`/api/portal/jobs/${no}`, body);
 export const deleteJob = (no: number) => http.delete<void>(`/api/portal/jobs/${no}`);
+
+export interface OnboardingStatus {
+  /** 最近一次閱讀小叮嚀(YYYY-MM-DD) */
+  readAt: string | null;
+  /** 最近一次通過驗收測驗(YYYY-MM-DD) */
+  passedAt: string | null;
+}
+export interface OnboardingQuiz {
+  questions: { no: number; text: string }[];
+  passScore: number;
+}
+export interface OnboardingQuizResult {
+  correct: number;
+  total: number;
+  score: number;
+  passed: boolean;
+  passedAt: string | null;
+}
+/** 新人導覽(PortalSolar NewPepR / HRNewPtest,與舊入口網共用);標準答案只在後端,由後端計分 */
+export const onboardingStatus = () => http.get<OnboardingStatus>('/api/portal/onboarding/status');
+export const markOnboardingRead = () => http.post<OnboardingStatus>('/api/portal/onboarding/read', {});
+export const onboardingQuiz = () => http.get<OnboardingQuiz>('/api/portal/onboarding/quiz');
+export const submitOnboardingQuiz = (answers: boolean[], comment: string) =>
+  http.post<OnboardingQuizResult>('/api/portal/onboarding/quiz', { answers, comment });

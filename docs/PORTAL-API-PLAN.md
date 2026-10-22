@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.6(2026-10-22,功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.7(2026-10-22,P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -136,7 +136,7 @@ portal-api 連 `giganexus_gw[_test]`,舊表一律以**設定的前綴 + 表名**
 | 分機表 | PortalSolar `NotesPhone`(查詢)、`NotesPhoneTemp`(異動紀錄) | **P2-1 完成**:`GET /directory`、`PUT /directory/me/phone` |
 | 內部職缺 | PortalSolar `EnlistTB`(2023-06 後無開放職缺) | **P2-1 完成**(D-15):`/jobs` CRUD |
 | 問卷調查 | PortalSolar `QAAnnual*`(寫入) | P2-2 |
-| 新人導覽 | PortalSolar `NewPepR`、`HRNewPtest`(寫入) | P2-2 |
+| 新人導覽 | PortalSolar `NewPepR`、`HRNewPtest`(寫入) | **P2-2a 已實作(2026-10-22,工作分支 `feature/portal-p2-2a-onboarding`,未合併、未上測試區)**:`GET /onboarding/status`、`POST /onboarding/read`、`GET / POST /onboarding/quiz`;小叮嚀內容照搬到前端;待確認見 `CONFIRM-NEEDED.md` |
 
 #### P2-2 盤點(2026-10-12,尚未實作)
 

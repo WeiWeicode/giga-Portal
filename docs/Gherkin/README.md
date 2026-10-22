@@ -24,6 +24,7 @@
 | `personal/assets.feature` | 個人資產明細(備註) | PORTAL-API-PLAN D-12 | P1 |
 | `resources/directory.feature` | 分機表查詢與更新本人分機 | PORTAL-API-PLAN P2-1 | P2 |
 | `resources/jobs.feature` | 內部職缺 | PORTAL-API-PLAN D-15 | P2 |
+| `resources/onboarding.feature` | 新人導覽(小叮嚀已讀、驗收測驗) | FEATURE-PLAN §3.5、PORTAL-API-PLAN D-20 | P2 |
 | `personal/bpm.feature` | BPM 簽核資訊(待簽核 / 未結案) | PORTAL-API-PLAN §3.3、D-13 | P1 |
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |

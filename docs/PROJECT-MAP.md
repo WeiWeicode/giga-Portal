@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-12**(框架對齊完成並通過測試區驗收;交接見 `docs/HANDOFF.md`)
+> **最後更新: 2026-10-22**(P2-2a 新人導覽:`routes/onboarding.ts`、`modules/onboarding/quiz.ts`、前端小叮嚀 / 驗收區串接;交接見 `docs/HANDOFF.md`)
 > 0. 2026-10-12:框架對齊 GigaItApp(`docs/FRAMEWORK-PLAN.md`):web-kit 改 npm Registry;側欄大項 `portal.group.*` 與名稱 / 排序 / 圖示以 BFF 為準(`composables/menu.ts`);每個 Tab 有權限代碼(`router.ts` `tabCode`);一頁一碼;移除隱藏的 M1 頁;`ui/icons.ts`;通知(`components/notify/`、`composables/notify.ts`)與首頁最新公告。
 > 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
 > 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
@@ -72,7 +72,7 @@ giga-Portal/
 │  │  │  │  ├─ hr/                人資專區 portal.hr.read (2 Tabs: 團體保險 / 主管職務代理人)
 │  │  │  │  ├─ jobOpening/        內部職缺 portal.job.read
 │  │  │  │  ├─ qa/                問卷調查 portal.survey.read
-│  │  │  │  ├─ onboarding/        新人導覽 portal.onboarding.read (2 Tabs: 小叮嚀 / 驗收區)
+│  │  │  │  ├─ onboarding/        新人導覽 portal.onboarding.read (2 Tabs: 小叮嚀 / 驗收區;content.ts 照搬舊頁內容)
 │  │  │  │  ├─ directory/         分機表、聯絡窗口 portal.directory.read (2 Tabs)
 │  │  │  │  └─ GuiNumberPage.vue  集團統編資訊 portal.gui-number.read
 │  │  │  ├─ group/                【集團與公告】(4 頁)
@@ -114,7 +114,7 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode)、migrate.ts
+   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding)、modules/(courses、commute、notes、bpm NaNa 唯讀、geocode、onboarding 測驗題目與計分)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
    ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀

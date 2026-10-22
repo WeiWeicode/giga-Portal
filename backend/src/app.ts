@@ -25,6 +25,7 @@ import { hrRoutes } from './routes/hr.js';
 import { jobRoutes, type JobRepo } from './routes/jobs.js';
 import { meRoutes } from './routes/me.js';
 import { noteRoutes } from './routes/notes.js';
+import { onboardingRoutes, type OnboardingRepo } from './routes/onboarding.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -52,6 +53,7 @@ export interface AppOptions {
   bpm?: BpmService | null;
   directory?: DirectoryRepo | null;
   jobs?: JobRepo | null;
+  onboarding?: OnboardingRepo | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -129,5 +131,6 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(directoryRoutes(opts.directory ?? null));
   await app.register(jobRoutes(opts.jobs ?? null));
   await app.register(hrRoutes());
+  await app.register(onboardingRoutes(opts.onboarding ?? null));
   return app;
 }

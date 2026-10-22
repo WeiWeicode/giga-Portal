@@ -2,6 +2,11 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-10-22 P2-2a 新人導覽(小叮嚀已讀、驗收測驗)
+- 內容:FEATURE-PLAN §3.5、D-20。portal-api `GET /v1/onboarding/status`、`POST /v1/onboarding/read`(NewPepR,同日不重複)、`GET / POST /v1/onboarding/quiz`(題目不含答案;後端計分,全對才在同一交易先刪本人舊紀錄再寫 HRNewPtest);權限 `portal.api.onboarding.read / write`,按鈕 `portal.onboarding.confirm` / `portal.onboarding.submit`(employee)。前端小叮嚀改為照搬舊頁內容(content.ts)、驗收區改串接 API(不預選答案、移除 mock 的正解與提示)。待確認事項新增 `docs/CONFIRM-NEEDED.md`
+- 檔案:`backend/src/routes/onboarding.ts`、`backend/src/modules/onboarding/quiz.ts`、`backend/src/{app,server,openapi}.ts`、`backend/test/onboarding.test.ts`、`backend/test/int/onboarding.int.test.ts`、`backend/package.json`(test:int 依序執行)、`frontend/src/api/portal.ts`、`frontend/src/composables/onboarding.ts`、`frontend/src/pages/resources/onboarding/*`、`frontend/test/onboarding.test.ts`、`deploy/gateway-rbac.yaml`、`docs/Gherkin/resources/onboarding.feature`、`docs/API.md`、`docs/PROJECT-MAP.md`、`docs/HANDOFF.md`、`docs/PORTAL-API-PLAN.md`、`docs/FEATURE-PLAN.md`、`docs/CONFIRM-NEEDED.md`
+- 驗證:backend `npm run typecheck`、`npm test`、`prettier --check`、`npm run test:int`(giganexus_gw_poc_test);frontend `npm run typecheck`、`npm test`、`npm run build`。瀏覽器畫面未驗證(測試區尚無此 API,10/27 合併後驗收)
+
 ## 2026-10-12 框架對齊測試區驗收、收尾文件
 - 內容:使用者執行 `deploy/sql/2026-10-12-portal-menu-realign.sql` 後,以 S112009(employee / gw-super-admin / it-admin)在測試區驗收:入口網大項 7、menu 44(全部在 `portal.group.*` 下)、tab 76、已移除代碼消失;首頁大項為直接連結;主管專區 11 頁可見、「主管權限說明」Tab 與麵包屑正確;首頁兩欄卡片、最新公告即時連線;giga-observe `portal-web` 健康。新增交接文件 `docs/HANDOFF.md`(下一階段 portal-api);FRAMEWORK-PLAN 標示完成並記錄驗收結果;PRD 記錄目前控管範圍(只到選單 / Tab,API 層待 portal-api)
 - 檔案:`docs/HANDOFF.md`(新增)、`docs/FRAMEWORK-PLAN.md`、`docs/PRD.md`、`docs/PROJECT-MAP.md`、`AGENT.md`
