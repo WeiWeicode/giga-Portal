@@ -1,217 +1,131 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { GCard, GTable, GButton, GBadge, GInput, GSelect, GAlert } from '@/ui'
+/**
+ * 證照需求(old_PortalSolar EHS/EHLicenseNeed.aspx;FEATURE-PLAN §8;docs/Gherkin/esh/license.feature)。
+ * 公司 × 證照 × 需求張數(整數 ≥ 0)+ 備註;公司只能選本人管理的公司(後端檢查)。
+ * 刪除同舊版為硬刪,新站人員清單不以需求表篩選,持證資料不會消失。維護按鈕 portal.esh.need.edit。
+ */
+import { computed, reactive, ref } from 'vue';
+import { can, describeError } from '@/api/gateway';
+import { createEshNeed, deleteEshNeed, eshItems, eshNeeds, updateEshNeed, type EshNeed } from '@/api/portal';
+import { useAsync } from '@/composables/useAsync';
+import { confirm, toast } from '@/ui/feedback';
 
-const searchPlant = ref('ALL')
-const searchDept = ref('ALL')
-const searchStatus = ref('ALL')
+const company = ref('');
+const { data, loading, error, reload } = useAsync(async () => {
+  const [needs, items] = await Promise.all([eshNeeds(company.value || undefined), eshItems()]);
+  return { ...needs, licenses: items.items };
+});
+const companyOptions = computed(() => [{ label: '全部公司', value: '' }, ...(data.value?.companies ?? []).map((c) => ({ label: c, value: c }))]);
+const licenseOptions = computed(() => (data.value?.licenses ?? []).map((l) => ({ label: l.name, value: String(l.id) })));
 
-const plantOptions = [
-  { label: '全部廠區 (All Plants)', value: 'ALL' },
-  { label: '新竹一廠 (Fab 1)', value: 'F1' },
-  { label: '竹南二廠 (Fab 2)', value: 'F2' },
-  { label: '台中三廠 (Fab 3)', value: 'F3' },
-]
-
-const deptOptions = [
-  { label: '全部部門 (All Departments)', value: 'ALL' },
-  { label: '廠務設施組 (Facility)', value: 'FAC' },
-  { label: '化學供應組 (Chemical)', value: 'CHEM' },
-  { label: '晶片製造組 (Manufacturing)', value: 'MFG' },
-  { label: '環境安全組 (EHS)', value: 'EHS' },
-]
-
-const statusOptions = [
-  { label: '全狀態 (All Status)', value: 'ALL' },
-  { label: '法定缺口/不足 (Shortage)', value: 'SHORTAGE' },
-  { label: '符合配置 (Compliant)', value: 'OK' },
-]
-
-const columns = [
-  { key: 'plant', label: '廠區' },
-  { key: 'dept', label: '所屬部門' },
-  { key: 'station', label: '作業站點 / 設備區域' },
-  { key: 'licenseName', label: '法定應具備證照名稱' },
-  { key: 'legalBasis', label: '法令規範依據' },
-  { key: 'reqHeadcount', label: '法定需求人數' },
-  { key: 'actHeadcount', label: '現況配置人數' },
-  { key: 'gap', label: '人力缺口' },
-  { key: 'status', label: '法令合規狀態' },
-  { key: 'action', label: '指派/調度' },
-]
-
-const needRecords = ref([
-  {
-    id: 'REQ-01',
-    plant: '新竹一廠',
-    dept: '廠務設施組',
-    station: '特氣/毒化供應站 (Gas Central)',
-    licenseName: '特定化學物質作業主管',
-    legalBasis: '職安署特化預防規則第37條',
-    reqHeadcount: 4,
-    actHeadcount: 4,
-    gap: 0,
-    status: 'COMPLIANT',
-  },
-  {
-    id: 'REQ-02',
-    plant: '新竹一廠',
-    dept: '廠務設施組',
-    station: '高壓變電站 (Main Substation)',
-    licenseName: '高壓氣體特定設備操作人員',
-    legalBasis: '高壓氣體勞工安全規則第68條',
-    reqHeadcount: 3,
-    actHeadcount: 2,
-    gap: -1,
-    status: 'DEFICIT',
-  },
-  {
-    id: 'REQ-03',
-    plant: '竹南二廠',
-    dept: '化學供應組',
-    station: '廢水處理場 (WWT Plant)',
-    licenseName: '廢水處理專責人員(乙級以上)',
-    legalBasis: '水污染防治法第21條',
-    reqHeadcount: 2,
-    actHeadcount: 2,
-    gap: 0,
-    status: 'COMPLIANT',
-  },
-  {
-    id: 'REQ-04',
-    plant: '竹南二廠',
-    dept: '晶片製造組',
-    station: '晶圓洗淨自動化線 (Clean Bay)',
-    licenseName: '有機溶劑作業主管',
-    legalBasis: '有機溶劑中毒預防規則第18條',
-    reqHeadcount: 6,
-    actHeadcount: 5,
-    gap: -1,
-    status: 'DEFICIT',
-  },
-  {
-    id: 'REQ-05',
-    plant: '台中三廠',
-    dept: '環境安全組',
-    station: '全廠急救站 (First Aid Station)',
-    licenseName: '急救人員(勞工健康保護)',
-    legalBasis: '勞工健康保護規則第9條',
-    reqHeadcount: 5,
-    actHeadcount: 6,
-    gap: 1,
-    status: 'SURPLUS',
-  },
-])
+const modal = ref(false);
+const editing = ref<EshNeed | null>(null);
+const form = reactive({ company: '', licenseId: '', required: '1', notes: '' });
+const saving = ref(false);
+function open(n: EshNeed | null) {
+  editing.value = n;
+  Object.assign(form, {
+    company: n?.company ?? (company.value || data.value?.companies[0] || ''),
+    licenseId: n ? String(n.licenseId) : '',
+    required: String(n?.required ?? 1),
+    notes: n?.notes ?? '',
+  });
+  modal.value = true;
+}
+async function save() {
+  saving.value = true;
+  try {
+    const body = { company: form.company, required: Number(form.required), notes: form.notes || null };
+    if (editing.value) await updateEshNeed(editing.value.licenseId, body);
+    else await createEshNeed({ ...body, licenseId: Number(form.licenseId) });
+    modal.value = false;
+    toast.success('已儲存');
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '儲存失敗');
+  } finally {
+    saving.value = false;
+  }
+}
+async function remove(n: EshNeed) {
+  if (
+    !(await confirm({
+      title: '刪除證照需求',
+      message: `確定刪除「${n.company} · ${n.licenseName}」的需求?(持證人員資料不受影響)`,
+      confirmText: '刪除',
+      tone: 'danger',
+    }))
+  )
+    return;
+  try {
+    await deleteEshNeed(n.company, n.licenseId);
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '刪除失敗');
+  }
+}
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- 頂部說明 -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          <span>⚖️</span>
-          <span>工作站法定持照配置需求 (License Requirements per Workstation)</span>
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">
-          管制各廠區高風險作業站點之法規必備專業人員配置名額、即時比對在職持照人數與人力缺口警示。
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <GButton variant="secondary" icon="printer">列印法定名冊</GButton>
-        <GButton variant="primary" icon="plus">新增作業站需求</GButton>
-      </div>
-    </div>
-
-    <!-- 合規狀態指標儀表 -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <GCard>
-        <div class="text-sm text-gray-500">法定列管工作站點</div>
-        <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-1">42 <span class="text-sm font-normal text-gray-400">處</span></div>
-        <div class="text-xs text-emerald-600 mt-1">全廠覆蓋率 100%</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">法定應配置總人次</div>
-        <div class="text-2xl font-bold text-blue-600 mt-1">86 <span class="text-sm font-normal text-gray-400">人次</span></div>
-        <div class="text-xs text-gray-500 mt-1">含備援合格人員</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">現況合格派任人次</div>
-        <div class="text-2xl font-bold text-emerald-600 mt-1">84 <span class="text-sm font-normal text-gray-400">人次</span></div>
-        <div class="text-xs text-emerald-600 mt-1">配置率 97.7%</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">法規缺口 (需補位)</div>
-        <div class="text-2xl font-bold text-red-600 mt-1">2 <span class="text-sm font-normal text-gray-400">名額</span></div>
-        <div class="text-xs text-red-500 mt-1 font-semibold">2 個站點待外部證照回訓補充</div>
-      </GCard>
-    </div>
-
-    <GAlert variant="warning" title="法規稽查警示">
-      竹南二廠晶片製造組「有機溶劑作業主管」及新竹一廠「高壓氣體特定設備操作人員」尚缺 1 名額，已排定於本月 25 日外部考證結訓，請相關課級主管留意班表調配。
-    </GAlert>
-
-    <!-- 查詢條件 -->
+  <div class="stack">
     <GCard>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">廠區別</label>
-          <GSelect v-model="searchPlant" :options="plantOptions" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">部門</label>
-          <GSelect v-model="searchDept" :options="deptOptions" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">配置狀態</label>
-          <GSelect v-model="searchStatus" :options="statusOptions" />
-        </div>
-        <div class="flex gap-2">
-          <GButton variant="primary" class="w-full" icon="search">套用篩選</GButton>
-          <GButton variant="secondary" icon="refresh-cw">重置</GButton>
-        </div>
+      <div class="row filters">
+        <GSelect v-model="company" :options="companyOptions" class="sel" @update:model-value="reload" />
+        <GButton v-can="'portal.esh.need.edit'" variant="primary" icon="plus" :disabled="!data?.companies.length" @click="open(null)">新增證照需求</GButton>
       </div>
     </GCard>
 
-    <!-- 需求清單表格 -->
-    <GCard>
-      <GTable :columns="columns" :rows="needRecords" row-key="id">
-        <template #cell-plant="{ row }">
-          <span class="font-medium text-gray-800 dark:text-gray-200">{{ row.plant }}</span>
-        </template>
-        <template #cell-dept="{ row }">
-          <span class="text-gray-700 dark:text-gray-300">{{ row.dept }}</span>
-        </template>
-        <template #cell-station="{ row }">
-          <div class="font-semibold text-gray-900 dark:text-gray-100">{{ row.station }}</div>
-          <div class="text-xs text-gray-400">{{ row.id }}</div>
-        </template>
-        <template #cell-licenseName="{ row }">
-          <span class="text-blue-600 dark:text-blue-400 font-medium">{{ row.licenseName }}</span>
-        </template>
-        <template #cell-legalBasis="{ row }">
-          <span class="text-xs text-gray-500">{{ row.legalBasis }}</span>
-        </template>
-        <template #cell-reqHeadcount="{ row }">
-          <span class="font-bold text-gray-700 dark:text-gray-300">{{ row.reqHeadcount }} 人</span>
-        </template>
-        <template #cell-actHeadcount="{ row }">
-          <span class="font-bold text-gray-800 dark:text-gray-200">{{ row.actHeadcount }} 人</span>
-        </template>
-        <template #cell-gap="{ row }">
-          <span v-if="row.gap < 0" class="text-red-600 font-bold">{{ row.gap }} 人 (缺)</span>
-          <span v-else-if="row.gap > 0" class="text-blue-600 font-bold">+{{ row.gap }} 人 (備)</span>
-          <span v-else class="text-emerald-600 font-bold">0 人 (足)</span>
-        </template>
-        <template #cell-status="{ row }">
-          <GBadge v-if="row.status === 'COMPLIANT'" tone="success">合規 (滿編)</GBadge>
-          <GBadge v-else-if="row.status === 'SURPLUS'" tone="primary">充足 (備用)</GBadge>
-          <GBadge v-else tone="danger">法定缺額 (警示)</GBadge>
-        </template>
-        <template #cell-action="{ row }">
-          <GButton size="sm" variant="ghost">指派名單</GButton>
-        </template>
-      </GTable>
+    <GCard v-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得證照需求" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
     </GCard>
+    <GCard v-else-if="loading && !data"><GSkeleton :lines="5" /></GCard>
+    <GCard v-else-if="data" title="證照需求" icon="layers">
+      <GEmpty v-if="!data.companies.length" icon="lock" title="您不是任何公司的證照管理員" />
+      <GEmpty v-else-if="!data.items.length" icon="layers" title="尚未設定證照需求" />
+      <div v-else class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>公司</th>
+              <th>證照名稱</th>
+              <th>需求張數</th>
+              <th>備註</th>
+              <th v-if="can('portal.esh.need.edit')"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="n in data.items" :key="`${n.company}-${n.licenseId}`">
+              <td class="nowrap">{{ n.company }}</td>
+              <td class="wrap">{{ n.licenseName }}</td>
+              <td>{{ n.required }}</td>
+              <td class="wrap">{{ n.notes || '—' }}</td>
+              <td v-if="can('portal.esh.need.edit')">
+                <span class="acts">
+                  <GButton size="sm" variant="ghost" square icon="edit" aria-label="編輯" @click="open(n)" />
+                  <GButton size="sm" variant="ghost" square icon="trash" aria-label="刪除" @click="remove(n)" />
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </GCard>
+
+    <GModal v-model:open="modal" :title="editing ? '編輯證照需求' : '新增證照需求'" icon="layers">
+      <form class="stack" @submit.prevent="save">
+        <GSelect v-model="form.company" label="公司" :options="(data?.companies ?? []).map((c) => ({ label: c, value: c }))" :disabled="!!editing" required />
+        <GSelect v-model="form.licenseId" label="證照" :options="licenseOptions" placeholder="選擇證照" :disabled="!!editing" required />
+        <GInput v-model="form.required" type="number" label="需求張數(整數 ≥ 0)" required />
+        <GTextarea v-model="form.notes" label="備註(350 字內)" :rows="3" />
+        <div class="row end">
+          <GButton @click="modal = false">取消</GButton>
+          <GButton v-can="'portal.esh.need.edit'" type="submit" variant="primary" icon="check" :loading="saving">儲存</GButton>
+        </div>
+      </form>
+    </GModal>
   </div>
 </template>
+
+<style scoped src="../esh.css"></style>

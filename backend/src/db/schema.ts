@@ -175,3 +175,86 @@ export const formDoc = portal.table(
   },
   (t) => [index('ix_form_doc_category').on(t.categoryId, t.active, t.sort)],
 );
+
+// ───────────── P6 ESH 證照管理(FEATURE-PLAN §8;docs/Gherkin/esh/*.feature)─────────────
+// 舊表(PortalSolar License*、ESHChemicalData*)不改結構;新站的檔案與排程紀錄放這裡。
+
+/** 證照 Logo(file-service UUID;舊站 LicenseInfo.LogoPath 不改,新站上傳的優先顯示) */
+export const eshLicenseLogo = portal.table('esh_license_logo', {
+  /** PortalSolar LicenseInfo.LicenseID */
+  licenseId: int('license_id').primaryKey(),
+  fileId: fileId('file_id').notNull(),
+  fileName: nvarchar('file_name', { length: 200 }).notNull(),
+  updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+  updatedAt: ts('updated_at').notNull().default(utcNow),
+});
+
+/** 人員證照影本(file-service UUID;取代舊站寫入 EHS/License 目錄 + LicenseFileC 的同名覆蓋做法) */
+export const eshLicenseDoc = portal.table(
+  'esh_license_doc',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    /** PortalSolar LicenseFileA.ID */
+    holderId: int('holder_id').notNull(),
+    empNo: nvarchar('emp_no', { length: 20 }).notNull(),
+    fileId: fileId('file_id').notNull(),
+    fileName: nvarchar('file_name', { length: 200 }).notNull(),
+    createdBy: nvarchar('created_by', { length: 20 }).notNull(),
+    createdAt: ts('created_at').notNull().default(utcNow),
+  },
+  (t) => [index('ix_esh_license_doc_holder').on(t.holderId)],
+);
+
+/** 化學品 SDS(管理員上傳,file-service UUID;BPM 同步不覆寫) */
+export const eshChemicalSds = portal.table('esh_chemical_sds', {
+  /** PortalSolar ESHChemicalDataA.EF_ID(BPM 流程序號) */
+  efId: nvarchar('ef_id', { length: 40 }).primaryKey(),
+  fileId: fileId('file_id').notNull(),
+  fileName: nvarchar('file_name', { length: 200 }).notNull(),
+  updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+  updatedAt: ts('updated_at').notNull().default(utcNow),
+});
+
+/**
+ * 排程 / 手動工作的執行紀錄:job = notify(複訓通知)/ chemical-sync(化學品由 BPM 同步);
+ * run_key 唯一:排程以「週一日期 / 當天日期」為鍵,重啟或多個執行個體也只執行一次
+ */
+export const eshJobRun = portal.table(
+  'esh_job_run',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    job: varchar('job', { length: 20 }).notNull(),
+    /** schedule / manual */
+    trigger: varchar('trigger', { length: 10 }).notNull(),
+    runKey: varchar('run_key', { length: 100 }).notNull(),
+    requestedBy: nvarchar('requested_by', { length: 20 }),
+    /** 公司範圍(| 分隔) */
+    scope: nvarchar('scope', { length: 500 }).notNull(),
+    /** running / ok / failed */
+    status: varchar('status', { length: 10 }).notNull(),
+    summary: nvarchar('summary', { length: 500 }),
+    startedAt: ts('started_at').notNull().default(utcNow),
+    finishedAt: ts('finished_at'),
+  },
+  (t) => [uniqueIndex('ux_esh_job_run_key').on(t.runKey), index('ix_esh_job_run_job').on(t.job, t.startedAt)],
+);
+
+/** 複訓通知寄送紀錄(每位收件人一筆;status queued / skipped / dry-run / duplicate / failed) */
+export const eshNotifyLog = portal.table(
+  'esh_notify_log',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    runId: bigint('run_id', { mode: 'number' })
+      .notNull()
+      .references(() => eshJobRun.id),
+    /** holder / boss / admin */
+    kind: varchar('kind', { length: 10 }).notNull(),
+    empNo: nvarchar('emp_no', { length: 20 }).notNull(),
+    company: nvarchar('company', { length: 20 }),
+    itemCount: int('item_count').notNull(),
+    status: varchar('status', { length: 10 }).notNull(),
+    message: nvarchar('message', { length: 200 }),
+    createdAt: ts('created_at').notNull().default(utcNow),
+  },
+  (t) => [index('ix_esh_notify_log_run').on(t.runId)],
+);

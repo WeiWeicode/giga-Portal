@@ -38,6 +38,9 @@
 | `manager/training.feature` | 年度教育訓練計畫(負責部門、課程驗證、提交與鎖定、匯出) | FEATURE-PLAN §7.1 | P5 |
 | `manager/budget.feature` | 部門預算與預算編列(D-26 可看部門、只顯示預算、編列鎖定與交易、送出) | FEATURE-PLAN §7.2、PORTAL-API-PLAN D-26 | P5 |
 | `approval/forms.feature` | 表單下載(分類、file-service 檔案、編輯者維護) | FEATURE-PLAN §4、PORTAL-API-PLAN D-25 | P4 |
+| `esh/license.feature` | ESH 證照(公司範圍、儀表板、證照項目 HTML 白名單 / Logo、需求、人員證照與下次複訓日、影本、管理員) | FEATURE-PLAN §8 | P6 |
+| `esh/notify.feature` | ESH 複訓通知(每週排程 + 立即通知、對象規則、Gateway 通知中心、寄送紀錄) | FEATURE-PLAN §8 | P6 |
+| `esh/chemicals.feature` | 危害性化學品(列管 / 不列管、成份以 ID 對應、由 BPM 同步整批交易、SDS) | FEATURE-PLAN §8 | P6 |
 
 ## 標籤慣例
 

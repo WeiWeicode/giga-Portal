@@ -579,7 +579,9 @@ export interface StaffCourses {
   courses: { key: string; status: CourseStatus; hours?: number; minHours?: number }[];
 }
 export const managerCourses = (o: { dept?: string; includeSub?: boolean; year?: number }) =>
-  http.get<{ year: number; courses: { key: string; name: string; category: 'safety' | 'general' }[]; items: StaffCourses[] }>(`/api/portal/manager/courses${mgrQuery(o)}`);
+  http.get<{ year: number; courses: { key: string; name: string; category: 'safety' | 'general' }[]; items: StaffCourses[] }>(
+    `/api/portal/manager/courses${mgrQuery(o)}`,
+  );
 
 export interface MgrPropertyNote {
   empNo: string;
@@ -726,3 +728,215 @@ export const budgetApply = (flag: number, dept: string) => http.get<BudgetApplyV
 export const saveBudgetApply = (b: { flag: number; dept: string; remark?: string; cells: BudgetCellInput[] }) =>
   http.put<BudgetApplyView>('/api/portal/manager/budget-apply', b);
 export const submitBudgetApply = (flag: number, dept: string) => http.post<BudgetApplyView>('/api/portal/manager/budget-apply/submit', { flag, dept });
+
+// ───────────── P6 ESH 證照管理與危害性化學品(FEATURE-PLAN §8;docs/Gherkin/esh/*.feature)─────────────
+export interface EshFileRef {
+  fileId: string;
+  fileName: string;
+}
+export interface EshItem {
+  id: number;
+  name: string;
+  months: number | null;
+  permanent: boolean;
+  /** 後端已白名單清洗的 HTML;顯示前再以 web-kit sanitizeHtml 清洗 */
+  description: string;
+  logo: EshFileRef | null;
+  legacyLogoUrl: string | null;
+  active: boolean;
+}
+export interface EshItemInput {
+  name: string;
+  months?: number | null;
+  permanent?: boolean;
+  description?: string | null;
+}
+export interface EshDashboardItem {
+  licenseId: number;
+  name: string;
+  months: number | null;
+  permanent: boolean;
+  description: string;
+  logo: EshFileRef | null;
+  legacyLogoUrl: string | null;
+  required: number;
+  valid: number;
+  ratio: number;
+  ok: boolean;
+  notes: string | null;
+}
+export interface EshDashboard {
+  companies: string[];
+  company: string | null;
+  items: EshDashboardItem[];
+}
+export interface EshNeed {
+  licenseId: number;
+  company: string;
+  licenseName: string;
+  required: number;
+  notes: string | null;
+}
+export type EshHolderStatus = 'left' | 'unset' | 'expired' | 'notify' | 'ok';
+export type EshHolderDoc = { kind: 'file'; id: number; fileId: string; fileName: string } | { kind: 'legacy'; fileName: string; url: string | null };
+export interface EshHolder {
+  id: number;
+  licenseId: number;
+  licenseName: string;
+  months: number | null;
+  permanent: boolean;
+  company: string;
+  empNo: string;
+  name: string | null;
+  dept: string | null;
+  trainingDate: string | null;
+  gatDate: string | null;
+  retrainDate: string | null;
+  nextTrainingDate: string | null;
+  notifyDays: number | null;
+  active: boolean;
+  inService: boolean;
+  daysLeft: number | null;
+  status: EshHolderStatus;
+  docs: EshHolderDoc[];
+}
+export interface EshHolderInput {
+  company: string;
+  trainingDate?: string | null;
+  gatDate?: string | null;
+  retrainDate?: string | null;
+  notifyDays: number;
+}
+export type EshHolderView = 'current' | 'history' | 'untracked';
+export interface EshManager {
+  company: string;
+  empNo: string;
+  name: string | null;
+  dept: string | null;
+  sendMail: boolean;
+  inService: boolean;
+}
+export type EshSendStatus = 'queued' | 'skipped' | 'dry-run' | 'duplicate' | 'failed';
+export interface EshNotifyResult {
+  runId: number;
+  mode: 'gateway' | 'dry-run';
+  total: number;
+  counts: Record<EshSendStatus, number>;
+}
+export interface EshJobRun {
+  id: number;
+  trigger: 'schedule' | 'manual';
+  requestedBy: string | null;
+  scope: string;
+  status: 'running' | 'ok' | 'failed';
+  summary: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+}
+export interface EshNotifyLog {
+  kind: 'holder' | 'boss' | 'admin';
+  empNo: string;
+  company: string | null;
+  itemCount: number;
+  status: EshSendStatus;
+  message: string | null;
+  createdAt: string;
+}
+export type EshRestrict = '列管' | '不列管';
+export interface EshPerson {
+  id: string | null;
+  name: string | null;
+  dept?: string | null;
+  deptName?: string | null;
+}
+export type EshSds =
+  { kind: 'file'; fileId: string; fileName: string } | { kind: 'url'; url: string; name: string } | { kind: 'legacy'; url: string | null; name: string };
+export interface EshComponent {
+  item: number;
+  cn: string | null;
+  en: string | null;
+  code: string | null;
+  cas: string | null;
+  formula: string | null;
+  rate: string | null;
+}
+export interface EshChemical {
+  efId: string;
+  restrict: string | null;
+  factoryArea: string | null;
+  createDate: string | null;
+  chemicalName: string | null;
+  chemicalNameEn: string | null;
+  vendor: string | null;
+  productNumber: string | null;
+  amount: string | null;
+  unit: string | null;
+  purpose: string | null;
+  path: string | null;
+  type: string | null;
+  state: string | null;
+  storage: string | null;
+  storageExt: string | null;
+  noAttachmentNote: string | null;
+  requester: EshPerson;
+  applicant: EshPerson;
+  keeper: EshPerson;
+  user: EshPerson;
+  components: EshComponent[];
+  sds: EshSds | null;
+}
+export interface EshChemicalPage {
+  from: string;
+  to: string;
+  total: number;
+  page: number;
+  pageSize: number;
+  items: EshChemical[];
+}
+export interface EshSyncResult {
+  runId: number;
+  from: string;
+  to: string;
+  forms: number;
+  written: number;
+  skipped: { efId: string; reason: string }[];
+}
+
+export const eshDashboard = (company?: string) => http.get<EshDashboard>(`/api/portal/esh/dashboard${mgrQuery({ company })}`);
+export const eshValidHolders = (company: string, licenseId: number) =>
+  http.get<{ items: EshHolder[] }>(`/api/portal/esh/dashboard/holders${mgrQuery({ company, licenseId })}`);
+export const eshItems = (includeInactive = false) =>
+  http.get<{ items: EshItem[] }>(`/api/portal/esh/items${mgrQuery({ includeInactive: includeInactive || undefined })}`);
+export const createEshItem = (b: EshItemInput) => http.post<EshItem>('/api/portal/esh/items', b);
+export const updateEshItem = (id: number, b: EshItemInput) => http.put<EshItem>(`/api/portal/esh/items/${id}`, b);
+export const deleteEshItem = (id: number) => http.delete<void>(`/api/portal/esh/items/${id}`);
+export const setEshItemLogo = (id: number, f: EshFileRef) => http.put<EshItem>(`/api/portal/esh/items/${id}/logo`, f);
+export const deleteEshItemLogo = (id: number) => http.delete<void>(`/api/portal/esh/items/${id}/logo`);
+export const eshNeeds = (company?: string) => http.get<{ companies: string[]; items: EshNeed[] }>(`/api/portal/esh/needs${mgrQuery({ company })}`);
+export const createEshNeed = (b: { company: string; licenseId: number; required: number; notes?: string | null }) =>
+  http.post<EshNeed>('/api/portal/esh/needs', b);
+export const updateEshNeed = (licenseId: number, b: { company: string; required: number; notes?: string | null }) =>
+  http.put<void>(`/api/portal/esh/needs/${licenseId}`, b);
+export const deleteEshNeed = (company: string, licenseId: number) => http.delete<void>(`/api/portal/esh/needs/${licenseId}${mgrQuery({ company })}`);
+export const eshHolders = (q: { company?: string; licenseId?: number; view?: EshHolderView }) =>
+  http.get<{ companies: string[]; items: EshHolder[] }>(`/api/portal/esh/holders${mgrQuery(q)}`);
+export const createEshHolder = (b: EshHolderInput & { empNo: string; licenseId: number }) => http.post<EshHolder>('/api/portal/esh/holders', b);
+export const updateEshHolder = (id: number, b: EshHolderInput) => http.put<EshHolder>(`/api/portal/esh/holders/${id}`, b);
+export const deleteEshHolder = (id: number) => http.delete<void>(`/api/portal/esh/holders/${id}`);
+export const addEshHolderDoc = (id: number, f: EshFileRef) => http.post<EshHolder>(`/api/portal/esh/holders/${id}/docs`, f);
+export const deleteEshHolderDoc = (id: number, docId: number) => http.delete<void>(`/api/portal/esh/holders/${id}/docs/${docId}`);
+export const deleteEshLegacyDoc = (id: number, fileName: string) => http.delete<void>(`/api/portal/esh/holders/${id}/legacy-docs${mgrQuery({ fileName })}`);
+export const sendEshNotify = () => http.post<EshNotifyResult>('/api/portal/esh/notify', {});
+export const eshNotifyRuns = () => http.get<{ mode: 'gateway' | 'dry-run'; items: EshJobRun[] }>('/api/portal/esh/notify/runs');
+export const eshNotifyLogs = (runId: number) => http.get<{ items: EshNotifyLog[] }>(`/api/portal/esh/notify/runs/${runId}`);
+export const eshManagers = (company?: string) => http.get<{ companies: string[]; items: EshManager[] }>(`/api/portal/esh/managers${mgrQuery({ company })}`);
+export const createEshManager = (b: { company: string; empNo: string; sendMail: boolean }) => http.post<EshManager>('/api/portal/esh/managers', b);
+export const updateEshManager = (b: { company: string; empNo: string; sendMail: boolean }) => http.put<void>('/api/portal/esh/managers', b);
+export const deleteEshManager = (company: string, empNo: string) => http.delete<void>(`/api/portal/esh/managers${mgrQuery({ company, empNo })}`);
+export const eshChemicals = (q: { restrict: EshRestrict; from?: string; to?: string; keyword?: string; page?: number; pageSize?: number }) =>
+  http.get<EshChemicalPage>(`/api/portal/esh/chemicals${mgrQuery(q)}`);
+export const eshChemical = (efId: string) => http.get<EshChemical>(`/api/portal/esh/chemicals/${enc(efId)}`);
+export const syncEshChemicals = (b: { from?: string; to?: string }) => http.post<EshSyncResult>('/api/portal/esh/chemicals/sync', b);
+export const eshChemicalSyncRuns = () => http.get<{ items: EshJobRun[] }>('/api/portal/esh/chemicals/sync/runs');
+export const setEshChemicalSds = (efId: string, f: EshFileRef) => http.put<EshChemical>(`/api/portal/esh/chemicals/${enc(efId)}/sds`, f);
+export const deleteEshChemicalSds = (efId: string) => http.delete<void>(`/api/portal/esh/chemicals/${enc(efId)}/sds`);

@@ -677,10 +677,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.license.read',
       milestone: 'M5',
-      description: '全廠勞安、環保與法定機械設備證照持有清冊與 90 天到期預警',
+      description: '各公司證照應有 / 有效張數與符合度,查看有效持證人與證照文件',
     },
     [
-      { key: 'list', label: '全廠持照清冊與預警', path: '', icon: 'award', component: () => import('./pages/esh/management/EhsManagementPage.vue') },
+      { key: 'list', label: '全廠持照清冊與預警', path: '', icon: 'award', requires: ['portal.api.esh.license.read'], component: () => import('./pages/esh/management/EhsManagementPage.vue') },
     ],
   ),
   page(
@@ -692,10 +692,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.item.read',
       milestone: 'M5',
-      description: '法定機械/安衛/環保證照代碼庫、主管機關與法定回訓週期維護',
+      description: '證照名稱、有效期(月)、描述與 Logo 維護(各公司共用)',
     },
     [
-      { key: 'list', label: '法定證照代碼維護', path: '', icon: 'settings', component: () => import('./pages/esh/itemEdit/EhsItemEditPage.vue') },
+      { key: 'list', label: '法定證照代碼維護', path: '', icon: 'settings', requires: ['portal.api.esh.item.read'], component: () => import('./pages/esh/itemEdit/EhsItemEditPage.vue') },
     ],
   ),
   page(
@@ -707,10 +707,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.need.read',
       milestone: 'M5',
-      description: '各廠區高風險工作站點法定應配置證照人數與人力缺口',
+      description: '各公司每項證照的需求張數與備註',
     },
     [
-      { key: 'list', label: '站點持照配置與缺口', path: '', icon: 'layers', component: () => import('./pages/esh/licenseNeed/EhsLicenseNeedPage.vue') },
+      { key: 'list', label: '站點持照配置與缺口', path: '', icon: 'layers', requires: ['portal.api.esh.need.read', 'portal.api.esh.item.read'], component: () => import('./pages/esh/licenseNeed/EhsLicenseNeedPage.vue') },
     ],
   ),
   page(
@@ -722,10 +722,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.personal.read',
       milestone: 'M5',
-      description: '同仁新取得專業證書登錄、審核與電子掃描檔案庫',
+      description: '持證人員、取得 / 複訓日期、下次複訓日(系統計算)、證照影本與複訓通知',
     },
     [
-      { key: 'list', label: '同仁證照登錄審核', path: '', icon: 'id-card', component: () => import('./pages/esh/personalLicense/EhsPersonalLicensePage.vue') },
+      { key: 'list', label: '同仁證照登錄審核', path: '', icon: 'id-card', requires: ['portal.api.esh.holder.read', 'portal.api.esh.item.read'], component: () => import('./pages/esh/personalLicense/EhsPersonalLicensePage.vue') },
     ],
   ),
   page(
@@ -737,10 +737,10 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.manager.read',
       milestone: 'M5',
-      description: '各廠區各部門法定專責人、緊急應變窗口與公務通報名冊',
+      description: '各公司證照管理員與複訓通知收件設定',
     },
     [
-      { key: 'list', label: '廠區窗口與擔當名冊', path: '', icon: 'users', component: () => import('./pages/esh/managerSetup/EhsManagerSetupPage.vue') },
+      { key: 'list', label: '廠區窗口與擔當名冊', path: '', icon: 'users', requires: ['portal.api.esh.manager.read'], component: () => import('./pages/esh/managerSetup/EhsManagerSetupPage.vue') },
     ],
   ),
   page(
@@ -752,11 +752,11 @@ const appPages: RouteRecordRaw[] = [
       group: 'esh',
       permission: 'portal.esh.chemical.read',
       milestone: 'M5',
-      description: '列管與一般化學品清單、CAS No.、SDS 安全資料表下載與防護',
+      description: '化學品申報(BPM)清單、成份 CAS No. 與 SDS 安全資料表',
     },
     [
-      { key: 'regulated', label: '列管化學品', path: '', icon: 'shield', component: () => import('./pages/esh/chemicals/EhsChemicalRegulatedTab.vue') },
-      { key: 'unregulated', label: '一般非列管化學品', path: 'unregulated', icon: 'box', component: () => import('./pages/esh/chemicals/EhsChemicalUnregulatedTab.vue') },
+      { key: 'regulated', label: '列管化學品', path: '', icon: 'shield', requires: ['portal.api.esh.chemical.read'], component: () => import('./pages/esh/chemicals/EhsChemicalRegulatedTab.vue') },
+      { key: 'unregulated', label: '一般非列管化學品', path: 'unregulated', icon: 'box', requires: ['portal.api.esh.chemical.read'], component: () => import('./pages/esh/chemicals/EhsChemicalUnregulatedTab.vue') },
     ],
   ),
   { path: '403', component: () => import('./pages/Forbidden.vue'), meta: { title: '沒有權限' } },

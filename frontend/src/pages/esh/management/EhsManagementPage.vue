@@ -1,187 +1,149 @@
 <script setup lang="ts">
 /**
- * ESH 證照管理清冊與到期預警 (對齊 old_PortalSolar EHS/EHManagement.aspx)
+ * 證照管理儀表板(old_PortalSolar EHS/EHManagement.aspx;FEATURE-PLAN §8;docs/Gherkin/esh/license.feature)。
+ * 每公司每證照:應有張數(需求)、有效張數(在職且下次複訓日 ≥ 今天)、符合度;不足為「待改善」。
+ * 公司只能選本人在 LicenseManagerInfo 的公司(後端每支 API 檢查)。描述為後端白名單清洗後的 HTML,顯示前再以 web-kit sanitizeHtml 清洗。
  */
 import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GModal, GSelect } from '@/ui';
+import { sanitizeHtml } from '@giganexus/web-kit';
+import { describeError } from '@/api/gateway';
+import { eshDashboard, eshValidHolders, type EshDashboardItem, type EshHolder } from '@/api/portal';
+import { dashboardCounts, docHref, filterDashboard, logoSrc, monthsText, type DashboardFilter } from '@/composables/esh';
+import { useAsync } from '@/composables/useAsync';
 
-interface StaffLicense {
-  empNo: string;
-  name: string;
-  dept: string;
-  licenseName: string;
-  certNo: string;
-  issueDate: string;
-  expireDate: string;
-  retrainHours: number;
-  status: '有效' | '即將到期 (90天內)' | '已逾期';
-}
-
-const licenses = ref<StaffLicense[]>([
-  {
-    empNo: 'V112045',
-    name: '黃宏達',
-    dept: '製造一課',
-    licenseName: '荷重在一公噸以上之堆高機操作人員',
-    certNo: 'FL-2023-08812',
-    issueDate: '2023-06-15',
-    expireDate: '2026-06-15',
-    retrainHours: 3,
-    status: '已逾期',
-  },
-  {
-    empNo: 'V113010',
-    name: '陳領班',
-    dept: '製造一課',
-    licenseName: '荷重在一公噸以上之堆高機操作人員',
-    certNo: 'FL-2024-01205',
-    issueDate: '2024-01-20',
-    expireDate: '2027-01-20',
-    retrainHours: 3,
-    status: '有效',
-  },
-  {
-    empNo: 'V112001',
-    name: '王大明',
-    dept: '資訊服務部',
-    licenseName: '勞工急救人員證書 (CPR+AED)',
-    certNo: 'FA-2023-11009',
-    issueDate: '2023-11-05',
-    expireDate: '2026-11-05',
-    retrainHours: 3,
-    status: '即將到期 (90天內)',
-  },
-  {
-    empNo: 'V113018',
-    name: '林佑任',
-    dept: '職業安全衛生室',
-    licenseName: '甲種職業安全衛生業務主管',
-    certNo: 'OSH-A-2022-003',
-    issueDate: '2022-08-10',
-    expireDate: '2025-08-10',
-    retrainHours: 6,
-    status: '有效',
-  },
-  {
-    empNo: 'V113045',
-    name: '周志成',
-    dept: '倉儲物流課',
-    licenseName: '固定式起重機操作人員 (天車)',
-    certNo: 'CR-2024-05521',
-    issueDate: '2024-05-15',
-    expireDate: '2027-05-15',
-    retrainHours: 3,
-    status: '有效',
-  },
-]);
-
-const searchKeyword = ref('');
-const statusFilter = ref('');
-
-const filteredLicenses = computed(() => {
-  return licenses.value.filter((l) => {
-    const kw = searchKeyword.value.toLowerCase().trim();
-    const matchKw =
-      !kw ||
-      l.empNo.toLowerCase().includes(kw) ||
-      l.name.toLowerCase().includes(kw) ||
-      l.dept.toLowerCase().includes(kw) ||
-      l.licenseName.toLowerCase().includes(kw) ||
-      l.certNo.toLowerCase().includes(kw);
-    const matchStatus = !statusFilter.value || l.status === statusFilter.value;
-    return matchKw && matchStatus;
-  });
+const company = ref('');
+const { data, loading, error, reload } = useAsync(async () => {
+  const d = await eshDashboard(company.value || undefined);
+  if (!company.value && d.company) company.value = d.company;
+  return d;
 });
+const companyOptions = computed(() => (data.value?.companies ?? []).map((c) => ({ label: c, value: c })));
+const filter = ref<DashboardFilter>('all');
+const counts = computed(() => dashboardCounts(data.value?.items ?? []));
+const filterOptions = computed(() => [
+  { label: `全部證照(${counts.value.all})`, value: 'all' },
+  { label: `待改善(${counts.value.ng})`, value: 'ng' },
+  { label: `符合規定(${counts.value.ok})`, value: 'ok' },
+]);
+const items = computed(() => filterDashboard(data.value?.items ?? [], filter.value));
+const expanded = ref<number | null>(null);
 
-const expiringCount = computed(() => licenses.value.filter((l) => l.status === '即將到期 (90天內)').length);
-const expiredCount = computed(() => licenses.value.filter((l) => l.status === '已逾期').length);
+const viewing = ref<EshDashboardItem | null>(null);
+const holders = ref<EshHolder[]>([]);
+const holdersLoading = ref(false);
+const holdersError = ref<unknown>(null);
+async function view(item: EshDashboardItem) {
+  viewing.value = item;
+  holders.value = [];
+  holdersError.value = null;
+  holdersLoading.value = true;
+  try {
+    holders.value = (await eshValidHolders(company.value, item.licenseId)).items;
+  } catch (e) {
+    holdersError.value = e;
+  } finally {
+    holdersLoading.value = false;
+  }
+}
 </script>
 
 <template>
-  <div class="ehs-management-page stack">
-    <!-- 指標統計卡 -->
-    <div class="stats-grid">
-      <GCard class="glass stat-card">
-        <span class="faint small">全廠持證人員總人次</span>
-        <strong class="stat-num mono text-primary">{{ licenses.length }} 筆</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">法定合格有效證照</span>
-        <strong class="stat-num mono text-healthy">{{ licenses.length - expiringCount - expiredCount }} 筆</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">90 天內即將到期預警</span>
-        <strong class="stat-num mono text-warning">{{ expiringCount }} 筆 (需安排回訓)</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">已逾期失效證照</span>
-        <strong class="stat-num mono text-danger">{{ expiredCount }} 筆 (暫停特種作業)</strong>
-      </GCard>
-    </div>
-
-    <!-- 篩選列 -->
-    <GCard class="glass filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label class="filter-label">關鍵字檢索</label>
-          <GInput v-model="searchKeyword" placeholder="搜尋工號、姓名、證照名稱、證書字號..." />
-        </div>
-        <div class="filter-item filter-select">
-          <label class="filter-label">證照有效狀態</label>
-          <GSelect
-            v-model="statusFilter"
-            :options="[
-              { label: '全部狀態', value: '' },
-              { label: '有效', value: '有效' },
-              { label: '即將到期 (90天內)', value: '即將到期 (90天內)' },
-              { label: '已逾期', value: '已逾期' },
-            ]"
-          />
-        </div>
+  <div class="stack">
+    <GCard>
+      <div class="row filters">
+        <GSelect v-model="company" :options="companyOptions" placeholder="選擇公司" class="sel" @update:model-value="reload" />
+        <GSegmented v-model="filter" :options="filterOptions" size="sm" />
       </div>
     </GCard>
 
-    <!-- 證照清單表格 -->
-    <GCard class="glass table-wrapper">
-      <table class="license-table">
-        <thead>
-          <tr>
-            <th>工號</th>
-            <th>姓名</th>
-            <th>所屬部門</th>
-            <th>法定證照名稱</th>
-            <th>證書字號</th>
-            <th class="mono">發證日期</th>
-            <th class="mono font-bold">有效到期日</th>
-            <th class="text-right">回訓時數</th>
-            <th class="text-center">狀態</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="l in filteredLicenses" :key="l.certNo">
-            <td class="mono font-bold">{{ l.empNo }}</td>
-            <td class="font-bold">{{ l.name }}</td>
-            <td>{{ l.dept }}</td>
-            <td class="font-bold text-primary">{{ l.licenseName }}</td>
-            <td class="mono small faint">{{ l.certNo }}</td>
-            <td class="mono small">{{ l.issueDate }}</td>
-            <td class="mono font-bold" :class="{ 'text-danger': l.status === '已逾期', 'text-warning': l.status === '即將到期 (90天內)' }">
-              {{ l.expireDate }}
-            </td>
-            <td class="mono text-right">{{ l.retrainHours }} 小時</td>
-            <td class="text-center">
-              <GBadge :tone="l.status === '有效' ? 'healthy' : l.status === '即將到期 (90天內)' ? 'warning' : 'danger'">
-                {{ l.status }}
-              </GBadge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <GCard v-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得證照資料" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
     </GCard>
+    <GCard v-else-if="loading && !data"><GSkeleton :lines="5" /></GCard>
+    <GCard v-else-if="data && !data.companies.length">
+      <GEmpty icon="lock" title="您不是任何公司的證照管理員" description="管理範圍依舊系統「證照管理員」(LicenseManagerInfo)設定,請洽 ESH 管理員新增。" />
+    </GCard>
+    <GCard v-else-if="data && !items.length"><GEmpty icon="award" title="沒有符合條件的證照需求" /></GCard>
+    <div v-else-if="data" class="grid">
+      <GCard v-for="i in items" :key="i.licenseId" :class="['lic', { ng: !i.ok }]">
+        <div class="head">
+          <img v-if="logoSrc(i)" :src="logoSrc(i)!" alt="" class="logo" loading="lazy" />
+          <div class="logo ph" v-else><GIcon name="award" :size="28" /></div>
+          <div class="title">
+            <b>{{ i.name }}</b>
+            <span class="xs faint">有效期 {{ monthsText(i) }}</span>
+          </div>
+        </div>
+        <div class="nums">
+          <span :class="['big', i.ok ? 'ok' : 'bad']">{{ i.valid }} / {{ i.required }}</span>
+          <GBadge :tone="i.ok ? 'success' : 'danger'">{{ i.ok ? '符合規定' : '待改善' }} · {{ i.ratio }}%</GBadge>
+        </div>
+        <p v-if="i.notes" class="xs faint notes">{{ i.notes }}</p>
+        <div class="row acts">
+          <GButton size="sm" variant="secondary" icon="users" @click="view(i)">查看有效持證人</GButton>
+          <GButton
+            v-if="i.description"
+            size="sm"
+            variant="ghost"
+            :icon="expanded === i.licenseId ? 'chevron-down' : 'chevron-right'"
+            @click="expanded = expanded === i.licenseId ? null : i.licenseId"
+            >說明</GButton
+          >
+        </div>
+        <!-- 後端已白名單清洗,顯示前再以 web-kit sanitizeHtml 清洗 -->
+        <div v-if="expanded === i.licenseId" class="desc" v-html="sanitizeHtml(i.description)" />
+      </GCard>
+    </div>
 
-    <GAlert tone="warning" icon="alert">
-      依職業安全衛生法規定，特種作業人員證照逾期未完成在職回訓者，不得繼續擔任該項特種作業（例如駕駛堆高機、操作天車或擔任安全業務主管）。請管理員定期通報各單位安排受訓。
-    </GAlert>
+    <GModal
+      :open="!!viewing"
+      :title="viewing ? `${viewing.name} · 有效持證人` : ''"
+      icon="users"
+      width="860px"
+      @update:open="(v: boolean) => !v && (viewing = null)"
+    >
+      <GSkeleton v-if="holdersLoading" :lines="4" />
+      <GEmpty v-else-if="holdersError" tone="danger" icon="alert" title="無法取得持證人" :description="describeError(holdersError)" />
+      <GEmpty v-else-if="!holders.length" icon="users" title="沒有有效持證人" />
+      <div v-else class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>部門</th>
+              <th>工號 / 姓名</th>
+              <th>初訓</th>
+              <th>取得</th>
+              <th>複訓</th>
+              <th>下次複訓</th>
+              <th>通知天數</th>
+              <th>證照文件</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="h in holders" :key="h.id">
+              <td>{{ h.dept ?? '—' }}</td>
+              <td>
+                <span class="mono">{{ h.empNo }}</span> {{ h.name ?? '' }}
+              </td>
+              <td>{{ h.trainingDate ?? '—' }}</td>
+              <td>{{ h.gatDate ?? '—' }}</td>
+              <td>{{ h.retrainDate ?? '—' }}</td>
+              <td>{{ h.nextTrainingDate ?? '—' }}</td>
+              <td>{{ h.notifyDays ?? '—' }}</td>
+              <td class="docs">
+                <template v-for="d in h.docs" :key="d.kind === 'file' ? `f${d.id}` : `l${d.fileName}`">
+                  <a v-if="docHref(d)" :href="docHref(d)!" target="_blank" rel="noopener noreferrer">{{ d.fileName }}</a>
+                  <span v-else class="faint">{{ d.fileName }}(舊站檔案)</span>
+                </template>
+                <span v-if="!h.docs.length" class="faint">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </GModal>
   </div>
 </template>
 
@@ -191,62 +153,106 @@ const expiredCount = computed(() => licenses.value.filter((l) => l.status === '�
   flex-direction: column;
   gap: 16px;
 }
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
+.filters {
+  flex-wrap: wrap;
+  gap: 12px;
 }
-.stat-card {
-  padding: 14px 18px;
+.sel {
+  min-width: 180px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.lic.ng {
+  border-color: var(--danger, var(--line));
+}
+.head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.logo {
+  width: 56px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex: none;
+}
+.logo.ph {
+  display: grid;
+  place-items: center;
+  background: var(--glass-soft);
+  color: var(--text-3);
+}
+.title {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.stat-num {
-  font-size: 20px;
-}
-.text-healthy { color: var(--color-healthy); }
-.filter-card {
-  padding: 12px 16px;
-}
-.filter-row {
+.nums {
   display: flex;
-  gap: 16px;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 0 4px;
+  gap: 8px;
+}
+.big {
+  font-size: var(--fs-xl, 1.4rem);
+  font-weight: 700;
+}
+.big.ok {
+  color: var(--success, inherit);
+}
+.big.bad {
+  color: var(--danger, inherit);
+}
+.notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.acts {
+  gap: 8px;
+  margin-top: 8px;
   flex-wrap: wrap;
 }
-.filter-item {
-  flex: 1;
-  min-width: 220px;
+.desc {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow: auto;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
 }
-.filter-select {
-  max-width: 220px;
-}
-.filter-label {
-  display: block;
-  font-size: 13px;
-  color: var(--color-faint);
-  margin-bottom: 4px;
-}
-.table-wrapper {
+.table-wrap {
   overflow-x: auto;
-  padding: 0;
 }
-.license-table {
+.data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
-.license-table th, .license-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-.license-table th {
-  background: var(--color-surface-hover);
+.data-table th,
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
   text-align: left;
-  font-weight: 600;
+  white-space: nowrap;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
+.data-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--glass-soft);
+}
+.docs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+}
+.mono {
+  font-family: var(--font-mono, monospace);
+}
 </style>

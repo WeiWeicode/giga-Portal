@@ -1,0 +1,72 @@
+/* ESH 頁面共用版面(只用 tokens.css 變數;各頁以 <style scoped src> 引用) */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.filters {
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+.sel {
+  min-width: 160px;
+}
+.kw {
+  flex: 1;
+  min-width: 180px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.data-table th,
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--glass-soft);
+  white-space: nowrap;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.wrap {
+  min-width: 160px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+.acts {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+.end {
+  justify-content: flex-end;
+  gap: 8px;
+}
+.docs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.off {
+  opacity: 0.55;
+}

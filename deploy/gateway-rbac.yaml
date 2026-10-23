@@ -132,18 +132,18 @@ permissions:
   - { code: portal.mgr.budget-apply.read, name: 新年度預算編列, kind: menu, parent: portal.group.manager, sort: 210 }
   - { code: portal.mgr.budget-apply.apply, name: 預算提案與動支申請, kind: tab, parent: portal.mgr.budget-apply.read, sort: 10, includes: [portal.api.mgr.budget-apply.read] }
   - { code: portal.esh.license.read, name: 證照管理, kind: menu, parent: portal.group.esh, sort: 300 }
-  - { code: portal.esh.license.list, name: 全廠持照清冊與預警, kind: tab, parent: portal.esh.license.read, sort: 10 }
+  - { code: portal.esh.license.list, name: 全廠持照清冊與預警, kind: tab, parent: portal.esh.license.read, sort: 10, includes: [portal.api.esh.license.read] }
   - { code: portal.esh.item.read, name: 證照項目設定, kind: menu, parent: portal.group.esh, sort: 301 }
-  - { code: portal.esh.item.list, name: 法定證照代碼維護, kind: tab, parent: portal.esh.item.read, sort: 10 }
+  - { code: portal.esh.item.list, name: 法定證照代碼維護, kind: tab, parent: portal.esh.item.read, sort: 10, includes: [portal.api.esh.item.read] }
   - { code: portal.esh.need.read, name: 工作站法定需求, kind: menu, parent: portal.group.esh, sort: 302 }
-  - { code: portal.esh.need.list, name: 站點持照配置與缺口, kind: tab, parent: portal.esh.need.read, sort: 10 }
+  - { code: portal.esh.need.list, name: 站點持照配置與缺口, kind: tab, parent: portal.esh.need.read, sort: 10, includes: [portal.api.esh.need.read, portal.api.esh.item.read] }
   - { code: portal.esh.personal.read, name: 人員證照登記, kind: menu, parent: portal.group.esh, sort: 303 }
-  - { code: portal.esh.personal.list, name: 同仁證照登錄審核, kind: tab, parent: portal.esh.personal.read, sort: 10 }
+  - { code: portal.esh.personal.list, name: 同仁證照登錄審核, kind: tab, parent: portal.esh.personal.read, sort: 10, includes: [portal.api.esh.holder.read, portal.api.esh.item.read, portal.api.esh.notify.read] }
   - { code: portal.esh.manager.read, name: 環安窗口設定, kind: menu, parent: portal.group.esh, sort: 304 }
-  - { code: portal.esh.manager.list, name: 廠區窗口與擔當名冊, kind: tab, parent: portal.esh.manager.read, sort: 10 }
+  - { code: portal.esh.manager.list, name: 廠區窗口與擔當名冊, kind: tab, parent: portal.esh.manager.read, sort: 10, includes: [portal.api.esh.manager.read] }
   - { code: portal.esh.chemical.read, name: 危害性化學品資訊, kind: menu, parent: portal.group.esh, sort: 305 }
-  - { code: portal.esh.chemical.regulated, name: 列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 10 }
-  - { code: portal.esh.chemical.unregulated, name: 一般非列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 20 }
+  - { code: portal.esh.chemical.regulated, name: 列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 10, includes: [portal.api.esh.chemical.read] }
+  - { code: portal.esh.chemical.unregulated, name: 一般非列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 20, includes: [portal.api.esh.chemical.read] }
   # 按鈕(按鈕 = 其呼叫的寫入 API 權限,PRD D4;其餘按鈕隨各 Tab 內容一起登記)
   - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.basic, sort: 10 }
   - { code: portal.note.edit, name: 新增 / 編輯個人提醒, kind: button, parent: portal.note.list, sort: 10, includes: [portal.api.note.write] }
@@ -171,6 +171,13 @@ permissions:
   - { code: portal.mgr.property.edit, name: 修改部屬資產備註, kind: button, parent: portal.mgr.property.list, sort: 10, includes: [portal.api.mgr.property.edit] }
   - { code: portal.mgr.training.edit, name: 編列與提交訓練計畫, kind: button, parent: portal.mgr.training.plan, sort: 10, includes: [portal.api.mgr.training.write] }
   - { code: portal.mgr.budget-apply.edit, name: 更新與送出部門預算, kind: button, parent: portal.mgr.budget-apply.apply, sort: 10, includes: [portal.api.mgr.budget-apply.write] }
+  # P6 ESH 證照管理(資料範圍由 portal-api 依 LicenseManagerInfo 的公司檢查;化學品同步另須 portal-esh-admin)
+  - { code: portal.esh.item.edit, name: 維護證照項目, kind: button, parent: portal.esh.item.list, sort: 10, includes: [portal.api.esh.item.edit] }
+  - { code: portal.esh.need.edit, name: 維護證照需求, kind: button, parent: portal.esh.need.list, sort: 10, includes: [portal.api.esh.need.edit] }
+  - { code: portal.esh.personal.edit, name: 維護人員證照與影本, kind: button, parent: portal.esh.personal.list, sort: 10, includes: [portal.api.esh.holder.edit] }
+  - { code: portal.esh.notify.send, name: 立即發送複訓通知, kind: button, parent: portal.esh.personal.list, sort: 20, includes: [portal.api.esh.notify.send] }
+  - { code: portal.esh.manager.edit, name: 維護證照管理員, kind: button, parent: portal.esh.manager.list, sort: 10, includes: [portal.api.esh.manager.edit] }
+  - { code: portal.esh.chemical.edit, name: 化學品由 BPM 同步 / 上傳 SDS, kind: button, parent: portal.esh.chemical.regulated, sort: 10, includes: [portal.api.esh.chemical.edit] }
 
 roles:
   - code: employee
@@ -352,6 +359,15 @@ roles:
       - portal.esh.personal.list
       - portal.esh.manager.read
       - portal.esh.manager.list
+      - portal.esh.item.edit
+      - portal.esh.need.edit
+      - portal.esh.personal.edit
+      - portal.esh.notify.send
+      - portal.esh.manager.edit
+      - portal.esh.chemical.read
+      - portal.esh.chemical.regulated
+      - portal.esh.chemical.unregulated
+      - portal.esh.chemical.edit
   - code: portal-editor
     name: 入口網內容維護(人資 / 行政)
     permissions:

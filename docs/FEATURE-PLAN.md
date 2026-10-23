@@ -203,7 +203,7 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 
 ---
 
-## 8. ESH 證照管理(`portal.group.esh`)— P6 ⏳
+## 8. ESH 證照管理(`portal.group.esh`)— P6 🔨 已實作(工作分支 `feature/portal-p6-esh`,待合併與測試區驗收;API 見 `API.md` §3.0、場景 `Gherkin/esh/*.feature`;待確認見 `CONFIRM-NEEDED.md` P6)
 
 **角色**:`portal-esh-admin`(成員來源 = `LicenseManagerInfo`,由 IT 指派);**管理範圍 = 該管理員在 `LicenseManagerInfo` 的公司**,後端每支 API 檢查(舊版只限制下拉選單)。
 
@@ -267,5 +267,5 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 3. **P3 首頁聚合與集團公告**(§1、§5)— 🔨 已實作待驗收(Q-D10 P3 未用到;3691 解碼上線前需人資 / 法務確認 D-23)
 4. **P4 待我簽核與表單下載**(§4)— 🔨 已實作待驗收(含 D-29 全部 BPM API;Q-D11 SP 定義取不到、Q-D12 待 BPM 管理者確認,皆列 CONFIRM-NEEDED P4)
 5. **P5 主管專區**(§7)— 🔨 已實作待驗收(Q-D10:只有晉升地圖用到 WPORTALZ,該頁 TIPTOP 轉移中,P5 不需要;待確認列 CONFIRM-NEEDED P5)
-6. **P6 ESH**(§8)
+6. **P6 ESH**(§8)— 🔨 已實作待驗收(複訓通知預設 dry-run;Gateway 範本 / API Key、NaNa 檢視、排程方式列 CONFIRM-NEEDED P6)
 7. **P7 臨時服務**(§9;先決 Q-F11 查舊報表)

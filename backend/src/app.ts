@@ -40,6 +40,7 @@ import { linkRoutes } from './routes/links.js';
 import { talkRoutes } from './routes/talk.js';
 import { formRoutes } from './routes/forms.js';
 import { managerRoutes, type ManagerServices } from './routes/manager.js';
+import { eshRoutes, type EshServices } from './routes/esh.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -79,6 +80,8 @@ export interface AppOptions {
   forms?: FormService | null;
   /** P5 主管專區 */
   manager?: ManagerServices | null;
+  /** P6 ESH 證照管理與危害性化學品 */
+  esh?: EshServices | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -164,5 +167,6 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(talkRoutes(opts.talk ?? null));
   await app.register(formRoutes(opts.forms ?? null));
   await app.register(managerRoutes(opts.manager ?? null));
+  await app.register(eshRoutes(opts.esh ?? null));
   return app;
 }

@@ -20,6 +20,11 @@
  *   BUDGET_LOCKED_CODES       選用:預算編列禁填科目(逗號分隔;預設同舊 Budget_DeptData strDisableAccountingCode)
  *   BUDGET_SUM_EDITABLE_CODES 選用:可填的合計科目例外(預設 6234,6134,6334,5534)
  *   BUDGET_VIEW_EXCLUDED_CODES 選用:部門預算不列的合計科目(預設同舊 Budget_DeptInfoV2)
+ *   ESH_NOTIFY_MODE   複訓通知寄送方式:dry-run(預設,只寫寄送紀錄不寄)/ gateway(POST Gateway /api/notify/send,需 GW_BASE_URL 與 API Key 具 notify.message.send)
+ *   ESH_SCHEDULE      on / off:程序內排程(複訓通知、化學品同步);預設 off(合併後先驗收,確認 05 腳本與寄信設定後再於 portal.env 設 on)
+ *   ESH_NOTIFY_WEEKDAY / ESH_NOTIFY_HOUR  複訓通知排程(台灣時間;預設週一(1)08 點後)
+ *   ESH_CHEMICAL_SYNC_HOUR / ESH_CHEMICAL_SYNC_MONTHS  化學品每日同步(預設 02 點後、同步最近 13 個月)
+ *   ESH_SDS_BASE_URL  BPM SDS 檔案網址前綴(同舊版 http://<BPM 主機>/SDSFILES);預設由 BPM_DB_HOST 組成,未設定 BPM 時為空
  *   DEV_SKIP_TOKEN    dev 專用:不驗證 X-Internal-Token(本機直連);非 dev 設定即啟動失敗
  */
 import { readFileSync } from 'node:fs';
@@ -56,7 +61,55 @@ export interface Config {
   legacyPortalUrl: string | null;
   /** 主管專區預算(FEATURE-PLAN §7.2;舊程式寫死的清單改為設定) */
   budget: BudgetSettings;
+  esh: EshSettings;
   devSkipToken: boolean;
+}
+
+export interface EshSettings {
+  notifyMode: 'dry-run' | 'gateway';
+  schedule: boolean;
+  notifyWeekday: number;
+  notifyHour: number;
+  chemicalSyncHour: number;
+  chemicalSyncMonths: number;
+  sdsBaseUrl: string | null;
+}
+
+function intIn(name: string, raw: string | undefined, fallback: number, min: number, max: number): number {
+  if (raw === undefined || raw.trim() === '') return fallback;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < min || n > max) throw new ConfigError(`${name} 必須為 ${min}~${max} 的整數:${raw}`);
+  return n;
+}
+
+function eshSettings(env: NodeJS.ProcessEnv, gateway: GatewayEnv, bpmHost: string | null): EshSettings {
+  const mode = env.ESH_NOTIFY_MODE?.trim() || 'dry-run';
+  if (mode !== 'dry-run' && mode !== 'gateway') throw new ConfigError(`ESH_NOTIFY_MODE 必須為 dry-run 或 gateway:${mode}`);
+  if (mode === 'gateway' && (!gateway.gatewayUrl || !gateway.apiKey)) throw new ConfigError('ESH_NOTIFY_MODE=gateway 需設定 GW_BASE_URL 與 Gateway API Key');
+  const sched = env.ESH_SCHEDULE?.trim() || 'off';
+  if (sched !== 'on' && sched !== 'off') throw new ConfigError(`ESH_SCHEDULE 必須為 on 或 off:${sched}`);
+  let sdsBaseUrl: string | null = null;
+  const rawSds = env.ESH_SDS_BASE_URL?.trim() || (bpmHost ? `http://${bpmHost}/SDSFILES` : '');
+  if (rawSds) {
+    let u: URL;
+    try {
+      u = new URL(rawSds);
+    } catch {
+      throw new ConfigError(`ESH_SDS_BASE_URL 格式錯誤:${rawSds}`);
+    }
+    if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash)
+      throw new ConfigError(`ESH_SDS_BASE_URL 必須為 http(s)://主機[/路徑],不含帳密與查詢字串:${rawSds}`);
+    sdsBaseUrl = `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+  }
+  return {
+    notifyMode: mode,
+    schedule: sched === 'on',
+    notifyWeekday: intIn('ESH_NOTIFY_WEEKDAY', env.ESH_NOTIFY_WEEKDAY, 1, 0, 6),
+    notifyHour: intIn('ESH_NOTIFY_HOUR', env.ESH_NOTIFY_HOUR, 8, 0, 23),
+    chemicalSyncHour: intIn('ESH_CHEMICAL_SYNC_HOUR', env.ESH_CHEMICAL_SYNC_HOUR, 2, 0, 23),
+    chemicalSyncMonths: intIn('ESH_CHEMICAL_SYNC_MONTHS', env.ESH_CHEMICAL_SYNC_MONTHS, 13, 1, 36),
+    sdsBaseUrl,
+  };
 }
 
 export interface BudgetSettings {
@@ -236,6 +289,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
   if (devSkipToken && !['127.0.0.1', '::1', 'localhost'].includes(host))
     throw new ConfigError(`DEV_SKIP_TOKEN 開啟時只能監聽本機(HOST=127.0.0.1),目前為 ${host}`);
 
+  const bpm = bpmConfig(env, !isDev);
   return {
     gateway,
     monitor: loadMonitorEnv(gateway.gwEnv, env),
@@ -252,7 +306,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     sourceMode: mode,
     sources,
     googleMapsApiKey: secret(env, 'GOOGLE_MAPS_API_KEY', !isDev) ?? null,
-    bpm: bpmConfig(env, !isDev),
+    bpm,
     bpmCompanies: (env.BPM_COMPANIES ?? '')
       .split(',')
       .map((s) => s.trim())
@@ -260,6 +314,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     talkKeys: talkKeys(env, !isDev),
     legacyPortalUrl: legacyPortalUrl(env.LEGACY_PORTAL_URL),
     budget: budgetSettings(env),
+    esh: eshSettings(env, gateway, bpm?.sql.server ?? null),
     devSkipToken,
   };
 }

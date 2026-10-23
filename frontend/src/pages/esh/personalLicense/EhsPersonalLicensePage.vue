@@ -1,315 +1,373 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { GCard, GTable, GButton, GBadge, GInput, GSelect, GModal, GAlert } from '@/ui'
+/**
+ * 證照人員設定(old_PortalSolar EHS/EHLicense.aspx;FEATURE-PLAN §8;docs/Gherkin/esh/license.feature、notify.feature)。
+ *   - 清單:目前追蹤 / 含歷史(已刪除、離職)/ 無需追蹤(通知天數 0);狀態由後端計算(有效 / 需通知 / 已失效 / 已離職)
+ *   - 新增持證:工號需在職(後端查 LOS);下次複訓日由後端計算(取得 / 初訓 / 複訓日最晚者 + 有效期 − 1 天),畫面只顯示預覽
+ *   - 證照影本經 giga-file-service(refType portal-esh-license,refNo = 人員證照 ID),不再同名覆蓋他人檔案;舊站影本唯讀連結
+ *   - 「立即通知」(按鈕 portal.esh.notify.send):只寄本人管理的公司;平常由排程每週一寄送;通知紀錄可查每封結果
+ * 維護按鈕 portal.esh.personal.edit。
+ */
+import { computed, reactive, ref } from 'vue';
+import { can, describeError } from '@/api/gateway';
+import { fmtTime } from '@/api/format';
+import {
+  addEshHolderDoc,
+  bindFiles,
+  createEshHolder,
+  deleteEshHolder,
+  deleteEshHolderDoc,
+  deleteEshLegacyDoc,
+  eshHolders,
+  eshItems,
+  eshNotifyLogs,
+  eshNotifyRuns,
+  sendEshNotify,
+  updateEshHolder,
+  uploadFile,
+  type EshHolder,
+  type EshHolderDoc,
+  type EshHolderView,
+  type EshJobRun,
+  type EshNotifyLog,
+} from '@/api/portal';
+import {
+  accept,
+  DOC_EXTENSIONS,
+  docHref,
+  filterHolders,
+  hasExt,
+  notifySummary,
+  previewNextDate,
+  REF,
+  sendStatusText,
+  STATUS_TONE,
+  statusText,
+} from '@/composables/esh';
+import { useAsync } from '@/composables/useAsync';
+import { confirm, toast } from '@/ui/feedback';
 
-const isModalOpen = ref(false)
-const searchKeyword = ref('')
-const selectedType = ref('ALL')
-const selectedStatus = ref('ALL')
+const company = ref('');
+const view = ref<EshHolderView>('current');
+const licenseId = ref('');
+const keyword = ref('');
+const { data, loading, error, reload } = useAsync(async () => {
+  const [h, items] = await Promise.all([eshHolders({ company: company.value || undefined, view: view.value }), eshItems()]);
+  return { ...h, licenses: items.items };
+});
+const companies = computed(() => data.value?.companies ?? []);
+const companyOptions = computed(() => [{ label: '全部公司', value: '' }, ...companies.value.map((c) => ({ label: c, value: c }))]);
+const licenseOptions = computed(() => (data.value?.licenses ?? []).map((l) => ({ label: l.name, value: String(l.id) })));
+const viewOptions = [
+  { label: '目前追蹤', value: 'current' },
+  { label: '含歷史', value: 'history' },
+  { label: '無需追蹤', value: 'untracked' },
+];
+const rows = computed(() => filterHolders(data.value?.items ?? [], keyword.value, licenseId.value));
+const editable = computed(() => can('portal.esh.personal.edit'));
 
-const typeOptions = [
-  { label: '全部類別 (All Types)', value: 'ALL' },
-  { label: '職業安全類 (Occupational Safety)', value: 'SAFETY' },
-  { label: '環境保護類 (Environmental)', value: 'ENV' },
-  { label: '危險性機械設備 (Dangerous Machinery)', value: 'MACHINE' },
-  { label: '急救與消防類 (First Aid / Fire)', value: 'FIRST_AID' },
-]
+// ───── 新增 / 編輯 ─────
+const modal = ref(false);
+const editing = ref<EshHolder | null>(null);
+const form = reactive({ empNo: '', licenseId: '', company: '', trainingDate: '', gatDate: '', retrainDate: '', notifyDays: '90' });
+const saving = ref(false);
+const selectedLicense = computed(() => data.value?.licenses.find((l) => String(l.id) === form.licenseId) ?? null);
+const preview = computed(() =>
+  previewNextDate(
+    [form.trainingDate, form.gatDate, form.retrainDate],
+    selectedLicense.value?.months ?? editing.value?.months ?? null,
+    selectedLicense.value?.permanent ?? editing.value?.permanent ?? false,
+  ),
+);
+function open(h: EshHolder | null) {
+  editing.value = h;
+  Object.assign(form, {
+    empNo: h?.empNo ?? '',
+    licenseId: h ? String(h.licenseId) : '',
+    company: h?.company ?? (company.value || companies.value[0] || ''),
+    trainingDate: h?.trainingDate ?? '',
+    gatDate: h?.gatDate ?? '',
+    retrainDate: h?.retrainDate ?? '',
+    notifyDays: String(h?.notifyDays ?? 90),
+  });
+  modal.value = true;
+}
+async function save() {
+  saving.value = true;
+  try {
+    const body = {
+      company: form.company,
+      trainingDate: form.trainingDate || null,
+      gatDate: form.gatDate || null,
+      retrainDate: form.retrainDate || null,
+      notifyDays: Number(form.notifyDays),
+    };
+    const saved = editing.value
+      ? await updateEshHolder(editing.value.id, body)
+      : await createEshHolder({ ...body, empNo: form.empNo, licenseId: Number(form.licenseId) });
+    modal.value = false;
+    toast.success(`已儲存,下次複訓日 ${saved.nextTrainingDate ?? '未設定'}`);
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '儲存失敗');
+  } finally {
+    saving.value = false;
+  }
+}
+async function remove(h: EshHolder) {
+  if (!(await confirm({ title: '刪除人員證照', message: `確定刪除 ${h.empNo} ${h.name ?? ''} 的「${h.licenseName}」?`, confirmText: '刪除', tone: 'danger' })))
+    return;
+  try {
+    await deleteEshHolder(h.id);
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '刪除失敗');
+  }
+}
 
-const statusOptions = [
-  { label: '全部狀態 (All Status)', value: 'ALL' },
-  { label: '有效 (Valid)', value: 'VALID' },
-  { label: '即將到期 (Expiring)', value: 'EXPIRING' },
-  { label: '待審核 (Pending)', value: 'PENDING' },
-]
+// ───── 證照影本 ─────
+const docInput = ref<HTMLInputElement | null>(null);
+const docTarget = ref<EshHolder | null>(null);
+function pickDoc(h: EshHolder) {
+  docTarget.value = h;
+  docInput.value?.click();
+}
+async function onDoc(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const f = input.files?.[0];
+  input.value = '';
+  const h = docTarget.value;
+  if (!f || !h) return;
+  if (!hasExt(f.name, DOC_EXTENSIONS)) return toast.error(`證照影本只接受 ${DOC_EXTENSIONS.join(' / ')}`);
+  try {
+    const fileId = await uploadFile(REF.license, f);
+    await addEshHolderDoc(h.id, { fileId, fileName: f.name });
+    await bindFiles(REF.license, String(h.id), [fileId]);
+    toast.success('影本已上傳');
+    await reload();
+  } catch (err) {
+    toast.fromError(err, '影本上傳失敗');
+  }
+}
+async function removeDoc(h: EshHolder, d: EshHolderDoc) {
+  if (!(await confirm({ title: '刪除證照影本', message: `確定刪除「${d.fileName}」?`, confirmText: '刪除', tone: 'danger' }))) return;
+  try {
+    if (d.kind === 'file') await deleteEshHolderDoc(h.id, d.id);
+    else await deleteEshLegacyDoc(h.id, d.fileName);
+    await reload();
+  } catch (e) {
+    toast.fromError(e, '刪除影本失敗');
+  }
+}
 
-const columns = [
-  { key: 'empNo', label: '工號/姓名' },
-  { key: 'dept', label: '部門' },
-  { key: 'category', label: '證照類別' },
-  { key: 'licenseName', label: '證照名稱' },
-  { key: 'certNo', label: '證書字號' },
-  { key: 'issueDate', label: '發證日期' },
-  { key: 'expireDate', label: '有效期限' },
-  { key: 'reTrainDate', label: '下次複訓日' },
-  { key: 'status', label: '狀態' },
-  { key: 'action', label: '操作' },
-]
-
-const personalLicenses = ref([
-  {
-    id: 'PL-001',
-    empNo: 'T10892',
-    name: '陳大華',
-    dept: '廠務設施組',
-    category: '危險性機械設備',
-    licenseName: '第一種壓力容器操作人員',
-    certNo: '北檢壓證字第 108-9821 號',
-    issueDate: '2022-04-10',
-    expireDate: '2025-04-09',
-    reTrainDate: '2025-03-01',
-    status: 'EXPIRING',
-    hasAttachment: true,
-  },
-  {
-    id: 'PL-002',
-    empNo: 'T11456',
-    name: '林志豪',
-    dept: '環境安全組',
-    category: '職業安全類',
-    licenseName: '乙級職業安全衛生管理員',
-    certNo: '勞安證字第 110-33201 號',
-    issueDate: '2021-08-15',
-    expireDate: '2027-08-14',
-    reTrainDate: '2025-07-20',
-    status: 'VALID',
-    hasAttachment: true,
-  },
-  {
-    id: 'PL-003',
-    empNo: 'T12089',
-    name: '張佳玲',
-    dept: '晶片製造組',
-    category: '職業安全類',
-    licenseName: '特定化學物質作業主管',
-    certNo: '中檢特化字第 112-5510 號',
-    issueDate: '2023-01-20',
-    expireDate: '2026-01-19',
-    reTrainDate: '2025-11-15',
-    status: 'VALID',
-    hasAttachment: true,
-  },
-  {
-    id: 'PL-004',
-    empNo: 'T13220',
-    name: '黃智翔',
-    dept: '化學供應組',
-    category: '環境保護類',
-    licenseName: '空氣污染防制專責人員(乙級)',
-    certNo: '環署訓空字第 111-0988 號',
-    issueDate: '2022-11-05',
-    expireDate: '2027-11-04',
-    reTrainDate: '2026-10-10',
-    status: 'VALID',
-    hasAttachment: true,
-  },
-  {
-    id: 'PL-005',
-    empNo: 'T14512',
-    name: '王小芬',
-    dept: '晶片製造組',
-    category: '急救與消防類',
-    licenseName: '基本救命術 (BLS / CPR+AED)',
-    certNo: '紅十字急救第 113-7741 號',
-    issueDate: '2024-03-12',
-    expireDate: '2026-03-11',
-    reTrainDate: '2026-02-15',
-    status: 'VALID',
-    hasAttachment: true,
-  },
-  {
-    id: 'PL-006',
-    empNo: 'T15099',
-    name: '郭俊宏',
-    dept: '廠務設施組',
-    category: '危險性機械設備',
-    licenseName: '固定式起重機操作人員(吊掛作業)',
-    certNo: '北檢起證字第 113-1102 號',
-    issueDate: '2024-09-01',
-    expireDate: '2027-08-31',
-    reTrainDate: '2026-08-01',
-    status: 'PENDING',
-    hasAttachment: true,
-  },
-])
-
-// 登記 Form
-const newCert = ref({
-  empNo: '',
-  name: '',
-  dept: '',
-  licenseName: '',
-  category: 'SAFETY',
-  certNo: '',
-  issueDate: '',
-  expireDate: '',
-  issuer: '',
-})
+// ───── 複訓通知 ─────
+const sending = ref(false);
+async function notify() {
+  if (
+    !(await confirm({
+      title: '立即通知',
+      message: '依規則寄送複訓通知給本人、主管與管理員彙整(只含您管理的公司)。平常每週一由排程自動寄送,確定現在寄送?',
+      confirmText: '寄送',
+    }))
+  )
+    return;
+  sending.value = true;
+  try {
+    toast.success(notifySummary(await sendEshNotify()));
+  } catch (e) {
+    toast.fromError(e, '通知失敗');
+  } finally {
+    sending.value = false;
+  }
+}
+const runsOpen = ref(false);
+const runs = ref<{ mode: string; items: EshJobRun[] } | null>(null);
+const logs = ref<EshNotifyLog[] | null>(null);
+async function openRuns() {
+  runsOpen.value = true;
+  logs.value = null;
+  try {
+    runs.value = await eshNotifyRuns();
+  } catch (e) {
+    toast.fromError(e, '無法取得通知紀錄');
+  }
+}
+async function openLogs(r: EshJobRun) {
+  try {
+    logs.value = (await eshNotifyLogs(r.id)).items;
+  } catch (e) {
+    toast.fromError(e, '無法取得寄送明細');
+  }
+}
+const KIND: Record<string, string> = { holder: '本人', boss: '主管', admin: '管理員彙整' };
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          <span>📜</span>
-          <span>人員證照管理與登記 (Personnel License Registration)</span>
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">
-          同仁取得之法定勞安、環保、危險性機械及急救證照清冊登錄、審核與電子證書附件歸檔。
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <GButton variant="secondary" icon="download">匯出個人證照清冊</GButton>
-        <GButton variant="primary" icon="plus" @click="isModalOpen = true">登記新取得證照</GButton>
-      </div>
-    </div>
-
-    <!-- 統計概況 -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <GCard>
-        <div class="text-sm text-gray-500">已登記總證照數</div>
-        <div class="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-1">318 <span class="text-sm font-normal text-gray-400">張</span></div>
-        <div class="text-xs text-blue-600 mt-1">涵蓋 215 位專業同仁</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">有效合格證照</div>
-        <div class="text-2xl font-bold text-emerald-600 mt-1">295 <span class="text-sm font-normal text-gray-400">張</span></div>
-        <div class="text-xs text-emerald-600 mt-1">在效期內比例 92.8%</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">90天內即將到期</div>
-        <div class="text-2xl font-bold text-amber-600 mt-1">17 <span class="text-sm font-normal text-gray-400">張</span></div>
-        <div class="text-xs text-amber-500 mt-1">已發出複訓提醒信件</div>
-      </GCard>
-      <GCard>
-        <div class="text-sm text-gray-500">待環安審核登記</div>
-        <div class="text-2xl font-bold text-purple-600 mt-1">6 <span class="text-sm font-normal text-gray-400">筆</span></div>
-        <div class="text-xs text-gray-400 mt-1">同仁上傳待查驗正本</div>
-      </GCard>
-    </div>
-
-    <!-- 篩選器 -->
+  <div class="stack">
     <GCard>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">關鍵字查詢 (工號/姓名/字號)</label>
-          <GInput v-model="searchKeyword" placeholder="請輸入工號或姓名..." />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證照分類</label>
-          <GSelect v-model="selectedType" :options="typeOptions" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證書狀態</label>
-          <GSelect v-model="selectedStatus" :options="statusOptions" />
-        </div>
-        <div class="flex gap-2">
-          <GButton variant="primary" class="w-full" icon="search">搜尋證照</GButton>
-          <GButton variant="secondary" icon="refresh-cw">清除</GButton>
-        </div>
+      <div class="row filters">
+        <GSelect v-model="company" :options="companyOptions" class="sel" @update:model-value="reload" />
+        <GSegmented v-model="view" :options="viewOptions" size="sm" @update:model-value="reload" />
+        <GSelect v-model="licenseId" :options="[{ label: '全部證照', value: '' }, ...licenseOptions]" class="sel" />
+        <GInput v-model="keyword" icon="search" placeholder="工號 / 姓名 / 部門 / 證照" clearable class="kw" />
+      </div>
+      <div class="row filters tools">
+        <GButton v-can="'portal.esh.personal.edit'" variant="primary" icon="plus" :disabled="!companies.length" @click="open(null)">新增人員證照</GButton>
+        <GButton v-can="'portal.esh.notify.send'" icon="send" :loading="sending" :disabled="!companies.length" @click="notify">立即通知</GButton>
+        <GButton variant="ghost" icon="history" @click="openRuns">通知紀錄</GButton>
+      </div>
+    </GCard>
+    <input ref="docInput" type="file" hidden :accept="accept(DOC_EXTENSIONS)" @change="onDoc" />
+
+    <GCard v-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得人員證照" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <GCard v-else-if="loading && !data"><GSkeleton :lines="6" /></GCard>
+    <GCard v-else-if="data" :title="`人員證照(${rows.length})`" icon="id-card">
+      <GEmpty v-if="!companies.length" icon="lock" title="您不是任何公司的證照管理員" />
+      <GEmpty v-else-if="!rows.length" icon="id-card" title="沒有符合條件的人員證照" />
+      <div v-else class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>公司</th>
+              <th>部門</th>
+              <th>工號 / 姓名</th>
+              <th>證照</th>
+              <th>初訓</th>
+              <th>取得</th>
+              <th>複訓</th>
+              <th>下次複訓</th>
+              <th>通知天數</th>
+              <th>狀態</th>
+              <th>證照影本</th>
+              <th v-if="editable"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="h in rows" :key="h.id" :class="{ off: !h.active }">
+              <td class="nowrap">{{ h.company }}</td>
+              <td class="nowrap">{{ h.dept ?? '—' }}</td>
+              <td class="nowrap">
+                <span class="mono">{{ h.empNo }}</span> {{ h.name ?? '' }}
+              </td>
+              <td class="wrap">{{ h.licenseName }}</td>
+              <td class="nowrap">{{ h.trainingDate ?? '—' }}</td>
+              <td class="nowrap">{{ h.gatDate ?? '—' }}</td>
+              <td class="nowrap">{{ h.retrainDate ?? '—' }}</td>
+              <td class="nowrap">{{ h.nextTrainingDate ?? '—' }}</td>
+              <td>{{ h.notifyDays ?? '—' }}</td>
+              <td class="nowrap">
+                <GBadge :tone="STATUS_TONE[h.status]">{{ statusText(h) }}</GBadge>
+              </td>
+              <td>
+                <div class="docs">
+                  <span v-for="d in h.docs" :key="d.kind === 'file' ? `f${d.id}` : `l${d.fileName}`" class="doc">
+                    <a v-if="docHref(d)" :href="docHref(d)!" target="_blank" rel="noopener noreferrer">{{ d.fileName }}</a>
+                    <span v-else class="faint">{{ d.fileName }}</span>
+                    <GBadge v-if="d.kind === 'legacy'" tone="neutral">舊站</GBadge>
+                    <GButton v-if="editable && h.active" size="sm" variant="ghost" square icon="x" aria-label="刪除影本" @click="removeDoc(h, d)" />
+                  </span>
+                  <span v-if="!h.docs.length" class="faint">—</span>
+                </div>
+              </td>
+              <td v-if="editable">
+                <span v-if="h.active" class="acts">
+                  <GButton size="sm" variant="ghost" square icon="upload" aria-label="上傳影本" @click="pickDoc(h)" />
+                  <GButton size="sm" variant="ghost" square icon="edit" aria-label="編輯" @click="open(h)" />
+                  <GButton size="sm" variant="ghost" square icon="trash" aria-label="刪除" @click="remove(h)" />
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </GCard>
 
-    <!-- 證照清單 -->
-    <GCard>
-      <GTable :columns="columns" :rows="personalLicenses" row-key="id">
-        <template #cell-empNo="{ row }">
-          <div class="font-bold text-gray-900 dark:text-gray-100">{{ row.name }}</div>
-          <div class="text-xs text-gray-400 font-mono">{{ row.empNo }}</div>
-        </template>
-        <template #cell-dept="{ row }">
-          <span class="text-gray-700 dark:text-gray-300">{{ row.dept }}</span>
-        </template>
-        <template #cell-category="{ row }">
-          <span class="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-            {{ row.category }}
-          </span>
-        </template>
-        <template #cell-licenseName="{ row }">
-          <div class="font-semibold text-blue-600 dark:text-blue-400">{{ row.licenseName }}</div>
-        </template>
-        <template #cell-certNo="{ row }">
-          <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ row.certNo }}</span>
-        </template>
-        <template #cell-issueDate="{ row }">
-          <span class="text-xs text-gray-600 dark:text-gray-400">{{ row.issueDate }}</span>
-        </template>
-        <template #cell-expireDate="{ row }">
-          <span class="text-xs font-medium" :class="row.status === 'EXPIRING' ? 'text-amber-600 font-bold' : 'text-gray-600 dark:text-gray-400'">
-            {{ row.expireDate }}
-          </span>
-        </template>
-        <template #cell-reTrainDate="{ row }">
-          <span class="text-xs text-gray-500">{{ row.reTrainDate }}</span>
-        </template>
-        <template #cell-status="{ row }">
-          <GBadge v-if="row.status === 'VALID'" tone="success">有效持有</GBadge>
-          <GBadge v-else-if="row.status === 'EXPIRING'" tone="warning">即將屆期</GBadge>
-          <GBadge v-else tone="info">待環安審核</GBadge>
-        </template>
-        <template #cell-action="{ row }">
-          <div class="flex gap-2">
-            <GButton size="sm" variant="ghost">查閱證書</GButton>
-            <GButton size="sm" variant="ghost" class="text-blue-600">複訓報名</GButton>
-          </div>
-        </template>
-      </GTable>
-    </GCard>
-
-    <!-- 登記新證照 Modal -->
-    <GModal v-model="isModalOpen" title="登記新取得專業證照" size="lg">
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">同仁工號</label>
-            <GInput v-model="newCert.empNo" placeholder="例: T10892" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">同仁姓名</label>
-            <GInput v-model="newCert.name" placeholder="例: 陳大華" />
-          </div>
+    <GModal v-model:open="modal" :title="editing ? '編輯人員證照' : '新增人員證照'" icon="id-card" width="640px">
+      <form class="stack" @submit.prevent="save">
+        <div class="grid2">
+          <GInput v-model="form.empNo" label="工號(需在職)" :disabled="!!editing" required />
+          <GSelect v-model="form.licenseId" label="證照" :options="licenseOptions" placeholder="選擇證照" :disabled="!!editing" required />
+          <GSelect v-model="form.company" label="公司" :options="companies.map((c) => ({ label: c, value: c }))" required />
+          <GInput v-model="form.notifyDays" type="number" label="通知天數(0 = 不追蹤)" required />
+          <GInput v-model="form.trainingDate" type="date" label="初訓日" />
+          <GInput v-model="form.gatDate" type="date" label="取得日" />
+          <GInput v-model="form.retrainDate" type="date" label="複訓日" />
         </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證照類別</label>
-            <GSelect v-model="newCert.category" :options="typeOptions" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證照名稱</label>
-            <GInput v-model="newCert.licenseName" placeholder="例: 有機溶劑作業主管" />
-          </div>
+        <GAlert tone="info" icon="info">下次複訓日由系統計算(三個日期中最晚者 + 有效期 − 1 天):預覽 {{ preview ?? '未設定' }}</GAlert>
+        <div class="row end">
+          <GButton @click="modal = false">取消</GButton>
+          <GButton v-can="'portal.esh.personal.edit'" type="submit" variant="primary" icon="check" :loading="saving">儲存</GButton>
         </div>
+      </form>
+    </GModal>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證書字號</label>
-            <GInput v-model="newCert.certNo" placeholder="例: 勞安證字第 113-XXXX 號" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">發證/檢定機關</label>
-            <GInput v-model="newCert.issuer" placeholder="例: 勞動部勞動力發展署" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">發證日期</label>
-            <GInput v-model="newCert.issueDate" type="date" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">有效截止日期</label>
-            <GInput v-model="newCert.expireDate" type="date" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">證書掃描檔/照片 (PDF 或 JPG)</label>
-          <div class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-blue-500 cursor-pointer">
-            <div class="text-3xl text-gray-400 mb-1">📤</div>
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">點擊上傳或將證件檔案拖曳至此處</div>
-            <div class="text-xs text-gray-400 mt-1">支援 PDF, JPG, PNG 格式，檔案大小不超過 10MB</div>
-          </div>
-        </div>
+    <GModal v-model:open="runsOpen" title="複訓通知紀錄" icon="history" width="760px">
+      <GAlert v-if="runs?.mode === 'dry-run'" tone="warning" icon="alert">目前為模擬寄送(dry-run):只寫寄送紀錄,不會寄出 Email。</GAlert>
+      <GEmpty v-if="runs && !runs.items.length" icon="history" title="尚無通知紀錄" />
+      <div v-else-if="runs" class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>時間</th>
+              <th>方式</th>
+              <th>執行者</th>
+              <th>結果</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in runs.items" :key="r.id">
+              <td class="nowrap">{{ fmtTime(r.startedAt) }}</td>
+              <td>{{ r.trigger === 'schedule' ? '排程' : '手動' }}</td>
+              <td class="mono">{{ r.requestedBy ?? '—' }}</td>
+              <td class="wrap">
+                <GBadge :tone="r.status === 'ok' ? 'success' : r.status === 'failed' ? 'danger' : 'neutral'">{{ r.status }}</GBadge> {{ r.summary ?? '' }}
+              </td>
+              <td><GButton size="sm" variant="ghost" @click="openLogs(r)">明細</GButton></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <GButton variant="secondary" @click="isModalOpen = false">取消</GButton>
-          <GButton variant="primary" @click="isModalOpen = false">送出審核</GButton>
-        </div>
-      </template>
+      <div v-if="logs" class="table-wrap">
+        <h4>寄送明細</h4>
+        <GEmpty v-if="!logs.length" icon="mail" title="這次沒有需要通知的對象" />
+        <table v-else class="data-table">
+          <thead>
+            <tr>
+              <th>收件人</th>
+              <th>類型</th>
+              <th>公司</th>
+              <th>筆數</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(l, idx) in logs" :key="idx">
+              <td class="mono">{{ l.empNo }}</td>
+              <td>{{ KIND[l.kind] ?? l.kind }}</td>
+              <td>{{ l.company ?? '—' }}</td>
+              <td>{{ l.itemCount }}</td>
+              <td class="wrap">{{ sendStatusText(l.status) }}{{ l.message ? `:${l.message}` : '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </GModal>
   </div>
 </template>
+
+<style scoped src="../esh.css"></style>
+<style scoped>
+.tools {
+  margin-top: 10px;
+}
+.doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+</style>

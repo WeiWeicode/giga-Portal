@@ -110,6 +110,20 @@
 | GET | `/api/portal/manager/budget-apply/options`、`/budget-apply?flag=&dept=` | `portal.api.mgr.budget-apply.read` | 未結案版本;編列資料(科目 `editable`、每月 `{ amount, mark }`、部門備註、`status`、`locked`) |
 | PUT | `/api/portal/manager/budget-apply` | `portal.api.mgr.budget-apply.write` | `{ flag, dept, remark?, cells[{ code, month, amount, mark? }](≤1200) }` 一個交易更新(按鈕 `portal.mgr.budget-apply.edit`);已送出 / 結案 409 `PORTAL_MGR_BUDGET_LOCKED`;資料列已不存在 409 `PORTAL_MGR_BUDGET_CHANGED` |
 | POST | `/api/portal/manager/budget-apply/submit` | `portal.api.mgr.budget-apply.write` | `{ flag, dept }` 送出(部門狀態 1) |
+| GET | `/api/portal/esh/dashboard?company=` | `portal.api.esh.license.read` | P6 證照儀表板 `{ companies, company, items[{ licenseId, name, months, permanent, description(清洗後 HTML), logo, legacyLogoUrl, required, valid, ratio, ok, notes }] }`;**所有 `/esh/*` 證照 API 須具 `portal-esh-admin`,公司限本人在 LicenseManagerInfo 的公司**,否則 403 |
+| GET | `/api/portal/esh/dashboard/holders?company=&licenseId=` | `portal.api.esh.license.read` | 有效持證人(在職、未刪除、下次複訓日 ≥ 今天)與證照影本 |
+| GET / POST / PUT / DELETE | `/api/portal/esh/items`、`/items/:id` | `.item.read` / `portal.api.esh.item.edit` | 證照項目(各公司共用;須至少管理一間公司);`{ name ≤50, months 1~600 \| permanent, description }`;重名 409 `PORTAL_ESH_ITEM_DUPLICATE`;描述清洗後含單引號 / `&lt;` 等實體 400;仍有需求或持證人時刪除 409 `PORTAL_ESH_ITEM_IN_USE`;刪除為軟刪 |
+| PUT / DELETE | `/api/portal/esh/items/:id/logo` | `portal.api.esh.item.edit` | `{ fileId, fileName }` 登記 file-service Logo(refType `portal-esh-logo`,只收圖片) |
+| GET / POST / PUT / DELETE | `/api/portal/esh/needs`、`/needs/:licenseId?company=` | `.need.read` / `portal.api.esh.need.edit` | 證照需求 `{ company, licenseId, required ≥0, notes ≤350 }`;重複 409 `PORTAL_ESH_NEED_DUPLICATE`;刪除為硬刪(同舊版) |
+| GET | `/api/portal/esh/holders?company=&licenseId=&view=current\|history\|untracked` | `portal.api.esh.holder.read` | 人員證照(狀態 `left / unset / expired / notify / ok`、`daysLeft`、`docs`) |
+| POST / PUT / DELETE | `/api/portal/esh/holders`、`/holders/:id` | `portal.api.esh.holder.edit` | 新增 `{ empNo, licenseId, company, trainingDate?, gatDate?, retrainDate?, notifyDays }`(在職檢查 400 `PORTAL_ESH_EMP_NOT_ACTIVE`、重複 409 `PORTAL_ESH_HOLDER_DUPLICATE`);**下次複訓日由後端計算**;刪除為軟刪 |
+| POST / DELETE | `/api/portal/esh/holders/:id/docs`、`/docs/:docId`、`/legacy-docs?fileName=` | `portal.api.esh.holder.edit` | 證照影本(file-service refType `portal-esh-license`,pdf / jpg / png);舊站 LicenseFileC 刪除需同工號 |
+| POST | `/api/portal/esh/notify` | `portal.api.esh.notify.send` | 立即通知(本人管理的公司);`{ runId, mode, total, counts }`;同公司 10 分鐘內 409 `PORTAL_ESH_NOTIFY_TOO_SOON` |
+| GET | `/api/portal/esh/notify/runs`、`/runs/:id` | `portal.api.esh.notify.read` | 通知紀錄(排程 + 手動)與寄送明細(只列範圍內公司);`mode` = `dry-run` / `gateway` |
+| GET / POST / PUT / DELETE | `/api/portal/esh/managers` | `.manager.read` / `portal.api.esh.manager.edit` | 證照管理員 `{ company, empNo, sendMail }`;重複 409 `PORTAL_ESH_MANAGER_DUPLICATE`;最後一位 409 `PORTAL_ESH_MANAGER_LAST` |
+| GET | `/api/portal/esh/chemicals?restrict=列管\|不列管&from=&to=&keyword=&page=&pageSize=`、`/chemicals/:efId` | `portal.api.esh.chemical.read` | 危害性化學品(所有員工;分頁;成份以 EF_ID 對應;SDS `file / url / legacy`) |
+| POST | `/api/portal/esh/chemicals/sync` | `portal.api.esh.chemical.edit` | `{ from?, to? }`(≤36 個月)由 BPM 唯讀同步,整批一個交易;另須 `portal-esh-admin`;執行中 409 `PORTAL_ESH_SYNC_RUNNING`;BPM 未設定 503 |
+| GET / PUT / DELETE | `/api/portal/esh/chemicals/sync/runs`、`/chemicals/:efId/sds` | `portal.api.esh.chemical.edit` | 同步紀錄;上傳 SDS(file-service refType `portal-esh-sds`,同步不覆寫) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案
@@ -186,5 +200,21 @@
 | `PORTAL_MGR_BUDGET_VERSION_NOT_FOUND` | 404 | 預算版本不存在、不屬於本人公司或已結案(編列) |
 | `PORTAL_MGR_BUDGET_LOCKED` | 409 | 部門預算已送出或版本已結案 |
 | `PORTAL_MGR_BUDGET_CHANGED` | 409 | 預算資料列已不存在(需重新整理) |
+| `PORTAL_ESH_ITEM_NOT_FOUND` | 404 | 證照項目不存在或已刪除 |
+| `PORTAL_ESH_ITEM_DUPLICATE` | 409 | 啟用中已有同名證照項目 |
+| `PORTAL_ESH_ITEM_IN_USE` | 409 | 證照項目仍有公司需求或啟用中的持證人 |
+| `PORTAL_ESH_NEED_NOT_FOUND` | 404 | 證照需求不存在 |
+| `PORTAL_ESH_NEED_DUPLICATE` | 409 | 同公司同證照已有需求 |
+| `PORTAL_ESH_HOLDER_NOT_FOUND` | 404 | 人員證照不存在或已刪除 |
+| `PORTAL_ESH_HOLDER_DUPLICATE` | 409 | 同人同證照同公司已有啟用中紀錄 |
+| `PORTAL_ESH_EMP_NOT_ACTIVE` | 400 | 工號查無在職的 LOS 人事資料 |
+| `PORTAL_ESH_DOC_NOT_FOUND` | 404 | 證照影本不存在 |
+| `PORTAL_ESH_MANAGER_NOT_FOUND` | 404 | 證照管理員不存在 |
+| `PORTAL_ESH_MANAGER_DUPLICATE` | 409 | 已是該公司的證照管理員 |
+| `PORTAL_ESH_MANAGER_LAST` | 409 | 不可刪除公司最後一位證照管理員 |
+| `PORTAL_ESH_NOTIFY_TOO_SOON` | 409 | 10 分鐘內已手動通知過 |
+| `PORTAL_ESH_RUN_NOT_FOUND` | 404 | 通知紀錄不存在或不在範圍內 |
+| `PORTAL_ESH_CHEMICAL_NOT_FOUND` | 404 | 化學品申報不存在(或沒有新站上傳的 SDS) |
+| `PORTAL_ESH_SYNC_RUNNING` | 409 | 化學品同步執行中 |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

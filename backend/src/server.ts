@@ -36,6 +36,13 @@ import { MssqlDeptSource, ScopeService } from './modules/manager/scope.js';
 import { ManagerStaffService, MssqlStaffRepo } from './modules/manager/staff.js';
 import { MssqlTrainingRepo } from './modules/manager/training-repo.js';
 import { TrainingService } from './modules/manager/training.js';
+import { EshChemicalService } from './modules/esh/chemical.js';
+import { MssqlChemicalRepo, NanaChemicalSource } from './modules/esh/chemical-repo.js';
+import { DrizzleEshRepo } from './modules/esh/drizzle-repo.js';
+import { EshLicenseService } from './modules/esh/license.js';
+import { DryRunMailer, EshNotifyService, GatewayNotifyMailer } from './modules/esh/notify.js';
+import { MssqlEshRepo } from './modules/esh/repo.js';
+import { dailyAt, EshScheduler, weeklyAt } from './modules/esh/scheduler.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -82,6 +89,18 @@ const homeLegacy = new MssqlHomeLegacyRepo(pool, config.sources, config.legacyPo
 const talkCipher = config.talkKeys ? new AuthorCipher(config.talkKeys.current, config.talkKeys.old) : null;
 // P5 主管專區:部門範圍(Token 部門含下層,LOS 部門樹快取)
 const scopes = new ScopeService(new MssqlDeptSource(pool, config.sources));
+// P6 ESH:寄送預設 dry-run(只寫紀錄);gateway 模式才呼叫 Gateway 通知中心(10/26 前不寄信)
+const eshRepo = new MssqlEshRepo(pool, config.sources);
+const eshFiles = new DrizzleEshRepo(db);
+const eshLicense = new EshLicenseService(eshRepo, eshFiles, config.legacyPortalUrl);
+const eshMailer = config.esh.notifyMode === 'gateway' ? new GatewayNotifyMailer(config.gateway.gatewayUrl!, config.gateway.apiKey!) : new DryRunMailer();
+const eshNotify = new EshNotifyService(eshRepo, eshFiles, eshMailer, eshLicense);
+const chemicalSource = config.bpm ? new NanaChemicalSource(config.bpm.sql) : null;
+const eshChemical = new EshChemicalService(new MssqlChemicalRepo(pool, config.sources), eshFiles, chemicalSource, eshFiles, {
+  sdsBaseUrl: config.esh.sdsBaseUrl,
+  legacyPortalUrl: config.legacyPortalUrl,
+  syncMonths: config.esh.chemicalSyncMonths,
+});
 const app = await buildApp({
   config,
   courses: new MssqlCourseRepo(pool, config.sources),
@@ -106,6 +125,7 @@ const app = await buildApp({
     training: new TrainingService(new MssqlTrainingRepo(pool, config.sources), scopes),
     budget: new BudgetService(new MssqlBudgetRepo(pool, config.sources), config.budget),
   },
+  esh: { license: eshLicense, notify: eshNotify, chemical: eshChemical },
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
@@ -117,6 +137,17 @@ const app = await buildApp({
   },
 });
 await app.listen({ host: config.host, port: config.port });
+// ESH 排程(程序內;run_key 唯一保證同一期只執行一次)
+const eshScheduler = config.esh.schedule
+  ? new EshScheduler(
+      [
+        { name: 'esh-notify', due: weeklyAt(config.esh.notifyWeekday, config.esh.notifyHour), run: () => eshNotify.runScheduled() },
+        ...(chemicalSource ? [{ name: 'esh-chemical-sync', due: dailyAt(config.esh.chemicalSyncHour), run: () => eshChemical.syncScheduled() }] : []),
+      ],
+      app.log,
+    )
+  : null;
+eshScheduler?.start();
 app.log.info(
   {
     gwEnv: config.gateway.gwEnv,
@@ -128,6 +159,7 @@ app.log.info(
     bpmCompanies: config.bpmCompanies,
     talkKey: config.talkKeys?.current.id ?? null,
     legacyPortalUrl: config.legacyPortalUrl,
+    esh: { notifyMode: config.esh.notifyMode, schedule: config.esh.schedule },
   },
   '服務已啟動',
 );
@@ -135,8 +167,9 @@ app.log.info(
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.once(signal, () => {
     // close 會一併送出監控緩衝(最多等 3 秒)
+    eshScheduler?.stop();
     void app
       .close()
-      .then(() => Promise.all([pool.close(), bpmRepo?.close()]))
+      .then(() => Promise.all([pool.close(), bpmRepo?.close(), chemicalSource?.close()]))
       .then(() => process.exit(0));
   });

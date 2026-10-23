@@ -64,6 +64,19 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.mgr.budget.read', name: '入口網 API:部門預算執行查詢' },
   { code: 'portal.api.mgr.budget-apply.read', name: '入口網 API:部門預算編列查詢' },
   { code: 'portal.api.mgr.budget-apply.write', name: '入口網 API:部門預算編列更新與送出' },
+  { code: 'portal.api.esh.license.read', name: '入口網 API:ESH 證照儀表板與有效持證人' },
+  { code: 'portal.api.esh.item.read', name: '入口網 API:ESH 證照項目查詢' },
+  { code: 'portal.api.esh.item.edit', name: '入口網 API:ESH 證照項目維護(含 Logo)' },
+  { code: 'portal.api.esh.need.read', name: '入口網 API:ESH 證照需求查詢' },
+  { code: 'portal.api.esh.need.edit', name: '入口網 API:ESH 證照需求維護' },
+  { code: 'portal.api.esh.holder.read', name: '入口網 API:ESH 人員證照查詢' },
+  { code: 'portal.api.esh.holder.edit', name: '入口網 API:ESH 人員證照維護(含證照影本)' },
+  { code: 'portal.api.esh.manager.read', name: '入口網 API:ESH 證照管理員查詢' },
+  { code: 'portal.api.esh.manager.edit', name: '入口網 API:ESH 證照管理員維護' },
+  { code: 'portal.api.esh.notify.read', name: '入口網 API:ESH 複訓通知紀錄' },
+  { code: 'portal.api.esh.notify.send', name: '入口網 API:ESH 立即發送複訓通知' },
+  { code: 'portal.api.esh.chemical.read', name: '入口網 API:危害性化學品清單' },
+  { code: 'portal.api.esh.chemical.edit', name: '入口網 API:危害性化學品由 BPM 同步與 SDS 上傳' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

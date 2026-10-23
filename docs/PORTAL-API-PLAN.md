@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.11(2026-10-23,**P5 主管專區實作完成待驗收**(範圍 Token 部門含下層、portal-manager-all、D-26 預算);**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.12(2026-10-23,**P6 ESH 證照管理實作完成待驗收**(公司範圍 LicenseManagerInfo、下次複訓日後端計算、複訓通知排程 + dry-run / Gateway 寄送、化學品 BPM 唯讀檢視同步);**P5 主管專區實作完成待驗收**(範圍 Token 部門含下層、portal-manager-all、D-26 預算);**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -211,6 +211,20 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 ### P6 ESH 證照管理
 
 `EHS/*`:`License*`、`ESHChemicalData*`(寫入);`portal-esh-admin` 成員來源 = `LicenseManagerInfo`。
+
+**P6 已實作(2026-10-23,工作分支 `feature/portal-p6-esh`,由 P5 切出;未合併、未上測試區;待確認見 `CONFIRM-NEEDED.md` P6)**:
+
+| 項目 | 資料 | 做法 |
+| --- | --- | --- |
+| 共通範圍 | PortalSolar LicenseManagerInfo / LicenseCompanyInfo | `modules/esh/license.ts`:須具 `portal-esh-admin`,公司 = 本人在 LicenseManagerInfo 的公司;每支 API 檢查(含以 ID 操作的持證、影本);違反 403 |
+| 儀表板 | LicenseBInfo、LicenseInfo、LicenseFileA、LOS RankInfo(在職) | `GET /esh/dashboard`、`/dashboard/holders`:應有 / 有效 / 符合度(同舊 EHManagement) |
+| 證照項目 | LicenseInfo + `portal.esh_license_logo` | `/esh/items*`:啟用中不重名(含編輯)、有效期 1~600 月或永久(9999999)、描述白名單清洗且拒收舊站會還原的實體 / 單引號、軟刪(使用中 409)、Logo 經 file-service |
+| 證照需求 | LicenseBInfo | `/esh/needs*`:整數 ≥ 0、重複 409、硬刪(舊表無 IsActive) |
+| 人員證照 | LicenseFileA、LicenseFileC(舊影本)、`portal.esh_license_doc` | `/esh/holders*`:在職檢查、下次複訓日 `rules.ts nextTrainingDate` 後端計算、軟刪、已刪除同筆復原、影本經 file-service |
+| 證照管理員 | LicenseManagerInfo | `/esh/managers`:在職、不重複、不可刪最後一位(交易內檢查) |
+| 複訓通知 | 同上 + `portal.esh_job_run` / `esh_notify_log` | `modules/esh/notify.ts`:每週一排程(`scheduler.ts`,run_key 唯一)+ `POST /esh/notify`;寄送介面 `EshMailer`(`dry-run` 預設 / `GatewayNotifyMailer` 呼叫 `/api/notify/send`) |
+| 危害性化學品 | ESHChemicalDataA / B / C、`portal.esh_chemical_sds`;NaNa 檢視 `dbo.portal_esh_chemical_forms`(05 檔) | `/esh/chemicals*`:所有員工查詢(分頁、成份以 EF_ID 對應);同步 `POST /esh/chemicals/sync` + 每日排程,解析 XML、整批一個交易;SDS 經 file-service |
+| 新表 | — | migration `20261023034541_p6_esh`(5 表) |
 
 ## 5. 待決事項
 
