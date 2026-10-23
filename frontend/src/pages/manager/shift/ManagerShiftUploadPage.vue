@@ -66,9 +66,7 @@ function handleUpload() {
       </div>
 
       <div v-if="uploadSuccess" class="success-alert">
-        <GAlert tone="success" icon="check">
-          檔案「2026年11月製造一課排班表.xlsx」解析驗證成功！共 45 名同仁排班資料無誤，可確認匯入。
-        </GAlert>
+        <GAlert tone="success" icon="check"> 檔案「2026年11月製造一課排班表.xlsx」解析驗證成功！共 45 名同仁排班資料無誤，可確認匯入。 </GAlert>
       </div>
     </GCard>
 
@@ -211,21 +209,29 @@ function handleUpload() {
   justify-content: space-between;
   align-items: center;
 }
-.shift-table, .preview-table {
+.shift-table,
+.preview-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13.5px;
 }
-.shift-table th, .shift-table td,
-.preview-table th, .preview-table td {
+.shift-table th,
+.shift-table td,
+.preview-table th,
+.preview-table td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
 }
-.shift-table th, .preview-table th {
+.shift-table th,
+.preview-table th {
   background: var(--color-surface-hover);
   text-align: left;
   font-weight: 600;
 }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 600;
+}
 </style>

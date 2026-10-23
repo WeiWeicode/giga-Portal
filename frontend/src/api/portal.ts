@@ -553,3 +553,176 @@ export const deleteForm = (id: number) => http.delete<void>(`/api/portal/forms/$
 export const createFormCategory = (body: { name: string; sort: number }) => http.post<FormCategory>('/api/portal/forms/categories', body);
 export const updateFormCategory = (id: number, body: { name: string; sort: number }) => http.put<FormCategory>(`/api/portal/forms/categories/${id}`, body);
 export const deleteFormCategory = (id: number) => http.delete<void>(`/api/portal/forms/categories/${id}`);
+
+// ───── P5 主管專區(/api/portal/manager/*;docs/Gherkin/manager/*.feature)─────
+export interface MgrDept {
+  code: string;
+  name: string | null;
+  parent: string | null;
+}
+export const managerDepts = () => http.get<{ all: boolean; items: MgrDept[] }>('/api/portal/manager/depts');
+
+const mgrQuery = (params: Record<string, string | number | boolean | undefined>) => {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') q.set(k, String(v));
+  const s = q.toString();
+  return s ? `?${s}` : '';
+};
+
+export interface StaffCourses {
+  empNo: string;
+  name: string | null;
+  dept: string | null;
+  deptName: string | null;
+  inYear: boolean;
+  deduction: number;
+  courses: { key: string; status: CourseStatus; hours?: number; minHours?: number }[];
+}
+export const managerCourses = (o: { dept?: string; includeSub?: boolean; year?: number }) =>
+  http.get<{ year: number; courses: { key: string; name: string; category: 'safety' | 'general' }[]; items: StaffCourses[] }>(`/api/portal/manager/courses${mgrQuery(o)}`);
+
+export interface MgrPropertyNote {
+  empNo: string;
+  name: string | null;
+  dept: string | null;
+  deptName: string | null;
+  compDb: string | null;
+  assetNo: string;
+  assetSub: string | null;
+  note: string | null;
+  hasPhoto: boolean;
+}
+export const managerProperty = (o: { dept?: string; includeSub?: boolean }) =>
+  http.get<{ items: MgrPropertyNote[] }>(`/api/portal/manager/property${mgrQuery(o)}`);
+export const updateManagerPropertyNote = (n: Pick<MgrPropertyNote, 'empNo' | 'compDb' | 'assetNo' | 'assetSub'>, note: string) =>
+  http.put<void>('/api/portal/manager/property/note', { empNo: n.empNo, compDb: n.compDb, assetNo: n.assetNo, assetSub: n.assetSub, note });
+
+export interface PlanCourse {
+  classId: string;
+  dept: string;
+  className: string | null;
+  agenda: string | null;
+  classType: string | null;
+  subType: string | null;
+  classWhere: string | null;
+  onType: string | null;
+  testType: string | null;
+  teacherName: string | null;
+  teacherUnit: string | null;
+  season: string | null;
+  hour: number | null;
+  cost1: number | null;
+  cost2: number | null;
+  cost3: number | null;
+  cost: number | null;
+  joinDept: string | null;
+}
+export interface AppliedCourse {
+  applyDate: string | null;
+  dept: string | null;
+  deptName: string | null;
+  className: string | null;
+  classWhere: string;
+  teacherName: string | null;
+  hours: string | null;
+  joinDept: string;
+}
+export interface TrainingOptions {
+  classTypes: string[];
+  subTypes: Record<string, string[]>;
+  classWhere: string[];
+  onTypes: string[];
+  testTypes: string[];
+  seasons: string[];
+}
+export interface TrainingView {
+  year: number;
+  depts: { code: string; name: string | null }[];
+  outOfScope: { code: string; name: string | null }[];
+  canEdit: boolean;
+  submitted: boolean;
+  lockedDepts: string[];
+  courses: PlanCourse[];
+  lastYear: PlanCourse[];
+  applied: AppliedCourse[];
+  options: TrainingOptions;
+}
+export interface CourseInput {
+  dept: string;
+  className: string;
+  agenda: string;
+  classType: string;
+  subType: string;
+  classWhere: string;
+  onType: string;
+  testType: string;
+  teacherName: string;
+  teacherUnit: string;
+  seasons: string[];
+  hour: number;
+  cost1: number;
+  cost2: number;
+  cost3: number;
+  joinDept: string;
+}
+export const trainingPlan = () => http.get<TrainingView>('/api/portal/manager/training');
+export const createTrainingCourse = (b: CourseInput) => http.post<PlanCourse>('/api/portal/manager/training/courses', b);
+export const updateTrainingCourse = (id: string, b: CourseInput) => http.put<PlanCourse>(`/api/portal/manager/training/courses/${enc(id)}`, b);
+export const deleteTrainingCourse = (id: string) => http.delete<void>(`/api/portal/manager/training/courses/${enc(id)}`);
+export const submitTrainingPlan = () => http.post<TrainingView>('/api/portal/manager/training/submit', {});
+export const trainingExportUrl = (dept: string) => `/api/portal/manager/training/export${mgrQuery({ dept })}`;
+
+export interface BudgetVersion {
+  flag: number;
+  year: number;
+  ver: number;
+  standard: string;
+  isFinal: boolean;
+  label: string;
+}
+export interface BudgetOptions {
+  company: { id: string; name: string | null };
+  year?: number | null;
+  versions: BudgetVersion[];
+  depts: { id: string; name: string | null }[];
+}
+export interface BudgetView {
+  version: BudgetVersion;
+  dept: string;
+  rows: { code: string; name: string | null; months: number[]; total: number }[];
+  monthTotals: number[];
+  total: number;
+  actual: null;
+  unavailable: string[];
+}
+export interface BudgetApplyRow {
+  code: string;
+  name: string | null;
+  isSum: boolean;
+  editable: boolean;
+  months: ({ amount: number; mark: string | null } | null)[];
+  total: number;
+}
+export interface BudgetApplyView {
+  version: BudgetVersion;
+  dept: string;
+  status: number | null;
+  locked: boolean;
+  remark: string | null;
+  rows: BudgetApplyRow[];
+  lastYearActual: null;
+  unavailable: string[];
+}
+export interface BudgetCellInput {
+  code: string;
+  month: number;
+  amount: number;
+  mark?: string;
+}
+export const budgetOptions = () => http.get<BudgetOptions>('/api/portal/manager/budget/options');
+export const deptBudget = (flag: number, dept: string) => http.get<BudgetView>(`/api/portal/manager/budget${mgrQuery({ flag, dept })}`);
+export const budgetApplyOptions = () => http.get<BudgetOptions>('/api/portal/manager/budget-apply/options');
+export const budgetApply = (flag: number, dept: string) => http.get<BudgetApplyView>(`/api/portal/manager/budget-apply${mgrQuery({ flag, dept })}`);
+export const saveBudgetApply = (b: { flag: number; dept: string; remark?: string; cells: BudgetCellInput[] }) =>
+  http.put<BudgetApplyView>('/api/portal/manager/budget-apply', b);
+export const submitBudgetApply = (flag: number, dept: string) => http.post<BudgetApplyView>('/api/portal/manager/budget-apply/submit', { flag, dept });

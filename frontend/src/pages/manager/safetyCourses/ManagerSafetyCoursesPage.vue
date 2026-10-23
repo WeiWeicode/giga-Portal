@@ -1,157 +1,93 @@
 <script setup lang="ts">
 /**
- * 部門全員必修工安課程追蹤 (對齊 old_PortalSolar AnnualCurse.aspx)
+ * 部門年度必上課程(old_PortalSolar AnnualCurse.aspx 主管版;FEATURE-PLAN §7;docs/Gherkin/manager/manager.feature)。
+ * 資料:GET /api/portal/manager/courses(範圍內部屬每人 12 門課;規則同個人版 D-9,扣分欄依規則計算,舊版固定 0.0 不沿用)。
  */
 import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GSelect } from '@/ui';
+import { managerCourses, type CourseStatus } from '@/api/portal';
+import { describeError } from '@/api/gateway';
+import { courseStats } from '@/composables/manager';
+import { useAsync } from '@/composables/useAsync';
+import MgrDeptFilter from '../MgrDeptFilter.vue';
 
-interface SafetyStaff {
-  empNo: string;
-  name: string;
-  title: string;
-  dept: string;
-  completedCount: number;
-  totalCourses: number;
-  unfinishedList: string[];
-  status: '完全合格' | '即將到期' | '進度落後';
-}
+const thisYear = new Date().getFullYear();
+const year = ref(String(thisYear));
+const years = [thisYear, thisYear - 1, thisYear - 2].map((y) => ({ label: `${y} 年`, value: String(y) }));
+const dept = ref('');
+const includeSub = ref(true);
+const keyword = ref('');
 
-const staffList = ref<SafetyStaff[]>([
-  {
-    empNo: 'V112001',
-    name: '王大明',
-    title: '資深系統工程師',
-    dept: '資訊服務部',
-    completedCount: 12,
-    totalCourses: 12,
-    unfinishedList: [],
-    status: '完全合格',
-  },
-  {
-    empNo: 'S180002',
-    name: '鄭智寬',
-    title: '資訊工程師',
-    dept: '資訊服務部',
-    completedCount: 10,
-    totalCourses: 12,
-    unfinishedList: ['急救常識與 AED 操作實務', '化學品危害通識'],
-    status: '即將到期',
-  },
-  {
-    empNo: 'V113045',
-    name: '周志成',
-    title: '倉儲專員',
-    dept: '倉儲物流課',
-    completedCount: 6,
-    totalCourses: 12,
-    unfinishedList: ['消防避難演練數位課程', '堆高機安全作業要點', '人因危害預防', '化學品危害通識', '性騷擾防治法遵', '資訊安全意識'],
-    status: '進度落後',
-  },
-  {
-    empNo: 'V112045',
-    name: '黃宏達',
-    title: '製造課長',
-    dept: '製造一課',
-    completedCount: 12,
-    totalCourses: 12,
-    unfinishedList: [],
-    status: '完全合格',
-  },
-]);
-
-const deptFilter = ref('');
-
-const filteredStaff = computed(() => {
-  return staffList.value.filter((s) => !deptFilter.value || s.dept === deptFilter.value);
+const { data, loading, error, reload } = useAsync(() => managerCourses({ dept: dept.value, includeSub: includeSub.value, year: Number(year.value) }), {
+  immediate: false,
 });
+const search = () => dept.value && reload();
+
+const MARK: Record<CourseStatus, { text: string; tone: string }> = {
+  done: { text: 'Y', tone: 'primary' },
+  missing: { text: 'N', tone: 'danger' },
+  na: { text: '--', tone: 'neutral' },
+};
+const items = computed(() => {
+  const kw = keyword.value.trim().toLowerCase();
+  return (data.value?.items ?? []).filter((p) => !kw || [p.empNo, p.name ?? '', p.dept ?? '', p.deptName ?? ''].some((s) => s.toLowerCase().includes(kw)));
+});
+const stats = computed(() => courseStats(items.value));
+const statusOf = (p: { courses: { key: string; status: CourseStatus }[] }, key: string) => p.courses.find((c) => c.key === key)?.status ?? 'na';
 </script>
 
 <template>
-  <div class="safety-courses-page stack">
-    <!-- 達成率指標卡 -->
-    <div class="stats-grid">
-      <GCard class="glass stat-card">
-        <span class="faint small">部門全員應訓人數</span>
-        <strong class="stat-num mono text-primary">4 位</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">全數合格達標人數</span>
-        <strong class="stat-num mono text-healthy">2 位</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">待補訓催課名單</span>
-        <strong class="stat-num mono text-warning">2 位</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">部門工安課程總達成率</span>
-        <strong class="stat-num mono text-healthy">83.3%</strong>
-      </GCard>
-    </div>
+  <div class="stack">
+    <GCard>
+      <MgrDeptFilter v-model:dept="dept" v-model:include-sub="includeSub" @ready="search">
+        <GSelect v-model="year" :options="years" class="year" aria-label="年度" />
+        <GButton variant="primary" icon="search" :loading="loading" :disabled="!dept" @click="search">查詢</GButton>
+        <GInput v-model="keyword" icon="search" placeholder="篩選工號 / 姓名 / 部門" clearable class="kw" />
+      </MgrDeptFilter>
+    </GCard>
 
-    <!-- 篩選列 -->
-    <GCard class="glass filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label class="filter-label">部門篩選</label>
-          <GSelect
-            v-model="deptFilter"
-            :options="[
-              { label: '全部部門', value: '' },
-              { label: '資訊服務部', value: '資訊服務部' },
-              { label: '倉儲物流課', value: '倉儲物流課' },
-              { label: '製造一課', value: '製造一課' },
-            ]"
-          />
-        </div>
+    <GCard v-if="error">
+      <GEmpty tone="danger" icon="alert" title="無法取得部屬必上課程" :description="describeError(error)">
+        <GButton icon="refresh" @click="reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <GCard v-else-if="loading && !data"><GSkeleton :lines="5" /></GCard>
+    <template v-else-if="data">
+      <div class="grid-stats">
+        <GStatCard label="部屬人數" :value="`${stats.people} 人`" tone="neutral" icon="users" />
+        <GStatCard label="課程完成率" :value="`${stats.rate}%`" tone="primary" icon="award" :meta="`${stats.done} / ${stats.applicable} 人次`" />
+        <GStatCard label="工安扣分人數" :value="`${stats.deducted} 人`" :tone="stats.deducted ? 'alert' : 'primary'" icon="shield" />
       </div>
-    </GCard>
-
-    <!-- 部門全員名冊表格 -->
-    <GCard class="glass table-wrapper">
-      <table class="safety-table">
-        <thead>
-          <tr>
-            <th>工號</th>
-            <th>姓名</th>
-            <th>職稱</th>
-            <th>所屬部門</th>
-            <th class="text-center">修畢門數</th>
-            <th class="text-center">達成進度</th>
-            <th>尚未完訓課程清單</th>
-            <th class="text-center">受訓狀態</th>
-            <th class="text-center">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in filteredStaff" :key="s.empNo">
-            <td class="mono font-bold">{{ s.empNo }}</td>
-            <td class="font-bold">{{ s.name }}</td>
-            <td class="small faint">{{ s.title }}</td>
-            <td>{{ s.dept }}</td>
-            <td class="mono text-center font-bold text-primary">{{ s.completedCount }} / {{ s.totalCourses }} 門</td>
-            <td class="mono text-center">{{ Math.round((s.completedCount / s.totalCourses) * 100) }}%</td>
-            <td class="small">
-              <span v-if="s.unfinishedList.length === 0" class="text-healthy font-bold">✓ 全部 12 門已修畢</span>
-              <span v-else class="text-danger">{{ s.unfinishedList.join('、') }}</span>
-            </td>
-            <td class="text-center">
-              <GBadge :tone="s.status === '完全合格' ? 'healthy' : s.status === '即將到期' ? 'warning' : 'danger'">
-                {{ s.status }}
-              </GBadge>
-            </td>
-            <td class="text-center">
-              <GButton size="sm" :disabled="s.unfinishedList.length === 0" variant="secondary">
-                催課提醒
-              </GButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </GCard>
-
-    <GAlert tone="neutral" icon="info">
-      依職業安全衛生教育訓練規則第 17 條規定，在職員工每年應定期接受至少 3 小時之一般安全衛生在職教育訓練。未達標同仁請主管敦促其於 11 月 30 日前至 E-Learning 線上平台修畢。
-    </GAlert>
+      <GCard :title="`${data.year} 年度必上課程完訓名冊`" icon="check-square">
+        <GEmpty v-if="!items.length" icon="users" title="沒有符合的部屬" description="對象為碩禾(公司別 DS11 / DS15 / DS36)在職或 11/30 後離職的同仁。" />
+        <div v-else class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>部門</th>
+                <th>工號</th>
+                <th>姓名</th>
+                <th v-for="c in data.courses" :key="c.key" :class="{ safety: c.category === 'safety' }" :title="c.name">{{ c.name }}</th>
+                <th>扣分</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in items" :key="p.empNo">
+                <td>{{ p.deptName ?? p.dept ?? '—' }}</td>
+                <td class="mono">{{ p.empNo }}</td>
+                <td>{{ p.name ?? '—' }}</td>
+                <td v-for="c in data.courses" :key="c.key" class="mark">
+                  <GBadge :tone="MARK[statusOf(p, c.key)].tone">{{ MARK[statusOf(p, c.key)].text }}</GBadge>
+                </td>
+                <td class="mono" :class="{ minus: p.deduction < 0 }">{{ p.deduction }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </GCard>
+      <GAlert tone="neutral" icon="info">
+        Y 已完成、N 未完成、-- 不適用(當年 9/30 後到職、免訓名單或非適用對象);工安課程(必修)適用卻未完成者每門扣 2 分。規則同「個人資訊 › 年度必上課程」。
+      </GAlert>
+    </template>
   </div>
 </template>
 
@@ -161,54 +97,52 @@ const filteredStaff = computed(() => {
   flex-direction: column;
   gap: 16px;
 }
-.stats-grid {
+.year {
+  width: 120px;
+}
+.kw {
+  flex: 1;
+  min-width: 180px;
+}
+.grid-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
 }
-.stat-card {
-  padding: 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.stat-num {
-  font-size: 22px;
-}
-.text-healthy { color: var(--color-healthy); }
-.filter-card {
-  padding: 12px 16px;
-}
-.filter-row {
-  display: flex;
-}
-.filter-item {
-  width: 220px;
-}
-.filter-label {
-  display: block;
-  font-size: 13px;
-  color: var(--color-faint);
-  margin-bottom: 4px;
-}
-.table-wrapper {
+.table-wrap {
   overflow-x: auto;
-  padding: 0;
 }
-.safety-table {
+.data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
-.safety-table th, .safety-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-.safety-table th {
-  background: var(--color-surface-hover);
+.data-table th,
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
   text-align: left;
+  white-space: nowrap;
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--glass-soft);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.data-table th.safety {
+  color: var(--c-danger);
+}
+.mark {
+  text-align: center;
+}
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+.minus {
+  color: var(--c-danger);
   font-weight: 600;
 }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
 </style>

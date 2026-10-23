@@ -137,7 +137,9 @@ const currentSteps = computed(() => tracks[selectedTrack.value] ?? []);
             <h4 class="step-title font-bold text-primary">{{ step.level }}</h4>
             <GBadge tone="storage">{{ step.grade }}</GBadge>
           </div>
-          <span class="faint small mono">年資門檻：<strong>{{ step.minYears }}</strong></span>
+          <span class="faint small mono"
+            >年資門檻：<strong>{{ step.minYears }}</strong></span
+          >
         </div>
 
         <div class="criteria-grid">
@@ -170,9 +172,7 @@ const currentSteps = computed(() => tracks[selectedTrack.value] ?? []);
       </GCard>
     </div>
 
-    <GAlert tone="neutral" icon="info">
-      每年 10 月啟動年度晉升考核初審程序，各級主管可依此晉升條件矩陣對部屬進行資格檢視並提出晉升提報案。
-    </GAlert>
+    <GAlert tone="neutral" icon="info"> 每年 10 月啟動年度晉升考核初審程序，各級主管可依此晉升條件矩陣對部屬進行資格檢視並提出晉升提報案。 </GAlert>
   </div>
 </template>
 
@@ -190,7 +190,9 @@ const currentSteps = computed(() => tracks[selectedTrack.value] ?? []);
   justify-content: space-between;
   align-items: center;
 }
-.m-0 { margin: 0; }
+.m-0 {
+  margin: 0;
+}
 .filter-card {
   padding: 12px 16px;
 }
@@ -267,5 +269,7 @@ const currentSteps = computed(() => tracks[selectedTrack.value] ?? []);
   flex-wrap: wrap;
   gap: 8px;
 }
-.font-bold { font-weight: 600; }
+.font-bold {
+  font-weight: 600;
+}
 </style>

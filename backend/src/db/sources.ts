@@ -35,6 +35,13 @@ export class SourceConfigError extends Error {
   override name = 'SourceConfigError';
 }
 
+/** 表名:字母(含中文)、數字、底線;Budget 庫有「部門狀態」「部門備註」等中文表名。不允許中括號、引號、空白、點 */
+const TABLE = /^[\p{L}\p{N}_]+$/u;
+function tableIdent(value: string): string {
+  if (!TABLE.test(value)) throw new SourceConfigError(`資料表名稱格式不合法:${value}`);
+  return value;
+}
+
 function ident(value: string, what: string): string {
   if (!IDENT.test(value)) throw new SourceConfigError(`${what} 格式不合法(只允許英數字與底線):${value}`);
   return value;
@@ -74,6 +81,6 @@ export class Sources {
   /** 三段式名稱,例 [giganexus_gw_test].[src_portalsolar].[CpfExInfo];表名只允許英數字與底線(含其他字元的舊表要用時再放寬白名單) */
   table(key: SourceKey, table: string): string {
     const p = this.prefixes[key];
-    return `[${p.db}].[${p.schema}].[${ident(table, '資料表名稱')}]`;
+    return `[${p.db}].[${p.schema}].[${tableIdent(table)}]`;
   }
 }

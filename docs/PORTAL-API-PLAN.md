@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.10(2026-10-23,**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.11(2026-10-23,**P5 主管專區實作完成待驗收**(範圍 Token 部門含下層、portal-manager-all、D-26 預算);**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -180,7 +180,19 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 
 ### P5 主管專區
 
-220 / LearnDB / Budget 可帶出的實作(部門訓練計畫、工安課程、部門財產的 PortalSolar 部分、預算);TIPTOP 來源(班表、工時、出勤、休假餘額、晉升地圖的人事欄位)轉移中。資料依內部 Token 部門(含下層)過濾。
+**P5 已實作(2026-10-23,工作分支 `feature/portal-p5-manager`,由 P4 切出;未合併、未上測試區;待確認見 `CONFIRM-NEEDED.md` P5)**:
+
+| 項目 | 資料 | 做法 |
+| --- | --- | --- |
+| 共通範圍 | Token `dept` + LOS `DeptInfo` 部門樹(快取 10 分鐘) | `modules/manager/scope.ts`:含下層;`portal-manager-all` 全公司(清單須指定部門);所有 `/manager/*` 須具 portal-manager / portal-manager-all;違反 403 `PORTAL_DATA_ACCESS_DENIED` |
+| 主管權益 | 靜態(前端 rightsContent.ts) | 照搬 ManagerRightInfo 4 Tab |
+| 班表上傳、主管工時追蹤、部屬出勤、休假餘額、晉升地圖 | TIPTOP(晉升地圖另需 WPORTALZ) | 整頁系統轉移中(前端 `MIGRATING_PAGES`) |
+| 部門必上課程 | LOS EmployeeInfo、Safety 名單、LearnDB | `GET /manager/courses`:個人版規則(D-9)逐人計算 |
+| 部門資產明細 | PortalSolar PersonalPropertyInfo + LOS EmployeeInfo | `GET /manager/property`、`PUT /manager/property/note`(更新保管人那筆,按鈕 `portal.mgr.property.edit`) |
+| 年度教育訓練計畫 | PortalSolar ELClassAnnual / ELPlanDept / ELClassForm / ELClassStatus;LearnDB(去年申請) | `/manager/training*`:CRUD、提交(檢查與寫入同一交易)、鎖定、xlsx 匯出(按鈕 `portal.mgr.training.edit`) |
+| 部門預算 | Budget CurrentFlag / BudgetVersionInfo / UserInfo / DeptInfo / AccountingCourses / DeptBudgetList | `/manager/budget*`(D-26);實際金額 TIPTOP 轉移中 |
+| 預算編列 | 同上 + BudgetData / DeptBudgetMark / 部門狀態 / 部門備註 / AcctProduct* | `/manager/budget-apply*`:未結案版本、合計 / 禁填清單設定化(`BUDGET_*`)、後端鎖定、更新包交易、送出(按鈕 `portal.mgr.budget-apply.edit`) |
+| 新表 | — | **不需要**(只讀寫舊表);`db/sources.ts` 表名白名單允許中文 |
 
 ### P7 臨時服務(D-8:有 URL、不在選單)
 
@@ -213,4 +225,4 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 | Q-D12 | BPM 深連結以網址參數帶工號(BPM 通知信既有格式),請 BPM 管理者確認 191 / 190 會驗證登入者與 `hdnUserId` 一致;正式區 BPM 網站位址為 `http://10.10.130.190:9090`(與測試區 8080 不同),可行時改 https | ⏳ 待 BPM 管理者確認(P4 沿用既有格式,列入 CONFIRM-NEEDED P4) |
 | Q-D13 | 跨公司工號撞號:其他公司本機帳號工號若剛好等於 BPM 上碩禾同仁的 id 會對到對方 | ✅ D-29 限定碩禾系 |
 | Q-D9 | 郵件審核 | ✅ 主管確認已不實施,頁面退場 |
-| Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 未用到(舊公告編輯不做);P5 前確認 |
+| Q-D10 | `WPORTALZ`(晉升地圖、訓練計畫、舊公告編輯引用)不在 220,位置待確認 | P3 未用到;**P5 盤點:訓練計畫(ELPlanDept 等)在 PortalSolar,未用到 WPORTALZ**;只有晉升地圖(HRPromoteMap)讀 WPORTALZ,該頁 TIPTOP 轉移中,待人事系統上線重做時再確認 |

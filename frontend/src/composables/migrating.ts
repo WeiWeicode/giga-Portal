@@ -11,6 +11,12 @@ export const MIGRATING_PAGES: readonly string[] = [
   'portal.attendance-abnormal.read', // 出勤異常
   'portal.abnormal-respond.read', // 出勤時數異常回報
   'portal.cipher-reset.read', // 薪資金鑰重置
+  // 主管專區(P5;FEATURE-PLAN §7):TIPTOP 班表 / 出勤 / 假勤 / 人事(晉升地圖另需 WPORTALZ,Q-D10)
+  'portal.mgr.shift.read', // 部門班表匯入
+  'portal.mgr.boss-trace.read', // 主管工時追蹤(理級以上出勤)
+  'portal.mgr.attendance.read', // 部屬出勤分析(員工出勤狀況)
+  'portal.mgr.leave-balance.read', // 休假餘額控管(特補休剩餘)
+  'portal.mgr.promotion.read', // 職等晉升地圖
 ];
 
 export const isMigrating = (menuPermission: string) => MIGRATING_PAGES.includes(menuPermission);

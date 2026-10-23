@@ -192,7 +192,8 @@ const filteredList = computed(() => {
     </GCard>
 
     <GAlert tone="neutral" icon="info">
-      依職業安全衛生法與勞基法「過勞預防指引」，單月延長工時超過 45 小時或總工時超過 200 小時之高階主管，系統將自動通知廠護中心進行過勞風險評估與安排駐廠醫師健康面談。
+      依職業安全衛生法與勞基法「過勞預防指引」，單月延長工時超過 45 小時或總工時超過 200
+      小時之高階主管，系統將自動通知廠護中心進行過勞風險評估與安排駐廠醫師健康面談。
     </GAlert>
   </div>
 </template>
@@ -244,7 +245,8 @@ const filteredList = computed(() => {
   border-collapse: collapse;
   font-size: 13.5px;
 }
-.trace-table th, .trace-table td {
+.trace-table th,
+.trace-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -253,7 +255,13 @@ const filteredList = computed(() => {
   text-align: left;
   font-weight: 600;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 600;
+}
 </style>

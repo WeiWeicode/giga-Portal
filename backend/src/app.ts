@@ -39,6 +39,7 @@ import { homeRoutes } from './routes/home.js';
 import { linkRoutes } from './routes/links.js';
 import { talkRoutes } from './routes/talk.js';
 import { formRoutes } from './routes/forms.js';
+import { managerRoutes, type ManagerServices } from './routes/manager.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -76,6 +77,8 @@ export interface AppOptions {
   talk?: TalkService | null;
   /** P4 表單下載 */
   forms?: FormService | null;
+  /** P5 主管專區 */
+  manager?: ManagerServices | null;
 }
 
 export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
@@ -160,5 +163,6 @@ export async function buildApp(opts: AppOptions): Promise<FastifyInstance> {
   await app.register(linkRoutes(opts.links ?? null));
   await app.register(talkRoutes(opts.talk ?? null));
   await app.register(formRoutes(opts.forms ?? null));
+  await app.register(managerRoutes(opts.manager ?? null));
   return app;
 }

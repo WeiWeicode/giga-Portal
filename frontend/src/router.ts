@@ -513,7 +513,7 @@ const appPages: RouteRecordRaw[] = [
       { key: 'level1', label: '課級主管 (Level 1)', path: '', icon: 'user', component: () => import('./pages/manager/rights/ManagerRightLevel1Tab.vue') },
       { key: 'level2', label: '理級主管 (Level 2)', path: 'level2', icon: 'user-check', component: () => import('./pages/manager/rights/ManagerRightLevel2Tab.vue') },
       { key: 'level3', label: '處級主管 (Level 3)', path: 'level3', icon: 'award', component: () => import('./pages/manager/rights/ManagerRightLevel3Tab.vue') },
-      { key: 'level4', label: '副總/總經理室 (Level 4)', path: 'level4', icon: 'shield', component: () => import('./pages/manager/rights/ManagerRightLevel4Tab.vue') },
+      { key: 'level4', label: '群組主管 (Level 4)', path: 'level4', icon: 'shield', component: () => import('./pages/manager/rights/ManagerRightLevel4Tab.vue') },
     ],
   ),
   page(
@@ -604,7 +604,7 @@ const appPages: RouteRecordRaw[] = [
       description: '年度部門內部與外訓開課規劃、預算與結訓達成率',
     },
     [
-      { key: 'plan', label: '年度訓練開課計畫', path: '', icon: 'book-open', component: () => import('./pages/manager/training/ManagerTrainingPlanPage.vue') },
+      { key: 'plan', label: '年度訓練開課計畫', path: '', icon: 'book-open', requires: ['portal.api.mgr.training.read'], component: () => import('./pages/manager/training/ManagerTrainingPlanPage.vue') },
     ],
   ),
   page(
@@ -619,7 +619,7 @@ const appPages: RouteRecordRaw[] = [
       description: '部門全員 12 門法規必修工安課程完訓名冊與進度檢驗',
     },
     [
-      { key: 'rate', label: '部屬完訓達成名冊', path: '', icon: 'award', component: () => import('./pages/manager/safetyCourses/ManagerSafetyCoursesPage.vue') },
+      { key: 'rate', label: '部屬完訓達成名冊', path: '', icon: 'award', requires: ['portal.api.mgr.dept.read', 'portal.api.mgr.course.read'], component: () => import('./pages/manager/safetyCourses/ManagerSafetyCoursesPage.vue') },
     ],
   ),
   page(
@@ -634,7 +634,7 @@ const appPages: RouteRecordRaw[] = [
       description: '部門名下保管之固定資產清冊、保管人及折舊現值',
     },
     [
-      { key: 'list', label: '固定資產保管清冊', path: '', icon: 'box', component: () => import('./pages/manager/property/ManagerDeptPropertyPage.vue') },
+      { key: 'list', label: '固定資產保管清冊', path: '', icon: 'box', requires: ['portal.api.mgr.dept.read', 'portal.api.mgr.property.read'], component: () => import('./pages/manager/property/ManagerDeptPropertyPage.vue') },
     ],
   ),
   page(
@@ -649,7 +649,7 @@ const appPages: RouteRecordRaw[] = [
       description: '部門各會計科目預算執行率長條圖、動支實績與可用餘額',
     },
     [
-      { key: 'exec', label: '預算執行率長條圖', path: '', icon: 'pie-chart', component: () => import('./pages/manager/budget/ManagerDeptBudgetPage.vue') },
+      { key: 'exec', label: '預算執行率長條圖', path: '', icon: 'pie-chart', requires: ['portal.api.mgr.budget.read'], component: () => import('./pages/manager/budget/ManagerDeptBudgetPage.vue') },
     ],
   ),
   page(
@@ -664,7 +664,7 @@ const appPages: RouteRecordRaw[] = [
       description: '新年度資本支出 (CAPEX) 與營業費用 (OPEX) 提案編列與審批',
     },
     [
-      { key: 'apply', label: '預算提案與動支申請', path: '', icon: 'plus-circle', component: () => import('./pages/manager/budgetApply/ManagerBudgetApplyPage.vue') },
+      { key: 'apply', label: '預算提案與動支申請', path: '', icon: 'plus-circle', requires: ['portal.api.mgr.budget-apply.read'], component: () => import('./pages/manager/budgetApply/ManagerBudgetApplyPage.vue') },
     ],
   ),
   // ESH 證照管理 (License of ESH)

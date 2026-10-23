@@ -165,21 +165,21 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 
 ---
 
-## 7. 主管專區(`portal.group.manager`)— P5 ⏳
+## 7. 主管專區(`portal.group.manager`)— P5 🔨 已實作(工作分支 `feature/portal-p5-manager`,待合併與測試區驗收;API 見 `API.md` §3.0、場景 `Gherkin/manager/*.feature`;待確認見 `CONFIRM-NEEDED.md` P5)
 
 **共通**:角色 `portal-manager`(IT 依職級指派,不再用寫死職務代碼或 Email 判斷);資料範圍 = Token 部門(含下層),全公司範圍改用角色(建議 `portal-manager-all`),不用寫死工號或 860000。
 
 | 頁面 | 狀態 | 邏輯 |
 | --- | --- | --- |
-| 主管權益 `manager/rights` | ⏳ 靜態 | 4 Tab(課 / 理 / 處 / 群組主管)照搬;建議加「生效日」顯示 |
+| 主管權益 `manager/rights` | 🔨 靜態照搬(未有生效日,CONFIRM P5) | 4 Tab(課 / 理 / 處 / 群組主管)照搬;建議加「生效日」顯示 |
 | 班表上傳 `manager/shift` | 🚧 | 依賴 ERP 班表匯入(狀態 2 的來源不在舊程式);人事系統上線後重做。重做時:只能上傳本人部屬、驗證全部完成才寫、包交易 |
 | 理級以上出勤追蹤、員工出勤狀況、特補休剩餘 | 🚧 | TIPTOP 出勤 / 假勤 |
 | 晉升地圖 `manager/promotion-map` | 🚧 | TIPTOP 人事 + WPORTALZ(Q-D10 位置未明) |
-| 年度教育訓練計畫 `manager/training-plan` | ⏳ | 見 §7.1 |
-| 年度必上課程(部門)`manager/safety-courses` | ⏳ | 規則同 §2 年度必上課程(D-9),範圍 = 部屬;扣分欄依規則計算(舊主管版固定 0.0 不沿用) |
-| 部門資產明細 `manager/property` | ⏳(部分)| 同 D-12:只列部門保管資產中已有備註者;**備註歸屬以保管人為準**(舊版寫入用主管工號、讀取用保管人,對不上),主管可修改需按鈕權限 `portal.mgr.property.edit` |
-| 部門預算 `manager/budget` | ⏳ | 見 §7.2 |
-| 部門預算編列 `manager/budget-apply` | ⏳ | 見 §7.2 |
+| 年度教育訓練計畫 `manager/training-plan` | 🔨 | 見 §7.1 |
+| 年度必上課程(部門)`manager/safety-courses` | 🔨 | 規則同 §2 年度必上課程(D-9),範圍 = 部屬;扣分欄依規則計算(舊主管版固定 0.0 不沿用) |
+| 部門資產明細 `manager/property` | 🔨(部分)| 同 D-12:只列部門保管資產中已有備註者;**備註歸屬以保管人為準**(舊版寫入用主管工號、讀取用保管人,對不上),主管可修改需按鈕權限 `portal.mgr.property.edit` |
+| 部門預算 `manager/budget` | 🔨(只預算)| 見 §7.2 |
+| 部門預算編列 `manager/budget-apply` | 🔨 | 見 §7.2 |
 
 ### 7.1 年度教育訓練計畫(PortalSolar `ELPlanDept` / `ELClassAnnual` / `ELClassForm` / `ELClassStatus`)
 
@@ -266,6 +266,6 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 2. **P2-2b 問卷調查**(§3.4)— 🔨 已實作待驗收
 3. **P3 首頁聚合與集團公告**(§1、§5)— 🔨 已實作待驗收(Q-D10 P3 未用到;3691 解碼上線前需人資 / 法務確認 D-23)
 4. **P4 待我簽核與表單下載**(§4)— 🔨 已實作待驗收(含 D-29 全部 BPM API;Q-D11 SP 定義取不到、Q-D12 待 BPM 管理者確認,皆列 CONFIRM-NEEDED P4)
-5. **P5 主管專區**(§7;先決 Q-D10)
+5. **P5 主管專區**(§7)— 🔨 已實作待驗收(Q-D10:只有晉升地圖用到 WPORTALZ,該頁 TIPTOP 轉移中,P5 不需要;待確認列 CONFIRM-NEEDED P5)
 6. **P6 ESH**(§8)
 7. **P7 臨時服務**(§9;先決 Q-F11 查舊報表)

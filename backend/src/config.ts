@@ -16,6 +16,10 @@
  *   TALK_AUTHOR_KEY_ID      金鑰代號(預設 k1;換金鑰時改代號,舊代號的金鑰另設 TALK_AUTHOR_OLD_KEYS_FILE)
  *   TALK_AUTHOR_OLD_KEYS_FILE  選用:換金鑰後的舊金鑰檔,每行「代號:base64」,只用來解碼舊發文
  *   LEGACY_PORTAL_URL 選用:舊入口網網站根網址(例 http://10.10.130.166/PortalSolar),首頁舊公告連結用;未設定則不帶連結(D-21)
+ *   BUDGET_COMPANY_MAP        選用:LOS 公司別對應 Budget 公司(預設 DS11=GSMC,DS36=WHOLESUN,DS15=GEE;舊 Budget_DeptData)
+ *   BUDGET_LOCKED_CODES       選用:預算編列禁填科目(逗號分隔;預設同舊 Budget_DeptData strDisableAccountingCode)
+ *   BUDGET_SUM_EDITABLE_CODES 選用:可填的合計科目例外(預設 6234,6134,6334,5534)
+ *   BUDGET_VIEW_EXCLUDED_CODES 選用:部門預算不列的合計科目(預設同舊 Budget_DeptInfoV2)
  *   DEV_SKIP_TOKEN    dev 專用:不驗證 X-Internal-Token(本機直連);非 dev 設定即啟動失敗
  */
 import { readFileSync } from 'node:fs';
@@ -50,7 +54,53 @@ export interface Config {
   talkKeys: { current: AuthorKey; old: AuthorKey[] } | null;
   /** 舊入口網根網址(不含結尾 /);null = 舊公告不帶連結 */
   legacyPortalUrl: string | null;
+  /** 主管專區預算(FEATURE-PLAN §7.2;舊程式寫死的清單改為設定) */
+  budget: BudgetSettings;
   devSkipToken: boolean;
+}
+
+export interface BudgetSettings {
+  /** LOS CompDB → Budget CompanyID */
+  companyMap: Record<string, string>;
+  lockedCodes: string[];
+  sumEditableCodes: string[];
+  viewExcludedCodes: string[];
+}
+
+const DEFAULT_BUDGET = {
+  companyMap: 'DS11=GSMC,DS36=WHOLESUN,DS15=GEE',
+  lockedCodes:
+    '6210A,6210B,6219,6227,6236,6246,6228,6119,6127,6136,6146,6128,6310A,6319,6327,6336,6346,6328,5510A,5510B,5519,5527,5536,5546,5528,5410A,5410B,5420,5430,5440,5450',
+  sumEditableCodes: '6234,6134,6334,5534',
+  viewExcludedCodes: '5500,5510A,5510B,6100,6110A,6110B,6200,6210,6210A,6210B,6300,6310A,6310B',
+};
+
+const CODE = /^[A-Za-z0-9]{1,10}$/;
+function codeList(name: string, raw: string | undefined, fallback: string): string[] {
+  const list = (raw?.trim() || fallback)
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  for (const c of list) if (!CODE.test(c)) throw new ConfigError(`${name} 科目代碼格式錯誤:${c}`);
+  return list;
+}
+
+function budgetSettings(env: NodeJS.ProcessEnv): BudgetSettings {
+  const companyMap: Record<string, string> = {};
+  for (const pair of (env.BUDGET_COMPANY_MAP?.trim() || DEFAULT_BUDGET.companyMap)
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)) {
+    const m = /^([A-Za-z0-9]{1,10})=([A-Za-z0-9_]{1,20})$/.exec(pair);
+    if (!m) throw new ConfigError(`BUDGET_COMPANY_MAP 格式錯誤(公司別=Budget 公司):${pair}`);
+    companyMap[m[1]!.toUpperCase()] = m[2]!;
+  }
+  return {
+    companyMap,
+    lockedCodes: codeList('BUDGET_LOCKED_CODES', env.BUDGET_LOCKED_CODES, DEFAULT_BUDGET.lockedCodes),
+    sumEditableCodes: codeList('BUDGET_SUM_EDITABLE_CODES', env.BUDGET_SUM_EDITABLE_CODES, DEFAULT_BUDGET.sumEditableCodes),
+    viewExcludedCodes: codeList('BUDGET_VIEW_EXCLUDED_CODES', env.BUDGET_VIEW_EXCLUDED_CODES, DEFAULT_BUDGET.viewExcludedCodes),
+  };
 }
 
 export class ConfigError extends Error {
@@ -209,6 +259,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
       .filter(Boolean),
     talkKeys: talkKeys(env, !isDev),
     legacyPortalUrl: legacyPortalUrl(env.LEGACY_PORTAL_URL),
+    budget: budgetSettings(env),
     devSkipToken,
   };
 }

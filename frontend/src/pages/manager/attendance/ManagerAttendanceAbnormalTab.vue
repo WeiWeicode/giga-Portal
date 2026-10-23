@@ -123,13 +123,9 @@ function confirmInterview() {
             <td class="font-bold">{{ emp.name }}</td>
             <td>{{ emp.dept }}</td>
             <td class="small faint">{{ emp.title }}</td>
-            <td class="mono text-center" :class="{ 'text-danger font-bold': emp.lateCount >= 3 }">
-              {{ emp.lateCount }} 次
-            </td>
+            <td class="mono text-center" :class="{ 'text-danger font-bold': emp.lateCount >= 3 }">{{ emp.lateCount }} 次</td>
             <td class="mono text-center">{{ emp.earlyCount }} 次</td>
-            <td class="mono text-center" :class="{ 'text-warning font-bold': emp.missedCardCount >= 2 }">
-              {{ emp.missedCardCount }} 次
-            </td>
+            <td class="mono text-center" :class="{ 'text-warning font-bold': emp.missedCardCount >= 2 }">{{ emp.missedCardCount }} 次</td>
             <td class="mono text-center">{{ emp.absentCount }} 次</td>
             <td class="text-center">
               <GBadge :tone="emp.warningLevel === '高風險警戒' ? 'danger' : 'warning'">
@@ -142,11 +138,7 @@ function confirmInterview() {
               </GBadge>
             </td>
             <td class="text-center">
-              <GButton
-                size="sm"
-                :tone="emp.interviewStatus === '尚未面談' ? 'primary' : 'secondary'"
-                @click="openInterview(emp)"
-              >
+              <GButton size="sm" :tone="emp.interviewStatus === '尚未面談' ? 'primary' : 'secondary'" @click="openInterview(emp)">
                 {{ emp.interviewStatus === '尚未面談' ? '安排面談' : '檢視紀錄' }}
               </GButton>
             </td>
@@ -172,11 +164,7 @@ function confirmInterview() {
         </div>
         <div class="form-sec">
           <label class="form-label font-bold">主管面談輔導紀錄與改善約定事項：</label>
-          <textarea
-            rows="4"
-            class="interview-textarea"
-            placeholder="請記錄面談原因（例如交通通勤困難、家庭突發事務）、改善輔導建議與後續追蹤約定..."
-          />
+          <textarea rows="4" class="interview-textarea" placeholder="請記錄面談原因（例如交通通勤困難、家庭突發事務）、改善輔導建議與後續追蹤約定..." />
         </div>
       </div>
       <template #footer>
@@ -224,7 +212,8 @@ function confirmInterview() {
   border-collapse: collapse;
   font-size: 13.5px;
 }
-.abnormal-table th, .abnormal-table td {
+.abnormal-table th,
+.abnormal-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -233,8 +222,12 @@ function confirmInterview() {
   text-align: left;
   font-weight: 600;
 }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 600;
+}
 .interview-stack {
   display: flex;
   flex-direction: column;

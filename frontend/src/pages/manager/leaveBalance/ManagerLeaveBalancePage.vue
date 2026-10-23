@@ -162,9 +162,7 @@ function notifyAll() {
             <td class="mono text-right">{{ emp.totalAnnualDays }} 天</td>
             <td class="mono text-right small faint">{{ emp.usedAnnualDays }} 天</td>
             <td class="mono text-right font-bold text-primary">{{ emp.remainAnnualDays }} 天</td>
-            <td class="mono text-right" :class="{ 'text-danger font-bold': emp.expiringAnnualDays > 0 }">
-              {{ emp.expiringAnnualDays }} 天
-            </td>
+            <td class="mono text-right" :class="{ 'text-danger font-bold': emp.expiringAnnualDays > 0 }">{{ emp.expiringAnnualDays }} 天</td>
             <td class="mono text-right text-warning font-bold">{{ emp.remainCompHours }} h</td>
             <td class="mono small">{{ emp.compExpireDate }}</td>
             <td class="text-center">
@@ -183,7 +181,8 @@ function notifyAll() {
     </GCard>
 
     <GAlert tone="neutral" icon="info">
-      依勞動基準法第 38 條規定，年度終結或契約終止時，勞工尚未休畢之特別休假日數，除經勞雇雙方協商遞延至次年度外，雇主應依結餘日數結算發給工資。主管應主動協助部屬排定休假計畫。
+      依勞動基準法第 38
+      條規定，年度終結或契約終止時，勞工尚未休畢之特別休假日數，除經勞雇雙方協商遞延至次年度外，雇主應依結餘日數結算發給工資。主管應主動協助部屬排定休假計畫。
     </GAlert>
   </div>
 </template>
@@ -208,7 +207,9 @@ function notifyAll() {
 .stat-num {
   font-size: 22px;
 }
-.text-healthy { color: var(--color-healthy); }
+.text-healthy {
+  color: var(--color-healthy);
+}
 .filter-card {
   padding: 12px 16px;
 }
@@ -237,7 +238,8 @@ function notifyAll() {
   border-collapse: collapse;
   font-size: 13.5px;
 }
-.leave-table th, .leave-table td {
+.leave-table th,
+.leave-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -246,7 +248,13 @@ function notifyAll() {
   text-align: left;
   font-weight: 600;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 600;
+}
 </style>

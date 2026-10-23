@@ -13,13 +13,18 @@ describe('人事資料「系統轉移中」', () => {
         'portal.attendance-abnormal.read',
         'portal.abnormal-respond.read',
         'portal.cipher-reset.read',
+        'portal.mgr.shift.read',
+        'portal.mgr.boss-trace.read',
+        'portal.mgr.attendance.read',
+        'portal.mgr.leave-balance.read',
+        'portal.mgr.promotion.read',
       ].sort(),
     );
   });
 
   it('只有部分欄位來自 TIPTOP 的頁面照常顯示', () => {
     const original = () => Promise.resolve({ default: {} });
-    for (const code of ['portal.profile.read', 'portal.asset.read', 'portal.ef-info.read', 'portal.note.read']) {
+    for (const code of ['portal.profile.read', 'portal.asset.read', 'portal.ef-info.read', 'portal.note.read', 'portal.mgr.training.read', 'portal.mgr.budget.read']) {
       expect(isMigrating(code)).toBe(false);
       expect(tabComponent(code, `${code.replace(/\.read$/, '')}.x`, original)).toBe(original);
     }

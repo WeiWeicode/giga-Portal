@@ -30,6 +30,12 @@ import { MssqlTalkRepo } from './modules/talk/repo.js';
 import { TalkService } from './modules/talk/talk.js';
 import { DrizzleFormRepo } from './modules/forms/drizzle-repo.js';
 import { FormService } from './modules/forms/forms.js';
+import { BudgetService } from './modules/manager/budget.js';
+import { MssqlBudgetRepo } from './modules/manager/budget-repo.js';
+import { MssqlDeptSource, ScopeService } from './modules/manager/scope.js';
+import { ManagerStaffService, MssqlStaffRepo } from './modules/manager/staff.js';
+import { MssqlTrainingRepo } from './modules/manager/training-repo.js';
+import { TrainingService } from './modules/manager/training.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -74,6 +80,8 @@ const links = new LinkService(new DrizzleLinkRepo(db));
 const homeLegacy = new MssqlHomeLegacyRepo(pool, config.sources, config.legacyPortalUrl);
 // 3691 作者金鑰只從 secret 讀(D-23);未設定時可瀏覽、不能發文 / 解碼
 const talkCipher = config.talkKeys ? new AuthorCipher(config.talkKeys.current, config.talkKeys.old) : null;
+// P5 主管專區:部門範圍(Token 部門含下層,LOS 部門樹快取)
+const scopes = new ScopeService(new MssqlDeptSource(pool, config.sources));
 const app = await buildApp({
   config,
   courses: new MssqlCourseRepo(pool, config.sources),
@@ -92,6 +100,12 @@ const app = await buildApp({
   links,
   talk: new TalkService(new MssqlTalkRepo(pool, config.sources), talkCipher),
   forms: new FormService(new DrizzleFormRepo(db)),
+  manager: {
+    scopes,
+    staff: new ManagerStaffService(new MssqlStaffRepo(pool, config.sources), scopes),
+    training: new TrainingService(new MssqlTrainingRepo(pool, config.sources), scopes),
+    budget: new BudgetService(new MssqlBudgetRepo(pool, config.sources), config.budget),
+  },
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };

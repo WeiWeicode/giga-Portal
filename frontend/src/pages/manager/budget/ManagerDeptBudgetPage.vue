@@ -1,167 +1,92 @@
 <script setup lang="ts">
 /**
- * 部門年度預算執行率查詢 (對齊 old_PortalSolar Budget_DeptInfoV2.aspx)
+ * 部門預算執行(old_PortalSolar Budget_DeptInfoV2.aspx;FEATURE-PLAN §7.2、D-26;docs/Gherkin/manager/budget.feature)。
+ * 可看部門 = Budget UserInfo(管理者 / 部門主管)且具 portal-manager;只顯示預算,實際金額(TIPTOP 傳票)系統轉移中。
  */
 import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GProgress, GSelect } from '@/ui';
+import { budgetOptions, deptBudget } from '@/api/portal';
+import { describeError } from '@/api/gateway';
+import { fmtMoney } from '@/composables/manager';
+import { useAsync } from '@/composables/useAsync';
 
-interface BudgetItem {
-  accountCode: string;
-  accountName: string;
-  approved: number;
-  spent: number;
-  reserved: number;
-  available: number;
-  rate: number;
-  status: '正常' | '即將用罄' | '超支警示';
-}
+const flag = ref('');
+const dept = ref('');
+const opts = useAsync(async () => {
+  const o = await budgetOptions();
+  // 預設最新版本(舊頁 ddlVersion 預設最後一筆)、第一個部門
+  if (!flag.value && o.versions.length) flag.value = String(Math.max(...o.versions.map((v) => v.flag)));
+  if (!dept.value && o.depts.length) dept.value = o.depts[0]!.id;
+  return o;
+});
+const { data, loading, error, reload } = useAsync(() => deptBudget(Number(flag.value), dept.value), { immediate: false });
+const search = () => flag.value && dept.value && reload();
 
-const budgetItems = ref<BudgetItem[]>([
-  {
-    accountCode: '6101',
-    accountName: '軟體授權與雲端系統維護費',
-    approved: 3500000,
-    spent: 2450000,
-    reserved: 350000,
-    available: 700000,
-    rate: 70.0,
-    status: '正常',
-  },
-  {
-    accountCode: '6102',
-    accountName: '核心硬體維修保固與汰換支出 (CAPEX)',
-    approved: 4200000,
-    spent: 3100000,
-    reserved: 600000,
-    available: 500000,
-    rate: 73.8,
-    status: '正常',
-  },
-  {
-    accountCode: '6105',
-    accountName: '國內外出差與交通旅費',
-    approved: 800000,
-    spent: 680000,
-    reserved: 80000,
-    available: 40000,
-    rate: 85.0,
-    status: '即將用罄',
-  },
-  {
-    accountCode: '6108',
-    accountName: '專業教育訓練與外部認證費',
-    approved: 500000,
-    spent: 280000,
-    reserved: 50000,
-    available: 170000,
-    rate: 56.0,
-    status: '正常',
-  },
-  {
-    accountCode: '6112',
-    accountName: '部門辦公事務耗材與雜支',
-    approved: 300000,
-    spent: 210000,
-    reserved: 20000,
-    available: 70000,
-    rate: 70.0,
-    status: '正常',
-  },
-]);
-
-const selectedYear = ref('2026');
-
-const totalApproved = computed(() => budgetItems.value.reduce((acc, cur) => acc + cur.approved, 0));
-const totalSpent = computed(() => budgetItems.value.reduce((acc, cur) => acc + cur.spent, 0));
-const totalReserved = computed(() => budgetItems.value.reduce((acc, cur) => acc + cur.reserved, 0));
-const totalAvailable = computed(() => budgetItems.value.reduce((acc, cur) => acc + cur.available, 0));
-const overallRate = computed(() => Math.round(((totalSpent.value + totalReserved.value) / totalApproved.value) * 100));
+const versionOptions = computed(() =>
+  (opts.data.value?.versions ?? []).map((v) => ({ label: `V.${v.ver}${v.isFinal ? '(已結案)' : ''}`, value: String(v.flag) })),
+);
+const deptOptions = computed(() => (opts.data.value?.depts ?? []).map((d) => ({ label: `${d.id} ${d.name ?? ''}`.trim(), value: d.id })));
+const MONTHS = Array.from({ length: 12 }, (_, i) => `${i + 1} 月`);
 </script>
 
 <template>
-  <div class="dept-budget-page stack">
-    <!-- 總覽指標卡 -->
-    <div class="stats-grid">
-      <GCard class="glass stat-card">
-        <span class="faint small">年度核定總預算</span>
-        <strong class="stat-num mono text-primary">NT$ {{ totalApproved.toLocaleString() }}</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">已動支實際支出</span>
-        <strong class="stat-num mono">NT$ {{ totalSpent.toLocaleString() }}</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">採購合約請購保留款</span>
-        <strong class="stat-num mono text-warning">NT$ {{ totalReserved.toLocaleString() }}</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">剩餘可用額度 (執行率: {{ overallRate }}%)</span>
-        <strong class="stat-num mono text-healthy">NT$ {{ totalAvailable.toLocaleString() }}</strong>
-      </GCard>
-    </div>
-
-    <!-- 篩選列 -->
-    <GCard class="glass filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label class="filter-label">預算年度</label>
-          <GSelect
-            v-model="selectedYear"
-            :options="[
-              { label: '2026 年度', value: '2026' },
-              { label: '2025 年度', value: '2025' },
-            ]"
-          />
+  <div class="stack">
+    <GCard v-if="opts.loading.value && !opts.data.value"><GSkeleton :lines="3" /></GCard>
+    <GCard v-else-if="opts.error.value">
+      <GEmpty tone="danger" icon="alert" title="無法取得預算選項" :description="describeError(opts.error.value)">
+        <GButton icon="refresh" @click="opts.reload">重試</GButton>
+      </GEmpty>
+    </GCard>
+    <template v-else-if="opts.data.value">
+      <GCard>
+        <div class="row filter">
+          <span class="small"> {{ opts.data.value.company.name ?? opts.data.value.company.id }} · {{ opts.data.value.year ?? '—' }} 年度 </span>
+          <GSelect v-model="flag" :options="versionOptions" placeholder="版本" class="ver" aria-label="版本" />
+          <GSelect v-model="dept" :options="deptOptions" placeholder="部門" class="dept" aria-label="部門" />
+          <GButton variant="primary" icon="search" :loading="loading" :disabled="!flag || !dept" @click="search">查詢</GButton>
         </div>
-      </div>
-    </GCard>
+      </GCard>
+      <GCard v-if="!opts.data.value.depts.length">
+        <GEmpty icon="pie-chart" title="沒有可查看的部門" description="部門預算的查看權限由財務於預算系統(Budget UserInfo:管理者 / 部門主管)設定。" />
+      </GCard>
+      <GAlert tone="info" icon="info" title="實際金額系統轉移中">實際發生金額來自舊 ERP(TIPTOP)傳票,目前只顯示預算。</GAlert>
 
-    <!-- 預算科目明細表格 -->
-    <GCard class="glass table-wrapper">
-      <div class="table-header">
-        <strong class="font-bold">2026 年度資訊服務部會計科目預算執行明細</strong>
-        <span class="faint small">幣別：新台幣 (TWD) ｜ 資料時間：當季累計</span>
-      </div>
-      <table class="budget-table">
-        <thead>
-          <tr>
-            <th>會計科目</th>
-            <th>科目名稱</th>
-            <th class="text-right">核定預算</th>
-            <th class="text-right">已動支實績</th>
-            <th class="text-right text-warning">保留款</th>
-            <th class="text-right text-healthy font-bold">剩餘額度</th>
-            <th style="width: 140px;">執行率進度</th>
-            <th class="text-center">狀態</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="b in budgetItems" :key="b.accountCode">
-            <td class="mono font-bold">{{ b.accountCode }}</td>
-            <td class="font-bold">{{ b.accountName }}</td>
-            <td class="mono text-right font-bold">NT$ {{ b.approved.toLocaleString() }}</td>
-            <td class="mono text-right">NT$ {{ b.spent.toLocaleString() }}</td>
-            <td class="mono text-right text-warning">NT$ {{ b.reserved.toLocaleString() }}</td>
-            <td class="mono text-right text-healthy font-bold">NT$ {{ b.available.toLocaleString() }}</td>
-            <td>
-              <div class="progress-wrap">
-                <GProgress :value="b.rate" :tone="b.rate > 80 ? 'warning' : 'healthy'" />
-                <span class="mono extra-small">{{ b.rate }}%</span>
-              </div>
-            </td>
-            <td class="text-center">
-              <GBadge :tone="b.status === '正常' ? 'healthy' : 'warning'">
-                {{ b.status }}
-              </GBadge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </GCard>
-
-    <GAlert tone="neutral" icon="info">
-      各科目可用額度低於核定預算 15% 時，請主管提早進行費用調度或辦理預算科目流用申請，避免影響後續日常請款與設備維修進行。
-    </GAlert>
+      <GCard v-if="error">
+        <GEmpty tone="danger" icon="alert" title="無法取得部門預算" :description="describeError(error)">
+          <GButton icon="refresh" @click="reload">重試</GButton>
+        </GEmpty>
+      </GCard>
+      <GCard v-else-if="data" :title="`${data.dept} 預算(${data.version.label})`" icon="pie-chart">
+        <GEmpty v-if="!data.rows.length" icon="pie-chart" title="此版本沒有該部門的預算資料" />
+        <div v-else class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="sticky">會計科目</th>
+                <th v-for="m in MONTHS" :key="m" class="num">{{ m }}</th>
+                <th class="num">年度合計</th>
+                <th class="num">實際</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in data.rows" :key="r.code">
+                <td class="sticky">
+                  <span class="mono">{{ r.code }}</span> {{ r.name }}
+                </td>
+                <td v-for="(v, i) in r.months" :key="i" class="num">{{ fmtMoney(v) }}</td>
+                <td class="num b">{{ fmtMoney(r.total) }}</td>
+                <td class="num faint">轉移中</td>
+              </tr>
+              <tr class="sum">
+                <td class="sticky">月總計</td>
+                <td v-for="(v, i) in data.monthTotals" :key="i" class="num">{{ fmtMoney(v) }}</td>
+                <td class="num">{{ fmtMoney(data.total) }}</td>
+                <td class="num faint">轉移中</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </GCard>
+    </template>
   </div>
 </template>
 
@@ -171,69 +96,53 @@ const overallRate = computed(() => Math.round(((totalSpent.value + totalReserved
   flex-direction: column;
   gap: 16px;
 }
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-}
-.stat-card {
-  padding: 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.stat-num {
-  font-size: 20px;
-}
-.text-healthy { color: var(--color-healthy); }
-.filter-card {
-  padding: 12px 16px;
-}
-.filter-row {
-  display: flex;
-}
-.filter-item {
-  width: 200px;
-}
-.filter-label {
-  display: block;
-  font-size: 13px;
-  color: var(--color-faint);
-  margin-bottom: 4px;
-}
-.table-wrapper {
-  overflow-x: auto;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
+.filter {
   gap: 10px;
-}
-.table-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
-.budget-table {
-  width: 100%;
+.ver {
+  width: 160px;
+}
+.dept {
+  width: 240px;
+  max-width: 100%;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.data-table {
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
+  min-width: 100%;
 }
-.budget-table th, .budget-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-.budget-table th {
-  background: var(--color-surface-hover);
+.data-table th,
+.data-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
   text-align: left;
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--glass-soft);
+}
+.num {
+  text-align: right !important;
+  font-family: var(--font-mono, monospace);
+}
+.b,
+.sum td {
   font-weight: 600;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
-.progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sticky {
+  position: sticky;
+  left: 0;
+  background: var(--glass-strong);
+  z-index: 1;
 }
-.extra-small { font-size: 11px; }
+.mono {
+  font-family: var(--font-mono, monospace);
+}
 </style>

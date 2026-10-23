@@ -34,6 +34,9 @@
 | `personal/commute.feature` | 溫室氣體盤查員工通勤調查 | PORTAL-API-PLAN D-10、D-11 | P1 |
 | `ui/migrating.feature` | 人事資料「系統轉移中」 | PORTAL-API-PLAN D-1 | P0 |
 | `approval/approval.feature` | 待我簽核(待簽核 / 已簽核 / 我送出的,「前往簽核」深連結;非碩禾系不查 BPM) | FEATURE-PLAN §4、PORTAL-API-PLAN D-6、D-24、D-29 | P4 |
+| `manager/manager.feature` | 主管專區共通範圍(Token 部門含下層、portal-manager-all)、主管權益、TIPTOP 頁轉移中、部門必上課程、部門資產備註 | FEATURE-PLAN §7、PORTAL-API-PLAN D-9、D-12 | P5 |
+| `manager/training.feature` | 年度教育訓練計畫(負責部門、課程驗證、提交與鎖定、匯出) | FEATURE-PLAN §7.1 | P5 |
+| `manager/budget.feature` | 部門預算與預算編列(D-26 可看部門、只顯示預算、編列鎖定與交易、送出) | FEATURE-PLAN §7.2、PORTAL-API-PLAN D-26 | P5 |
 | `approval/forms.feature` | 表單下載(分類、file-service 檔案、編輯者維護) | FEATURE-PLAN §4、PORTAL-API-PLAN D-25 | P4 |
 
 ## 標籤慣例

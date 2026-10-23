@@ -1,221 +1,208 @@
 <script setup lang="ts">
 /**
- * 部門年度預算編列與提報 (對齊 old_PortalSolar Budget_DeptData.aspx)
+ * 部門預算編列(old_PortalSolar Budget_DeptData.aspx;FEATURE-PLAN §7.2、D-26;docs/Gherkin/manager/budget.feature)。
+ * 只列未結案版本;合計 / 禁填科目不可填;「更新預算」包交易、後端檢查鎖定;「送出」前有未儲存修改時擋下(舊「預算資料未上傳更新」)。
+ * 寫入按鈕 portal.mgr.budget-apply.edit。舊頁 Excel 上傳 / 貼上解析、去年實際金額(TIPTOP)不在本版(CONFIRM-NEEDED P5)。
  */
 import { computed, ref } from 'vue';
-import { GAlert, GBadge, GButton, GCard, GInput, GModal, GSelect } from '@/ui';
+import { budgetApply, budgetApplyOptions, saveBudgetApply, submitBudgetApply, type BudgetApplyView } from '@/api/portal';
+import { can, describeError } from '@/api/gateway';
+import { BUDGET_STATUS, budgetChanges, budgetTotals, cellKey, fmtMoney, initialEdits, type BudgetEdits } from '@/composables/manager';
+import { useAsync } from '@/composables/useAsync';
+import { confirm, toast } from '@/ui/feedback';
 
-interface BudgetProposal {
-  id: string;
-  accountCode: string;
-  itemName: string;
-  amount: number;
-  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
-  category: '資本支出 (CAPEX)' | '營運費用 (OPEX)';
-  reason: string;
-  status: '草稿' | '財務部審查中' | '已核定通過';
-}
-
-const proposals = ref<BudgetProposal[]>([
-  {
-    id: 'PR-2027-001',
-    accountCode: '6102',
-    itemName: '核心資料庫伺服器高可用叢集汰換',
-    amount: 850000,
-    quarter: 'Q2',
-    category: '資本支出 (CAPEX)',
-    reason: '現有資料庫主機服役逾 5 年已過原廠保固期，提升 ERP 營運穩定度與高可用容錯。',
-    status: '財務部審查中',
-  },
-  {
-    id: 'PR-2027-002',
-    accountCode: '6101',
-    itemName: '次世代 AI 智慧開發輔助平台企業授權',
-    amount: 240000,
-    quarter: 'Q1',
-    category: '營運費用 (OPEX)',
-    reason: '導入 Copilot 企業版 20 人份授權，提升軟體開發與單元測試撰寫效率 30% 以上。',
-    status: '已核定通過',
-  },
-  {
-    id: 'PR-2027-003',
-    accountCode: '6108',
-    itemName: '全員資安防禦情資與攻防實戰培訓',
-    amount: 150000,
-    quarter: 'Q3',
-    category: '營運費用 (OPEX)',
-    reason: '符合 ISO 27001 年度外部認證之工程師資安防護演練要求。',
-    status: '草稿',
-  },
-]);
-
-const newModal = ref(false);
-const newForm = ref({
-  accountCode: '6101',
-  itemName: '',
-  amount: 100000,
-  quarter: 'Q2',
-  category: '營運費用 (OPEX)',
-  reason: '',
+const flag = ref('');
+const dept = ref('');
+const opts = useAsync(async () => {
+  const o = await budgetApplyOptions();
+  if (!flag.value && o.versions.length) flag.value = String(o.versions[0]!.flag);
+  if (!dept.value && o.depts.length) dept.value = o.depts[0]!.id;
+  return o;
 });
+const versionOptions = computed(() => (opts.data.value?.versions ?? []).map((v) => ({ label: v.label, value: String(v.flag) })));
+const deptOptions = computed(() => (opts.data.value?.depts ?? []).map((d) => ({ label: `${d.id} ${d.name ?? ''}`.trim(), value: d.id })));
 
-function openNewModal() {
-  newForm.value = {
-    accountCode: '6101',
-    itemName: '',
-    amount: 100000,
-    quarter: 'Q2',
-    category: '營運費用 (OPEX)',
-    reason: '',
-  };
-  newModal.value = true;
+const view = ref<BudgetApplyView | null>(null);
+const edits = ref<BudgetEdits>({});
+const remark = ref('');
+const loading = ref(false);
+const error = ref<Error | null>(null);
+const busy = ref(false);
+const markCell = ref<{ code: string; month: number; name: string } | null>(null);
+
+function show(v: BudgetApplyView) {
+  view.value = v;
+  edits.value = initialEdits(v.rows);
+  remark.value = v.remark ?? '';
+}
+async function load() {
+  if (!flag.value || !dept.value) return;
+  if (dirty.value && !(await confirm({ title: '放棄修改', message: '有尚未更新的修改,確定重新載入?', confirmText: '重新載入', tone: 'danger' }))) return;
+  loading.value = true;
+  error.value = null;
+  try {
+    show(await budgetApply(Number(flag.value), dept.value));
+  } catch (e) {
+    error.value = e as Error;
+    view.value = null;
+  } finally {
+    loading.value = false;
+  }
 }
 
-function submitNew() {
-  if (!newForm.value.itemName || newForm.value.amount <= 0) return;
-  proposals.value.unshift({
-    id: `PR-2027-${String(proposals.value.length + 1).padStart(3, '0')}`,
-    accountCode: newForm.value.accountCode,
-    itemName: newForm.value.itemName,
-    amount: newForm.value.amount,
-    quarter: newForm.value.quarter as any,
-    category: newForm.value.category as any,
-    reason: newForm.value.reason,
-    status: '財務部審查中',
-  });
-  newModal.value = false;
-}
+const changes = computed(() => (view.value ? budgetChanges(view.value.rows, edits.value) : { cells: [], invalid: [] }));
+const remarkChanged = computed(() => !!view.value && remark.value !== (view.value.remark ?? ''));
+const dirty = computed(() => changes.value.cells.length > 0 || changes.value.invalid.length > 0 || remarkChanged.value);
+const totals = computed(() => (view.value ? budgetTotals(view.value.rows, edits.value) : { row: {}, month: [] as number[] }));
+const writable = computed(() => !!view.value && !view.value.locked && can('portal.mgr.budget-apply.edit'));
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-const totalProposed = computed(() => proposals.value.reduce((acc, cur) => acc + cur.amount, 0));
+async function save() {
+  if (!view.value) return;
+  if (changes.value.invalid.length) return toast.error(`請確認底下資料:${changes.value.invalid.join('、')} 金額格式錯誤`);
+  busy.value = true;
+  try {
+    show(
+      await saveBudgetApply({
+        flag: view.value.version.flag,
+        dept: view.value.dept,
+        ...(remarkChanged.value ? { remark: remark.value } : {}),
+        cells: changes.value.cells,
+      }),
+    );
+    toast.success('已更新預算資料');
+  } catch (e) {
+    toast.fromError(e, '更新預算失敗');
+  } finally {
+    busy.value = false;
+  }
+}
+async function submit() {
+  if (!view.value) return;
+  if (dirty.value) return toast.error('預算資料未上傳更新:請先按「更新預算」再送出');
+  if (!(await confirm({ title: '送出部門預算', message: `送出 ${view.value.dept} 的預算後即不能再修改,確定送出?`, confirmText: '送出' }))) return;
+  busy.value = true;
+  try {
+    show(await submitBudgetApply(view.value.version.flag, view.value.dept));
+    toast.success('部門預算已送出');
+  } catch (e) {
+    toast.fromError(e, '送出失敗');
+  } finally {
+    busy.value = false;
+  }
+}
+const statusText = computed(() => {
+  const v = view.value;
+  if (!v) return '';
+  if (v.version.isFinal) return '預算已結案';
+  return v.status === null ? '未提交' : (BUDGET_STATUS[v.status] ?? `狀態 ${v.status}`);
+});
 </script>
 
 <template>
-  <div class="budget-apply-page stack">
-    <!-- 指標統計卡 -->
-    <div class="stats-grid">
-      <GCard class="glass stat-card">
-        <span class="faint small">新年度編列總項目</span>
-        <strong class="stat-num mono text-primary">{{ proposals.length }} 項</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">編列提案總金額</span>
-        <strong class="stat-num mono text-primary">NT$ {{ totalProposed.toLocaleString() }}</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">資本支出 (CAPEX) 額度</span>
-        <strong class="stat-num mono">NT$ 850,000</strong>
-      </GCard>
-      <GCard class="glass stat-card">
-        <span class="faint small">審核完成通過比例</span>
-        <strong class="stat-num mono text-healthy">33.3%</strong>
-      </GCard>
-    </div>
-
-    <!-- 頂部操作列 -->
-    <GCard class="glass action-card">
-      <div class="action-flex">
-        <div>
-          <strong class="font-bold">2027 年度新預算項目編列清單</strong>
-          <span class="faint small">（提報截止日：2026/11/15 17:00）</span>
-        </div>
-        <GButton tone="primary" @click="openNewModal">+ 新增預算編列提案</GButton>
-      </div>
+  <div class="stack">
+    <GCard v-if="opts.loading.value && !opts.data.value"><GSkeleton :lines="3" /></GCard>
+    <GCard v-else-if="opts.error.value">
+      <GEmpty tone="danger" icon="alert" title="無法取得預算編列選項" :description="describeError(opts.error.value)">
+        <GButton icon="refresh" @click="opts.reload">重試</GButton>
+      </GEmpty>
     </GCard>
-
-    <!-- 編列清單表格 -->
-    <GCard class="glass table-wrapper">
-      <table class="proposal-table">
-        <thead>
-          <tr>
-            <th>提案編號</th>
-            <th>科目</th>
-            <th>預算項目名稱</th>
-            <th>類別</th>
-            <th class="text-right">預計金額</th>
-            <th class="text-center">動支季別</th>
-            <th>編列事由與效益說明</th>
-            <th class="text-center">審查進度</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in proposals" :key="p.id">
-            <td class="mono font-bold">{{ p.id }}</td>
-            <td class="mono small">{{ p.accountCode }}</td>
-            <td class="font-bold">{{ p.itemName }}</td>
-            <td>
-              <GBadge tone="storage">{{ p.category }}</GBadge>
-            </td>
-            <td class="mono text-right font-bold text-primary">NT$ {{ p.amount.toLocaleString() }}</td>
-            <td class="mono text-center">
-              <GBadge tone="neutral">{{ p.quarter }}</GBadge>
-            </td>
-            <td class="small faint reason-cell">{{ p.reason }}</td>
-            <td class="text-center">
-              <GBadge :tone="p.status === '已核定通過' ? 'healthy' : p.status === '財務部審查中' ? 'warning' : 'neutral'">
-                {{ p.status }}
-              </GBadge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </GCard>
-
-    <GAlert tone="neutral" icon="info">
-      預算編列提案送出後，將由財務部會計專員進行科目與額度合規性初審，最終提報總經理室年度經營會議進行綜合審定。
-    </GAlert>
-
-    <!-- 新增編列提案 Modal -->
-    <GModal v-model="newModal" title="新增新年度預算編列提案" width="580px">
-      <div class="modal-form-stack">
-        <div>
-          <label class="form-label font-bold">預算項目名稱 *</label>
-          <GInput v-model="newForm.itemName" placeholder="例如：核心備份儲存擴充" />
+    <template v-else-if="opts.data.value">
+      <GCard>
+        <div class="row filter">
+          <span class="small">{{ opts.data.value.company.name ?? opts.data.value.company.id }}</span>
+          <GSelect v-model="flag" :options="versionOptions" placeholder="預算版本" class="ver" aria-label="預算版本" :disabled="!versionOptions.length" />
+          <GSelect v-model="dept" :options="deptOptions" placeholder="部門" class="dept" aria-label="部門" :disabled="!deptOptions.length" />
+          <GButton variant="primary" icon="search" :loading="loading" :disabled="!flag || !dept" @click="load">查詢</GButton>
         </div>
-        <div class="form-row">
-          <div class="form-col">
-            <label class="form-label font-bold">會計科目</label>
-            <GSelect
-              v-model="newForm.accountCode"
-              :options="[
-                { label: '6101 軟體授權與維護費', value: '6101' },
-                { label: '6102 核心硬體購置 (CAPEX)', value: '6102' },
-                { label: '6105 國內外出差差旅費', value: '6105' },
-                { label: '6108 專業教育訓練費', value: '6108' },
-                { label: '6112 辦公耗材與雜項購置', value: '6112' },
-              ]"
-            />
+      </GCard>
+      <GCard v-if="!versionOptions.length || !deptOptions.length">
+        <GEmpty
+          icon="plus-circle"
+          :title="!versionOptions.length ? '目前沒有開放編列的預算版本' : '沒有可編列的部門'"
+          description="預算版本與部門權限由財務於預算系統設定。"
+        />
+      </GCard>
+
+      <GCard v-if="error">
+        <GEmpty tone="danger" icon="alert" title="無法取得預算資料" :description="describeError(error)">
+          <GButton icon="refresh" @click="load">重試</GButton>
+        </GEmpty>
+      </GCard>
+      <template v-else-if="view">
+        <GAlert v-if="view.locked" tone="warning" icon="lock" :title="statusText">
+          {{ view.version.isFinal ? `預算版本 ${view.version.label} 預算已結案` : `預算版本 ${view.version.label} 部門 ${view.dept} 預算已送出` }},不能再修改。
+        </GAlert>
+        <GCard :title="`${view.dept} · ${view.version.label}`" icon="plus-circle">
+          <template #actions>
+            <GBadge :tone="view.locked ? 'neutral' : 'warning'">{{ statusText }}</GBadge>
+            <GBadge v-if="dirty" tone="danger">有未更新的修改</GBadge>
+          </template>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="sticky">會計科目</th>
+                  <th v-for="m in MONTHS" :key="m" class="num">{{ m }} 月</th>
+                  <th class="num">年度合計</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in view.rows" :key="r.code" :class="{ sum: r.isSum }">
+                  <td class="sticky">
+                    <span class="mono">{{ r.code }}</span> {{ r.name }}
+                    <GBadge v-if="r.isSum" tone="neutral">合計</GBadge>
+                  </td>
+                  <td v-for="m in MONTHS" :key="m" class="num">
+                    <template v-if="r.months[m - 1]">
+                      <input
+                        v-if="writable && r.editable && edits[cellKey(r.code, m)]"
+                        v-model="edits[cellKey(r.code, m)]!.amount"
+                        class="cell"
+                        inputmode="decimal"
+                        :aria-label="`${r.name ?? r.code} ${m} 月`"
+                      />
+                      <span v-else>{{ fmtMoney(r.months[m - 1]!.amount) }}</span>
+                      <button
+                        v-if="writable && r.editable"
+                        type="button"
+                        class="mark"
+                        :class="{ has: edits[cellKey(r.code, m)]?.mark }"
+                        :title="edits[cellKey(r.code, m)]?.mark || '備註'"
+                        @click="markCell = { code: r.code, month: m, name: r.name ?? r.code }"
+                      >
+                        <GIcon name="message" :size="12" />
+                      </button>
+                      <span v-else-if="r.months[m - 1]!.mark" class="mark has" :title="r.months[m - 1]!.mark ?? ''"><GIcon name="message" :size="12" /></span>
+                    </template>
+                    <span v-else class="faint">—</span>
+                  </td>
+                  <td class="num b">{{ fmtMoney(totals.row[r.code]) }}</td>
+                </tr>
+                <tr class="sum">
+                  <td class="sticky">月總計</td>
+                  <td v-for="(v, i) in totals.month" :key="i" class="num">{{ fmtMoney(v) }}</td>
+                  <td class="num">{{ fmtMoney(totals.month.reduce((s, x) => s + x, 0)) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="form-col">
-            <label class="form-label font-bold">預估動支季別</label>
-            <GSelect
-              v-model="newForm.quarter"
-              :options="[
-                { label: '第一季 (Q1)', value: 'Q1' },
-                { label: '第二季 (Q2)', value: 'Q2' },
-                { label: '第三季 (Q3)', value: 'Q3' },
-                { label: '第四季 (Q4)', value: 'Q4' },
-              ]"
-            />
+          <GTextarea v-model="remark" label="部門備註" :rows="3" :disabled="!writable" class="remark" />
+          <GAlert tone="neutral" icon="info">去年實際金額來自舊 ERP(TIPTOP)傳票,系統轉移中;合計科目與禁填科目由財務設定,不可填寫。</GAlert>
+          <div v-if="writable" class="row end">
+            <GButton v-can="'portal.mgr.budget-apply.edit'" variant="primary" icon="check" :loading="busy" :disabled="!dirty" @click="save">更新預算</GButton>
+            <GButton v-can="'portal.mgr.budget-apply.edit'" variant="secondary" icon="send" :loading="busy" @click="submit">送出(下一步)</GButton>
           </div>
-        </div>
-        <div>
-          <label class="form-label font-bold">預算金額 (新台幣元) *</label>
-          <GInput v-model.number="newForm.amount" type="number" placeholder="金額" />
-        </div>
-        <div>
-          <label class="form-label font-bold">編列事由與預期效益說明 *</label>
-          <textarea
-            v-model="newForm.reason"
-            rows="3"
-            class="reason-textarea"
-            placeholder="請詳細敘述該筆支出之業務必要性及預期達成之營運效益..."
-          />
-        </div>
-      </div>
-      <template #footer>
-        <GButton variant="secondary" @click="newModal = false">取消</GButton>
-        <GButton tone="primary" @click="submitNew">送出審查提案</GButton>
+        </GCard>
       </template>
+    </template>
+
+    <GModal :open="!!markCell" title="月份備註" icon="message" @update:open="(v: boolean) => !v && (markCell = null)">
+      <div v-if="markCell && edits[cellKey(markCell.code, markCell.month)]" class="stack">
+        <span class="small">{{ markCell.name }} · {{ markCell.month }} 月(按「更新預算」後才會儲存)</span>
+        <GTextarea v-model="edits[cellKey(markCell.code, markCell.month)]!.mark" label="備註(300 字內)" :rows="3" />
+        <div class="row end"><GButton variant="primary" @click="markCell = null">完成</GButton></div>
+      </div>
     </GModal>
   </div>
 </template>
@@ -226,79 +213,88 @@ const totalProposed = computed(() => proposals.value.reduce((acc, cur) => acc + 
   flex-direction: column;
   gap: 16px;
 }
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
-}
-.stat-card {
-  padding: 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.stat-num {
-  font-size: 20px;
-}
-.text-healthy { color: var(--color-healthy); }
-.action-card {
-  padding: 14px 18px;
-}
-.action-flex {
-  display: flex;
-  justify-content: space-between;
+.filter {
+  gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
-.table-wrapper {
+.ver {
+  width: 220px;
+}
+.dept {
+  width: 240px;
+  max-width: 100%;
+}
+.table-wrap {
   overflow-x: auto;
-  padding: 0;
 }
-.proposal-table {
-  width: 100%;
+.data-table {
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
+  min-width: 100%;
 }
-.proposal-table th, .proposal-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-.proposal-table th {
-  background: var(--color-surface-hover);
+.data-table th,
+.data-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
   text-align: left;
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--glass-soft);
+}
+.num {
+  text-align: right !important;
+  font-family: var(--font-mono, monospace);
+}
+.b,
+.sum td {
   font-weight: 600;
 }
-.reason-cell {
-  max-width: 320px;
-  line-height: 1.4;
+.sticky {
+  position: sticky;
+  left: 0;
+  background: var(--glass-strong);
+  z-index: 1;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
-.modal-form-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.cell {
+  width: 90px;
+  text-align: right;
+  font: inherit;
+  padding: 3px 6px;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-xs);
+  background: var(--field);
+  color: inherit;
 }
-.form-row {
-  display: flex;
-  gap: 12px;
+.cell:focus {
+  outline: none;
+  border-color: var(--field-focus);
 }
-.form-col {
-  flex: 1;
+.mark {
+  margin-left: 2px;
+  border: none;
+  background: none;
+  color: var(--text-2);
+  opacity: 0.4;
+  cursor: pointer;
+  padding: 0;
 }
-.form-label {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 4px;
+.mark.has {
+  opacity: 1;
+  color: var(--c-primary);
 }
-.reason-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
+.remark {
+  margin-top: 12px;
+}
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+.end {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
 }
 </style>

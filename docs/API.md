@@ -97,6 +97,19 @@
 | POST | `/api/portal/talk/posts/:sn/like` | `portal.api.talk.write` | 按讚(每人每則一次)`{ likes }` |
 | PUT | `/api/portal/talk/posts/:sn/block` | `portal.api.talk.moderate` | `{ blocked }` 屏蔽 / 取消屏蔽並寫稽核(按鈕 `portal.talk.moderate`) |
 | POST | `/api/portal/talk/posts/:sn/reveal` | `portal.api.talk.reveal` | `{ approvalNo(必填 ≤ 50), reason? }` → `{ sn, empNo }`;每次嘗試都寫 `portal.talk_audit`;舊站發文 409 `PORTAL_TALK_AUTHOR_LEGACY`、無資料 404 `PORTAL_TALK_AUTHOR_NOT_FOUND`、解不開 500 `PORTAL_TALK_AUTHOR_DECRYPT_FAILED`(按鈕 `portal.talk.reveal`;**上線前需人資 / 法務確認**) |
+| GET | `/api/portal/manager/depts` | `portal.api.mgr.dept.read` | 主管可選部門 `{ all, items[{ code, name, parent }] }`:Token 部門含下層;`portal-manager-all` 全公司;**所有 `/manager/*` 須具 portal-manager 或 portal-manager-all**,否則 403(P5) |
+| GET | `/api/portal/manager/courses?dept=&includeSub=&year=` | `portal.api.mgr.course.read` | 部屬年度必上課程 `{ year, courses[{ key, name, category }], items[{ empNo, name, dept, deptName, inYear, deduction, courses[{ key, status }] }] }`(D-9);範圍外 403;全公司角色未指定 dept 400 `PORTAL_MGR_DEPT_REQUIRED` |
+| GET | `/api/portal/manager/property?dept=&includeSub=` | `portal.api.mgr.property.read` | 部門資產備註(在職部屬的 PersonalPropertyInfo,D-12) |
+| PUT | `/api/portal/manager/property/note` | `portal.api.mgr.property.edit` | `{ empNo, compDb, assetNo, assetSub, note(≤150) }` 更新**保管人**那筆備註(按鈕 `portal.mgr.property.edit`);保管人不在範圍 403、無紀錄 404 `PORTAL_MGR_PROPERTY_NOT_FOUND` |
+| GET | `/api/portal/manager/training` | `portal.api.mgr.training.read` | 年度教育訓練計畫:`year`(ELClassAnnual)、`depts`(ELPlanDept ∩ 範圍)、`outOfScope`、`canEdit`、`submitted`、`lockedDepts`、`courses`、`lastYear`、`applied`、`options`;年度未設定 503 `PORTAL_MGR_TRAINING_YEAR_UNSET` |
+| POST / PUT / DELETE | `/api/portal/manager/training/courses`、`/courses/:classId` | `portal.api.mgr.training.write` | 新增(201)/ 修改 / 刪除課程(按鈕 `portal.mgr.training.edit`);驗證 400 `VALIDATION_FAILED`、同部門同名 409 `PORTAL_MGR_TRAINING_DUPLICATE`、已提交 409 `PORTAL_MGR_TRAINING_LOCKED`、非本年度可編部門 404 `PORTAL_MGR_TRAINING_NOT_FOUND`、非負責部門 403 |
+| POST | `/api/portal/manager/training/submit` | `portal.api.mgr.training.write` | 提交(每部門 ≥ 2 門在職訓練課程且必填齊全,否則 422 `PORTAL_MGR_TRAINING_INCOMPLETE`,`details` 列問題);回應同 GET |
+| GET | `/api/portal/manager/training/export?dept=` | `portal.api.mgr.training.read` | 下載 `<部門>_<民國年>年度教育訓練計劃.xlsx` |
+| GET | `/api/portal/manager/budget/options` | `portal.api.mgr.budget.read` | `{ company, year, versions[], depts[] }`(D-26:Budget UserInfo 管理者 / 部門主管) |
+| GET | `/api/portal/manager/budget?flag=&dept=&includeZero=` | `portal.api.mgr.budget.read` | 部門預算 1~12 月與合計;`actual: null`、`unavailable: ["actual"]`(TIPTOP);版本不符 404 `PORTAL_MGR_BUDGET_VERSION_NOT_FOUND` |
+| GET | `/api/portal/manager/budget-apply/options`、`/budget-apply?flag=&dept=` | `portal.api.mgr.budget-apply.read` | 未結案版本;編列資料(科目 `editable`、每月 `{ amount, mark }`、部門備註、`status`、`locked`) |
+| PUT | `/api/portal/manager/budget-apply` | `portal.api.mgr.budget-apply.write` | `{ flag, dept, remark?, cells[{ code, month, amount, mark? }](≤1200) }` 一個交易更新(按鈕 `portal.mgr.budget-apply.edit`);已送出 / 結案 409 `PORTAL_MGR_BUDGET_LOCKED`;資料列已不存在 409 `PORTAL_MGR_BUDGET_CHANGED` |
+| POST | `/api/portal/manager/budget-apply/submit` | `portal.api.mgr.budget-apply.write` | `{ flag, dept }` 送出(部門狀態 1) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
 
 ### 3.1 草案
@@ -163,5 +176,15 @@
 | `PORTAL_FORM_CATEGORY_NOT_FOUND` | 404 | 表單分類不存在 |
 | `PORTAL_FORM_CATEGORY_DUPLICATE` | 409 | 已有同名的表單分類 |
 | `PORTAL_FORM_CATEGORY_IN_USE` | 409 | 分類下還有表單,不能刪除 |
+| `PORTAL_MGR_DEPT_REQUIRED` | 400 | 全公司主管角色查詢清單時未指定部門 |
+| `PORTAL_MGR_PROPERTY_NOT_FOUND` | 404 | 保管人該資產沒有備註紀錄 |
+| `PORTAL_MGR_TRAINING_YEAR_UNSET` | 503 | 舊系統未設定編列年度(ELClassAnnual) |
+| `PORTAL_MGR_TRAINING_NOT_FOUND` | 404 | 課程不存在或不屬於本人本年度負責部門 |
+| `PORTAL_MGR_TRAINING_DUPLICATE` | 409 | 同年度同部門已有同名課程 |
+| `PORTAL_MGR_TRAINING_LOCKED` | 409 | 訓練計畫已提交(本人或該部門) |
+| `PORTAL_MGR_TRAINING_INCOMPLETE` | 422 | 提交檢查未通過(`details` 列出部門 / 課程問題) |
+| `PORTAL_MGR_BUDGET_VERSION_NOT_FOUND` | 404 | 預算版本不存在、不屬於本人公司或已結案(編列) |
+| `PORTAL_MGR_BUDGET_LOCKED` | 409 | 部門預算已送出或版本已結案 |
+| `PORTAL_MGR_BUDGET_CHANGED` | 409 | 預算資料列已不存在(需重新整理) |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

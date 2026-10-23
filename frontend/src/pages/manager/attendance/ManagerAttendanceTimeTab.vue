@@ -173,7 +173,8 @@ const timeRecords = ref([
   border-collapse: collapse;
   font-size: 13.5px;
 }
-.time-table th, .time-table td {
+.time-table th,
+.time-table td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border);
 }
@@ -182,8 +183,16 @@ const timeRecords = ref([
   text-align: left;
   font-weight: 600;
 }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; }
-.extra-small { font-size: 11.5px; }
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.font-bold {
+  font-weight: 600;
+}
+.extra-small {
+  font-size: 11.5px;
+}
 </style>

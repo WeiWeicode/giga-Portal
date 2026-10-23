@@ -12,6 +12,8 @@ export interface Employee {
   /** 部門代碼(Token dept);部門含下層由需要的功能另行查詢 */
   dept: string | null;
   companies: string[];
+  /** Token roles(角色代碼;主管專區全公司範圍 portal-manager-all、預算 D-26 portal-manager) */
+  roles?: string[];
 }
 
 export function employeeOf(req: FastifyRequest): Employee {
@@ -19,5 +21,5 @@ export function employeeOf(req: FastifyRequest): Employee {
   if (!id) throw new AppError(401, 'PORTAL_INTERNAL_TOKEN_INVALID', '缺少內部 Token');
   const isSystem = id.amr === 'api_key' || id.amr === 'webhook' || id.sub.startsWith('client:') || id.sub.startsWith('webhook:');
   if (isSystem || !id.emp) throw dataAccessDenied('此 API 只提供員工本人使用');
-  return { empNo: id.emp, name: id.name ?? null, dept: id.dept ?? null, companies: id.cos ?? [] };
+  return { empNo: id.emp, name: id.name ?? null, dept: id.dept ?? null, companies: id.cos ?? [], roles: id.roles ?? [] };
 }

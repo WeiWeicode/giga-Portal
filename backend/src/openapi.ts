@@ -55,6 +55,15 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.talk.reveal', name: '入口網 API:3691 解碼作者(需核准文號、留稽核)' },
   { code: 'portal.api.form.read', name: '入口網 API:表單下載清單' },
   { code: 'portal.api.form.edit', name: '入口網 API:表單與分類維護' },
+  { code: 'portal.api.mgr.dept.read', name: '入口網 API:主管專區可選部門' },
+  { code: 'portal.api.mgr.course.read', name: '入口網 API:主管專區部屬年度必上課程' },
+  { code: 'portal.api.mgr.property.read', name: '入口網 API:主管專區部門資產備註' },
+  { code: 'portal.api.mgr.property.edit', name: '入口網 API:主管專區修改部屬資產備註' },
+  { code: 'portal.api.mgr.training.read', name: '入口網 API:年度教育訓練計畫查詢與匯出' },
+  { code: 'portal.api.mgr.training.write', name: '入口網 API:年度教育訓練計畫課程維護與提交' },
+  { code: 'portal.api.mgr.budget.read', name: '入口網 API:部門預算執行查詢' },
+  { code: 'portal.api.mgr.budget-apply.read', name: '入口網 API:部門預算編列查詢' },
+  { code: 'portal.api.mgr.budget-apply.write', name: '入口網 API:部門預算編列更新與送出' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-23**(P4 待我簽核與表單下載:`routes/{bpm,forms}.ts`、`modules/bpm/`(已簽核、我送出的 state、申請人、D-29 `applies`)、`modules/forms/`、`db/dba/04-bpm-readonly-p4.sql`、前端 `pages/approval/*` 與 `composables/{bpm,forms}.ts` 改真實資料;P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
+> **最後更新: 2026-10-23**(P5 主管專區:`routes/manager.ts`、`modules/manager/`(範圍、部屬課程 / 資產、訓練計畫、預算)、前端 `pages/manager/*` 與 `composables/manager.ts` 改真實資料;P4 待我簽核與表單下載:`routes/{bpm,forms}.ts`、`modules/bpm/`(已簽核、我送出的 state、申請人、D-29 `applies`)、`modules/forms/`、`db/dba/04-bpm-readonly-p4.sql`、前端 `pages/approval/*` 與 `composables/{bpm,forms}.ts` 改真實資料;P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
 > 0. 2026-10-12:框架對齊 GigaItApp(`docs/FRAMEWORK-PLAN.md`):web-kit 改 npm Registry;側欄大項 `portal.group.*` 與名稱 / 排序 / 圖示以 BFF 為準(`composables/menu.ts`);每個 Tab 有權限代碼(`router.ts` `tabCode`);一頁一碼;移除隱藏的 M1 頁;`ui/icons.ts`;通知(`components/notify/`、`composables/notify.ts`)與首頁最新公告。
 > 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
 > 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
@@ -82,7 +82,7 @@ giga-Portal/
 │  │  │  │  ├─ calendar/          行事曆 portal.calendar.read (2 Tabs: 年度行事曆 PDF / 年度清單〔編輯者上傳〕)
 │  │  │  │  ├─ LinksPage.vue      集團系統 portal.links.read(DES 跳轉系統只顯示待重構;編輯者維護)
 │  │  │  │  └─ TalkPage.vue       3691 全民開講 portal.talk.read(TalkNodeItem 樹狀節點;發文 / 屏蔽 / 解碼作者)
-│  │  │  ├─ manager/              【主管專區】(11 頁,portal.mgr.*.read,角色 portal-manager)
+│  │  │  ├─ manager/              【主管專區】(11 頁,portal.mgr.*.read,角色 portal-manager / portal-manager-all;P5:權益靜態、TIPTOP 5 頁轉移中,必上課程 / 資產 / 訓練計畫 / 預算 / 預算編列串接 /api/portal/manager/*;MgrDeptFilter 部門篩選)
 │  │  │  │  ├─ rights/            主管權限說明 (4 Tabs: 課級/理級/處級/總經理室各級職責與核決)
 │  │  │  │  ├─ shift/             部門班表匯入 (班表 Excel 批次上傳、解析預覽、班別代碼)
 │  │  │  │  ├─ bossTrace/         主管工時追蹤 (理級以上工時追蹤、出差統計、健康超時警示)
@@ -116,10 +116,11 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk、forms)、modules/(courses、commute、notes、bpm NaNa 唯讀(待簽核 / 我送出的 / 已簽核,D-29 限碩禾系)、forms(表單下載分類與檔案登記)、geocode、onboarding 測驗題目與計分、
+   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk、forms、manager)、modules/(courses、commute、notes、bpm NaNa 唯讀(待簽核 / 我送出的 / 已簽核,D-29 限碩禾系)、forms(表單下載分類與檔案登記)、geocode、onboarding 測驗題目與計分、
    │                              qa 問卷:rules 純邏輯、qa 服務(擁有者 / 代管範圍)、repo 舊表 QAAnnual*、html 白名單、export Excel)、
    │                              home(dashboard 聚合、content 輪播 / 行事曆、legacy-repo 舊公告 ContentX 與 LOS 到職日)、links(集團系統、個人常用連結)、
-   │                              talk(author-cipher AES-256-GCM、talk 服務、repo 舊表 Talk3691* + portal.talk_author / talk_audit)、migrate.ts
+   │                              talk(author-cipher AES-256-GCM、talk 服務、repo 舊表 Talk3691* + portal.talk_author / talk_audit)、
+   │                              manager(P5:scope 部門範圍 Token 含下層 / portal-manager-all、staff 部屬課程與資產備註、training* 年度訓練計畫 EL* 舊表與匯出、budget* Budget 庫預算與編列)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
    ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro、04 P4 補欄位並改回欄位層級授權(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
