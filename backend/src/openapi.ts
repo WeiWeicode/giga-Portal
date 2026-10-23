@@ -77,6 +77,19 @@ export const PERMISSIONS: { code: string; name: string }[] = [
   { code: 'portal.api.esh.notify.send', name: '入口網 API:ESH 立即發送複訓通知' },
   { code: 'portal.api.esh.chemical.read', name: '入口網 API:危害性化學品清單' },
   { code: 'portal.api.esh.chemical.edit', name: '入口網 API:危害性化學品由 BPM 同步與 SDS 上傳' },
+  // P7 臨時服務(D-8:有網址、不在選單)
+  { code: 'portal.api.svc.consent.read', name: '入口網 API:同意書內容與本人待簽清單' },
+  { code: 'portal.api.svc.consent.sign', name: '入口網 API:簽署同意書' },
+  { code: 'portal.api.svc.stock.read', name: '入口網 API:員工持股領回查詢(本人)' },
+  { code: 'portal.api.svc.stock.write', name: '入口網 API:員工持股領回 / 不領回' },
+  { code: 'portal.api.svc.post.read', name: '入口網 API:中華郵政寄件登記查詢(本人)' },
+  { code: 'portal.api.svc.post.write', name: '入口網 API:中華郵政寄件登記新增 / 修改 / 作廢' },
+  { code: 'portal.api.svc.auction.read', name: '入口網 API:內部拍賣品與出價' },
+  { code: 'portal.api.svc.auction.bid', name: '入口網 API:內部拍賣出價' },
+  { code: 'portal.api.svc.auction.admin', name: '入口網 API:內部拍賣管理(出價人、刪除出價、匯出)' },
+  { code: 'portal.api.svc.tv.read', name: '入口網 API:電視看板設定查詢' },
+  { code: 'portal.api.svc.tv.edit', name: '入口網 API:電視看板跑馬燈與圖片維護' },
+  { code: 'portal.api.svc.iso.read', name: '入口網 API:ISO 文件庫查詢' },
 ];
 
 export function swaggerOptions(serviceCode: string, project: string): SwaggerOptions {

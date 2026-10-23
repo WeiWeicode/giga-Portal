@@ -35,6 +35,8 @@ declare module 'vue-router' {
     tabs?: TabItem[];
     /** 應用層守衛不檢查(無權限頁本身,避免迴圈,PRD FR-2.4) */
     noAppGuard?: boolean;
+    /** 臨時服務(D-8):有網址、不在選單 / 麵包屑(沒有 group),仍檢查 permission / requires */
+    hidden?: boolean;
     /** 模擬或尚未串接的頁面:標示預計完成的里程碑 */
     milestone?: string;
   }
@@ -85,6 +87,14 @@ function page(path: string, meta: RouteRecordRaw['meta'] & { title: string; grou
       meta: { tab: t.label, permission: t.permission, ...(t.requires ? { requires: t.requires } : {}) },
     })),
   };
+}
+
+/**
+ * 臨時服務頁(P7;FEATURE-PLAN §9、D-8):人事以 URL 通知同仁進入,不在側欄 / 麵包屑;權限代碼掛在 Gateway 目錄 portal.group.services
+ * (deploy/gateway-rbac.yaml),前端沒有 group 所以 buildMenu 不會列出
+ */
+function service(path: string, title: string, icon: string, permission: string, requires: string[], component: () => Promise<{ default: RouteComponent }>): RouteRecordRaw {
+  return { path, component, meta: { title, icon, permission, requires, hidden: true } };
 }
 
 const appPages: RouteRecordRaw[] = [
@@ -759,6 +769,13 @@ const appPages: RouteRecordRaw[] = [
       { key: 'unregulated', label: '一般非列管化學品', path: 'unregulated', icon: 'box', requires: ['portal.api.esh.chemical.read'], component: () => import('./pages/esh/chemicals/EhsChemicalUnregulatedTab.vue') },
     ],
   ),
+  // P7 臨時服務(不在選單)
+  service('services/consent/:id', '同意書', 'file-check', 'portal.svc.consent.read', ['portal.api.svc.consent.read'], () => import('./pages/services/ConsentPage.vue')),
+  service('services/stock', '員工持股領回確認', 'coin', 'portal.svc.stock.read', ['portal.api.svc.stock.read'], () => import('./pages/services/StockPage.vue')),
+  service('services/post', '中華郵政寄件登記', 'mail', 'portal.svc.post.read', ['portal.api.svc.post.read'], () => import('./pages/services/PostPage.vue')),
+  service('services/auction', '內部拍賣', 'award', 'portal.svc.auction.read', ['portal.api.svc.auction.read'], () => import('./pages/services/AuctionPage.vue')),
+  service('services/tv', '電視看板設定', 'monitor', 'portal.svc.tv.read', ['portal.api.svc.tv.read'], () => import('./pages/services/TvSettingPage.vue')),
+  service('services/iso', 'ISO 文件庫', 'book-open', 'portal.svc.iso.read', ['portal.api.svc.iso.read'], () => import('./pages/services/IsoPage.vue')),
   { path: '403', component: () => import('./pages/Forbidden.vue'), meta: { title: '沒有權限' } },
   { path: ':pathMatch(.*)*', component: () => import('./pages/NotFound.vue'), meta: { title: '找不到頁面' } },
 ];
@@ -776,6 +793,8 @@ const routes: RouteRecordRaw[] = [
   auth('/reset-password', () => import('./pages/auth/ResetPassword.vue'), { public: true, title: '忘記密碼' }),
   auth('/unavailable', () => import('./pages/Unavailable.vue'), { public: true, title: '暫時無法使用' }),
   auth('/no-access', () => import('./pages/NoAccess.vue'), { noAppGuard: true, title: '沒有使用權限' }),
+  // P7 電視看板:公共螢幕全螢幕顯示,免登入(後端 GET /api/portal/tv/board 為 public)
+  { path: '/tv', component: () => import('./pages/services/TvBoardPage.vue'), meta: { public: true, title: '電視看板', hidden: true } },
   { path: '/', component: AppLayout, children: appPages },
 ];
 

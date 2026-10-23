@@ -58,7 +58,9 @@ const crumbs = computed(() => {
     // 不在選單的子頁(權限與選單項目不同)附上自己的標題
     const own = route.matched[1]?.meta;
     if (own?.title && own.permission !== activeItem.value.item.permission) out.push(menuTitle(own.permission, own.title));
-  } else if (route.meta.title) out.push(route.meta.title);
+  } else if (route.meta.title && !route.meta.hidden) out.push(route.meta.title);
+  // 臨時服務(D-8)不顯示麵包屑
+  if (route.meta.hidden) return [];
   // Tab 名稱以 BFF 為準(與頁籤一致)
   if (route.meta.tab) out.push(menuTitle(route.meta.permission, route.meta.tab));
   return out;

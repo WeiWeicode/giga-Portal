@@ -320,7 +320,7 @@ describe('首頁聚合', () => {
     const svc = new DashboardService({ bpm });
     const d = await svc.build({ empNo: 'S1', name: null, dept: null, companies: ['碩禾'] }, { error: () => undefined });
     assert.deepEqual(d.todos.items, []);
-    assert.deepEqual(d._meta.unavailable, ['todos.consent', 'todos.qa', 'todos.onboarding', 'todos.notes', 'secretary.links', 'news', 'slides']);
+    assert.deepEqual(d._meta.unavailable, ['todos.qa', 'todos.onboarding', 'todos.consent', 'todos.notes', 'secretary.links', 'news', 'slides']);
   });
 
   it('舊入口網公告唯讀併入', async () => {

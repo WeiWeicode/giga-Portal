@@ -43,6 +43,18 @@ import { EshLicenseService } from './modules/esh/license.js';
 import { DryRunMailer, EshNotifyService, GatewayNotifyMailer } from './modules/esh/notify.js';
 import { MssqlEshRepo } from './modules/esh/repo.js';
 import { dailyAt, EshScheduler, weeklyAt } from './modules/esh/scheduler.js';
+import { ConsentService } from './modules/services/consent.js';
+import { MssqlConsentRepo } from './modules/services/consent-repo.js';
+import { StockService } from './modules/services/stock.js';
+import { MssqlStockRepo } from './modules/services/stock-repo.js';
+import { PostService } from './modules/services/post.js';
+import { MssqlPostRepo } from './modules/services/post-repo.js';
+import { AuctionService } from './modules/services/auction.js';
+import { MssqlAuctionRepo } from './modules/services/auction-repo.js';
+import { TvService } from './modules/services/tv.js';
+import { MssqlTvRepo } from './modules/services/tv-repo.js';
+import { IsoService } from './modules/services/iso.js';
+import { NanaIsoSource } from './modules/services/iso-repo.js';
 
 const config = loadConfig();
 const pool = await openPool(config.sql, { appName: 'giganexus-portal-api' });
@@ -101,6 +113,11 @@ const eshChemical = new EshChemicalService(new MssqlChemicalRepo(pool, config.so
   legacyPortalUrl: config.legacyPortalUrl,
   syncMonths: config.esh.chemicalSyncMonths,
 });
+// P7 臨時服務
+const consent = new ConsentService(new MssqlConsentRepo(pool, config.sources));
+// ISO 文件庫:唯讀查 NaNa(BPM 未設定時回 503;授權 06-bpm-readonly-p7.sql)
+const isoSource = config.bpm ? new NanaIsoSource(config.bpm.sql) : null;
+const stock = new StockService(new MssqlStockRepo(pool, config.sources), config.services.stockLogUserName);
 const app = await buildApp({
   config,
   courses: new MssqlCourseRepo(pool, config.sources),
@@ -113,7 +130,7 @@ const app = await buildApp({
   onboarding,
   // 職級快速帶入待 Gateway 提供職級查詢介面(CONFIRM-NEEDED P2-2b),目前回 503
   qa,
-  dashboard: new DashboardService({ bpm, qa, onboarding, hireDates: homeLegacy, notes, links, news: homeLegacy, content }),
+  dashboard: new DashboardService({ bpm, qa, onboarding, hireDates: homeLegacy, notes, links, news: homeLegacy, content, consents: consent }),
   content,
   legacyNews: homeLegacy,
   links,
@@ -126,6 +143,14 @@ const app = await buildApp({
     budget: new BudgetService(new MssqlBudgetRepo(pool, config.sources), config.budget),
   },
   esh: { license: eshLicense, notify: eshNotify, chemical: eshChemical },
+  services: {
+    consent,
+    stock,
+    post: new PostService(new MssqlPostRepo(pool, config.sources)),
+    auction: new AuctionService(new MssqlAuctionRepo(pool, config.sources)),
+    tv: new TvService(new MssqlTvRepo(pool, config.sources), config.legacyPortalUrl),
+    iso: new IsoService(isoSource, config.services.isoDocBaseUrl),
+  },
   readiness: async () => {
     const c = await checks();
     return { ok: c.every((x) => x.ok), checks: Object.fromEntries(c.map((x) => [x.name, x.ok ? 'ok' : `error: ${x.message}`])) };
@@ -170,6 +195,6 @@ for (const signal of ['SIGINT', 'SIGTERM'])
     eshScheduler?.stop();
     void app
       .close()
-      .then(() => Promise.all([pool.close(), bpmRepo?.close(), chemicalSource?.close()]))
+      .then(() => Promise.all([pool.close(), bpmRepo?.close(), chemicalSource?.close(), isoSource?.close()]))
       .then(() => process.exit(0));
   });

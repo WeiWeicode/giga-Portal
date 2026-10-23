@@ -122,6 +122,16 @@
 | GET | `/api/portal/esh/notify/runs`、`/runs/:id` | `portal.api.esh.notify.read` | 通知紀錄(排程 + 手動)與寄送明細(只列範圍內公司);`mode` = `dry-run` / `gateway` |
 | GET / POST / PUT / DELETE | `/api/portal/esh/managers` | `.manager.read` / `portal.api.esh.manager.edit` | 證照管理員 `{ company, empNo, sendMail }`;重複 409 `PORTAL_ESH_MANAGER_DUPLICATE`;最後一位 409 `PORTAL_ESH_MANAGER_LAST` |
 | GET | `/api/portal/esh/chemicals?restrict=列管\|不列管&from=&to=&keyword=&page=&pageSize=`、`/chemicals/:efId` | `portal.api.esh.chemical.read` | 危害性化學品(所有員工;分頁;成份以 EF_ID 對應;SDS `file / url / legacy`) |
+| GET | `/api/portal/services/consents`、`/consents/:id` | `portal.api.svc.consent.read` | P7 同意書(不在選單):本人待簽清單(首頁待辦同規則);內容與狀態(id = ConsentX GUID 或編號;`state` open / not-started / ended / signed;對象不含本人 403;身分證只回末 4 碼) |
+| POST | `/api/portal/services/consents/:id/sign` | `portal.api.svc.consent.sign` | `{ agree: true, signatureFileId?(file-service UUID,refType `portal-consent`、refNo `<編號>:<工號>`,前端先綁定), fields?{ phone, homeAddress, mailAddress, account(11 碼) } }`;過期 410 `PORTAL_SERVICE_ENDED`、已簽 409 `PORTAL_CONSENT_SIGNED`;回 `{ signedAt, accountLast4 }` |
+| GET / POST | `/api/portal/services/stock`、`/stock/decision` | `portal.api.svc.stock.read` / `.write` | 員工持股領回(本人;集保帳號只回末 4 碼);`{ doBack, account? }`:不可領回 409 `PORTAL_STOCK_NOT_ELIGIBLE`、已回覆 409 `PORTAL_STOCK_DECIDED`、今年無資料 410 |
+| GET | `/api/portal/services/post?from=&to=`、`/post/senders?q=` | `portal.api.svc.post.read` | 中華郵政寄件登記(寄件人 = 本人;預設近一個月,≤ 400 天);在職寄件人搜尋(≤ 20 筆) |
+| POST / PUT / DELETE | `/api/portal/services/post`、`/post/:sn` | `portal.api.svc.post.write` | `{ senderId(在職,精確), dept, receiver, zip, sendDate, mailType }`;修改 / 作廢限寄件人本人(403)、修改不可變更寄件人(400)、有郵資 409 `PORTAL_POST_LOCKED` |
+| GET | `/api/portal/services/auction`、`/auction/admin` | `.svc.auction.read` / `.svc.auction.admin` | 內部拍賣品與出價(出價人只對本人;管理清單含工號姓名與刪除識別碼) |
+| POST / DELETE / GET | `/api/portal/services/auction/:id/bids`、`/bids?key=`、`/:id/export` | `.svc.auction.bid` / `.svc.auction.admin` | 出價 `{ amount }`(≥ 最高價 + 1000,409 `PORTAL_AUCTION_BID_TOO_LOW`,過期 410);刪除出價;匯出 xlsx |
+| GET | `/api/portal/tv/board` | `public`(需 IT 核准) | 電視看板(免登入,不帶內部 Token):跑馬燈、字級、顯示中的圖片 |
+| GET / PUT / POST / DELETE | `/api/portal/services/tv`、`/tv/message`、`/tv/images`、`/tv/images/:id` | `.svc.tv.read` / `.svc.tv.edit` | 看板設定;跑馬燈 `{ message ≤ 500, fontSize 8~200 }`;新增圖片(file-service refType `portal-tv`,只收圖片);調整順序 / 顯示 `{ items[] }` |
+| GET | `/api/portal/services/iso/clauses`、`/iso/docs?clause=\|q=`、`/iso/docs/:docNo` | `portal.api.svc.iso.read` | ISO 文件庫(NaNa 唯讀,來源待確認;未授權 503 `PORTAL_SOURCE_UNAVAILABLE`) |
 | POST | `/api/portal/esh/chemicals/sync` | `portal.api.esh.chemical.edit` | `{ from?, to? }`(≤36 個月)由 BPM 唯讀同步,整批一個交易;另須 `portal-esh-admin`;執行中 409 `PORTAL_ESH_SYNC_RUNNING`;BPM 未設定 503 |
 | GET / PUT / DELETE | `/api/portal/esh/chemicals/sync/runs`、`/chemicals/:efId/sds` | `portal.api.esh.chemical.edit` | 同步紀錄;上傳 SDS(file-service refType `portal-esh-sds`,同步不覆寫) |
 | GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
@@ -216,5 +226,17 @@
 | `PORTAL_ESH_RUN_NOT_FOUND` | 404 | 通知紀錄不存在或不在範圍內 |
 | `PORTAL_ESH_CHEMICAL_NOT_FOUND` | 404 | 化學品申報不存在(或沒有新站上傳的 SDS) |
 | `PORTAL_ESH_SYNC_RUNNING` | 409 | 化學品同步執行中 |
+| `PORTAL_SERVICE_ENDED` | 410 | 臨時服務已結束(過期 / 尚未開放 / 沒有本年度資料) |
+| `PORTAL_CONSENT_NOT_FOUND` | 404 | 同意書不存在或未登記型式 |
+| `PORTAL_CONSENT_SIGNED` | 409 | 本人已簽署此同意書 |
+| `PORTAL_STOCK_NOT_ELIGIBLE` | 409 | 今年度沒有可領回的自提持股 |
+| `PORTAL_STOCK_DECIDED` | 409 | 本年度已有回覆紀錄 |
+| `PORTAL_POST_NOT_FOUND` | 404 | 寄件登記不存在或已作廢 |
+| `PORTAL_POST_LOCKED` | 409 | 已有郵資,不能修改 / 作廢 |
+| `PORTAL_AUCTION_NOT_FOUND` | 404 | 拍賣品編號格式錯誤 |
+| `PORTAL_AUCTION_BID_TOO_LOW` | 409 | 出價低於目前最高價 + 1000(`details.minBid`) |
+| `PORTAL_AUCTION_BID_NOT_FOUND` | 404 | 出價不存在或已刪除 |
+| `PORTAL_TV_IMAGE_NOT_FOUND` | 404 | 看板圖片不存在 |
+| `PORTAL_ISO_NOT_FOUND` | 404 | ISO 文件不存在或已失效 |
 
 Gateway 層的錯誤(`UNAUTHENTICATED`、`PERMISSION_DENIED`、`ROUTE_NOT_FOUND`、`UPSTREAM_*`…)依 Gateway PRD §8.1.1 處理。

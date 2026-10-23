@@ -1,6 +1,6 @@
 # portal-api 規劃
 
-> 版本:v0.12(2026-10-23,**P6 ESH 證照管理實作完成待驗收**(公司範圍 LicenseManagerInfo、下次複訓日後端計算、複訓通知排程 + dry-run / Gateway 寄送、化學品 BPM 唯讀檢視同步);**P5 主管專區實作完成待驗收**(範圍 Token 部門含下層、portal-manager-all、D-26 預算);**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
+> 版本:v0.13(2026-10-23,**P7 臨時服務實作完成待驗收**(同意書一頁承接、員工持股、中華郵政、內部拍賣、電視看板、ISO 文件庫;隱藏 = Gateway 目錄 portal.group.services + 前端不列);**P6 ESH 證照管理實作完成待驗收**(公司範圍 LicenseManagerInfo、下次複訓日後端計算、複訓通知排程 + dry-run / Gateway 寄送、化學品 BPM 唯讀檢視同步);**P5 主管專區實作完成待驗收**(範圍 Token 部門含下層、portal-manager-all、D-26 預算);**P4 待我簽核與表單下載實作完成待驗收**(D-29 全部 BPM API 套用);P3 首頁聚合與集團公告實作完成待驗收;P2-2b 問卷調查實作完成待驗收;P2-2a 新人導覽實作完成待驗收;功能企劃決議 D-21~D-29;此前 P0 完成、P1 決議 D-9~D-13、P2-2 決議 D-18~D-20)。時程以 NexusPlan 甘特圖為準,本文件不列日期。
 > 前提見 `docs/HANDOFF.md` §2、`docs/PRD.md` §6.7;舊庫對照見 `docs/DATABASE-MAP.md`(本文件 §1 補充盤點發現)。
 
 ## 0. 已定決議(2026-10-12 起)
@@ -206,7 +206,19 @@ P2-2 決議(2026-10-12 使用者決定,見 D-18~D-20):分兩批,**P2-2a 新人�
 | 電視看板 | `TVDemo.aspx`、`TVDemoSetting.aspx` | PortalSolar `TVShowInfo`、`TVImgInfo`(寫入) |
 | ISO 文件 | `ISOInfo.aspx` | NaNa 與檢視 `v_ISO_Docs_*`(來源待確認) |
 
-做法(草案):前端路由標記 `hidden`(側欄、搜尋、麵包屑不列),仍需登入與權限代碼(例 `portal.svc.stock.read`,kind `menu`、上層新增目錄 `portal.group.services` 並在選單管理設為不顯示,或 Gateway 支援隱藏旗標;待 P7 開始時與 Gateway 規格對齊);開放期間由 API 依資料表的期間設定判斷,過期回「服務已結束」。
+**P7 已實作(2026-10-23,工作分支 `feature/portal-p7-services`,由 P6 切出;未合併、未上測試區;待確認見 `CONFIRM-NEEDED.md` P7)**:
+
+| 項目 | 資料 | 做法 |
+| --- | --- | --- |
+| 隱藏(D-8) | — | Gateway 沒有選單隱藏旗標:yaml 目錄 `portal.group.services` + menu `portal.svc.*.read` + 按鈕;前端 `service()` 路由沒有 group(側欄不列)、`meta.hidden`(麵包屑不列),仍檢查權限 |
+| 同意書 | ConsentX / ConsentXB(GUID 版)、ConsentCInfo / ConsentBInfo(編號版)、`portal.consent_def`、`portal.consent_sign`、LOS EmployeeInfo | `/services/consents*`:部門完整比對、勾選 + 簽名(file-service,先綁定再簽署)、後端擋重簽(sp_getapplock)、過期 410、身分證末 4 碼;首頁待辦 `todos.consent` |
+| 員工持股 | EmployeeStockInfo(唯讀)、EmployeeStockLog | `/services/stock*`:今年有資料才開放、自提 CanBack = Y 才送出、每年度一筆、集保帳號 11 碼;Q-F11 預設寫工號(`STOCK_LOG_USERNAME`,待確認) |
+| 中華郵政 | MisDb SendMailLog、LOS EmployeeInfo | `/services/post*`:寄件人 = 本人清單、在職寄件人精確選擇、修改不可換寄件人、有郵資 409 |
+| 內部拍賣 | ContentX(購物台,唯讀)、ContentXMessage | `/services/auction*`:該品項最高價 + 1000、應用鎖、出價人遮蔽、管理刪除 / 匯出(portal-service-admin) |
+| 垃圾信回報 | SpamXB、SpamXC | ⛔ D-27 不做 |
+| 電視看板 | TVShowInfo、TVImgInfo、`portal.tv_image` | `GET /tv/board` public(不驗 Token);設定 `/services/tv*` 需權限,圖片經 file-service |
+| ISO 文件 | NaNa v_ISO_Docs_Clause_* + Documents 等(唯讀 portal_bpm_ro,`db/dba/06-bpm-readonly-p7.sql`) | `/services/iso/*`:參數化,來源待確認(未授權 503) |
+| 新表 | — | migration `20261023082527_p7_services`(consent_def、consent_sign、tv_image) |
 
 ### P6 ESH 證照管理
 

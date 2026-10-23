@@ -1,0 +1,2175 @@
+{
+  "version": "2",
+  "dialect": "mssql",
+  "id": "5aedc899-a05a-47fa-9e01-1e35854b55a6",
+  "prevIds": [
+    "97152931-688f-4600-a3b6-39035b0c5e9a"
+  ],
+  "ddl": [
+    {
+      "name": "calendar_pdf",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "consent_def",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "consent_sign",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "esh_chemical_sds",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "esh_job_run",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "esh_license_doc",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "esh_license_logo",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "esh_notify_log",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "form_category",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "form_doc",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "home_slide",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "personal_link",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "personal_note",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "system_link",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "talk_audit",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "talk_author",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "name": "tv_image",
+      "entityType": "tables",
+      "schema": "portal"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "year",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "calendar_pdf"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "calendar_pdf"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "calendar_pdf"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "calendar_pdf"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "calendar_pdf"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "consent_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "start_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "end_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "require_sign",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_def"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "varchar(1)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "ref",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "signed_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "consent_sign"
+    },
+    {
+      "type": "nvarchar(40)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "ef_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "job",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "trigger",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "run_key",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "requested_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "scope",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "summary",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "started_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "finished_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_job_run"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "holder_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_doc"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "license_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_logo"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_logo"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_logo"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_logo"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_license_logo"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "run_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "company",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "item_count",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "message",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "esh_notify_log"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_category"
+    },
+    {
+      "type": "nvarchar(30)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_category"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_category"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_category"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_category"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "category_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "nvarchar(300)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "form_doc"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "link_url",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "start_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "end_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "home_slide"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_link"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(1000)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "priority",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "date",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "due_date",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "done",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "personal_note"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "nvarchar(300)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "nvarchar(30)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "open_mode",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "legacy_des",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "system_link"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sn",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "result",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "emp_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "approval_no",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "reason",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_audit"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sn",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_author"
+    },
+    {
+      "type": "varchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "cipher",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_author"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "key_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_author"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "talk_author"
+    },
+    {
+      "type": "bigint",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "varchar(36)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_id",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "nvarchar(200)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "file_name",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sort",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "bit",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "portal",
+      "entityType": "columns",
+      "table": "tv_image"
+    },
+    {
+      "columns": [
+        {
+          "value": "source",
+          "isExpression": false
+        },
+        {
+          "value": "ref",
+          "isExpression": false
+        },
+        {
+          "value": "emp_no",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "ux_consent_sign",
+      "entityType": "indexes",
+      "table": "consent_sign",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "run_key",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "ux_esh_job_run_key",
+      "entityType": "indexes",
+      "table": "esh_job_run",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "job",
+          "isExpression": false
+        },
+        {
+          "value": "started_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_esh_job_run_job",
+      "entityType": "indexes",
+      "table": "esh_job_run",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "holder_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_esh_license_doc_holder",
+      "entityType": "indexes",
+      "table": "esh_license_doc",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "run_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_esh_notify_log_run",
+      "entityType": "indexes",
+      "table": "esh_notify_log",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "name",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "ux_form_category_name",
+      "entityType": "indexes",
+      "table": "form_category",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "category_id",
+          "isExpression": false
+        },
+        {
+          "value": "active",
+          "isExpression": false
+        },
+        {
+          "value": "sort",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_form_doc_category",
+      "entityType": "indexes",
+      "table": "form_doc",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "kind",
+          "isExpression": false
+        },
+        {
+          "value": "active",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_home_slide_kind",
+      "entityType": "indexes",
+      "table": "home_slide",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "emp_no",
+          "isExpression": false
+        },
+        {
+          "value": "sort",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_personal_link_emp",
+      "entityType": "indexes",
+      "table": "personal_link",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "emp_no",
+          "isExpression": false
+        },
+        {
+          "value": "done",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_personal_note_emp",
+      "entityType": "indexes",
+      "table": "personal_note",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "active",
+          "isExpression": false
+        },
+        {
+          "value": "sort",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_system_link_active",
+      "entityType": "indexes",
+      "table": "system_link",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        {
+          "value": "sn",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "name": "ix_talk_audit_sn",
+      "entityType": "indexes",
+      "table": "talk_audit",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        "run_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "portal",
+      "tableTo": "esh_job_run",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "esh_notify_log_run_id_esh_job_run_id_fk",
+      "entityType": "fks",
+      "table": "esh_notify_log",
+      "schema": "portal"
+    },
+    {
+      "columns": [
+        "category_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "portal",
+      "tableTo": "form_category",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "form_doc_category_id_form_category_id_fk",
+      "entityType": "fks",
+      "table": "form_doc",
+      "schema": "portal"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "year"
+      ],
+      "name": "calendar_pdf_pkey",
+      "table": "calendar_pdf",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "consent_id"
+      ],
+      "name": "consent_def_pkey",
+      "table": "consent_def",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "consent_sign_pkey",
+      "table": "consent_sign",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "ef_id"
+      ],
+      "name": "esh_chemical_sds_pkey",
+      "table": "esh_chemical_sds",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "esh_job_run_pkey",
+      "table": "esh_job_run",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "esh_license_doc_pkey",
+      "table": "esh_license_doc",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "license_id"
+      ],
+      "name": "esh_license_logo_pkey",
+      "table": "esh_license_logo",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "esh_notify_log_pkey",
+      "table": "esh_notify_log",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "form_category_pkey",
+      "table": "form_category",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "form_doc_pkey",
+      "table": "form_doc",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "home_slide_pkey",
+      "table": "home_slide",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "personal_link_pkey",
+      "table": "personal_link",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "personal_note_pkey",
+      "table": "personal_note",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "system_link_pkey",
+      "table": "system_link",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "talk_audit_pkey",
+      "table": "talk_audit",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "sn"
+      ],
+      "name": "talk_author_pkey",
+      "table": "talk_author",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "tv_image_pkey",
+      "table": "tv_image",
+      "schema": "portal",
+      "entityType": "pks"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "calendar_pdf_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "calendar_pdf"
+    },
+    {
+      "column": "require_sign",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "consent_def_require_sign_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "consent_def"
+    },
+    {
+      "column": "active",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "consent_def_active_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "consent_def"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "consent_def_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "consent_def"
+    },
+    {
+      "column": "signed_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "consent_sign_signed_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "consent_sign"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "esh_chemical_sds_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "esh_chemical_sds"
+    },
+    {
+      "column": "started_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "esh_job_run_started_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "esh_job_run"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "esh_license_doc_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "esh_license_doc"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "esh_license_logo_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "esh_license_logo"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "esh_notify_log_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "esh_notify_log"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "form_category_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "form_category"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "form_category_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "form_category"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "form_doc_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "form_doc"
+    },
+    {
+      "column": "active",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "form_doc_active_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "form_doc"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "form_doc_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "form_doc"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "home_slide_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "home_slide"
+    },
+    {
+      "column": "active",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "home_slide_active_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "home_slide"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "home_slide_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "home_slide"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "home_slide_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "home_slide"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "personal_link_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_link"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "personal_link_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_link"
+    },
+    {
+      "column": "done",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "personal_note_done_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "personal_note_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "personal_note_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "personal_note"
+    },
+    {
+      "column": "open_mode",
+      "nameExplicit": false,
+      "default": "('new')",
+      "name": "system_link_open_mode_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "system_link"
+    },
+    {
+      "column": "legacy_des",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "system_link_legacy_des_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "system_link"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((0))",
+      "name": "system_link_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "system_link"
+    },
+    {
+      "column": "active",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "system_link_active_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "system_link"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "system_link_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "system_link"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "talk_audit_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "talk_audit"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "talk_author_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "talk_author"
+    },
+    {
+      "column": "sort",
+      "nameExplicit": false,
+      "default": "((99))",
+      "name": "tv_image_sort_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "tv_image"
+    },
+    {
+      "column": "active",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "tv_image_active_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "tv_image"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "tv_image_created_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "tv_image"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "(sysutcdatetime())",
+      "name": "tv_image_updated_at_default",
+      "entityType": "defaults",
+      "schema": "portal",
+      "table": "tv_image"
+    }
+  ],
+  "renames": []
+}

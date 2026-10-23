@@ -19,7 +19,13 @@ export function sectionState(meta: Dashboard['_meta'] | undefined, ...sections: 
 }
 
 /** 待辦區塊有任一來源失敗時的提示文字(其他待辦仍顯示) */
-const TODO_SOURCES: Record<string, string> = { bpm: 'BPM', 'todos.qa': '問卷', 'todos.onboarding': '新人導覽', 'todos.notes': '個人提醒' };
+const TODO_SOURCES: Record<string, string> = {
+  bpm: 'BPM',
+  'todos.qa': '問卷',
+  'todos.onboarding': '新人導覽',
+  'todos.consent': '同意書',
+  'todos.notes': '個人提醒',
+};
 export function todoErrors(meta: Dashboard['_meta'] | undefined): string[] {
   return (meta?.errors ?? []).map((e) => TODO_SOURCES[e.section]).filter((x): x is string => !!x);
 }

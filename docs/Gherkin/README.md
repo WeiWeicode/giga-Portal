@@ -41,6 +41,12 @@
 | `esh/license.feature` | ESH 證照(公司範圍、儀表板、證照項目 HTML 白名單 / Logo、需求、人員證照與下次複訓日、影本、管理員) | FEATURE-PLAN §8 | P6 |
 | `esh/notify.feature` | ESH 複訓通知(每週排程 + 立即通知、對象規則、Gateway 通知中心、寄送紀錄) | FEATURE-PLAN §8 | P6 |
 | `esh/chemicals.feature` | 危害性化學品(列管 / 不列管、成份以 ID 對應、由 BPM 同步整批交易、SDS) | FEATURE-PLAN §8 | P6 |
+| `services/consent.feature` | 同意書(GUID 版 / 編號版一頁承接、部門完整比對、勾選 + 簽名、擋重簽、首頁待辦) | FEATURE-PLAN §9 | P7 |
+| `services/stock.feature` | 員工持股領回(本人、可領回才送出、每年度一筆、集保帳號末 4 碼) | FEATURE-PLAN §9 | P7 |
+| `services/post.feature` | 中華郵政寄件登記(本人清單、在職寄件人精確選擇、有郵資不可改) | FEATURE-PLAN §9 | P7 |
+| `services/auction.feature` | 內部拍賣(期間、+1000 出價規則、併發、出價人遮蔽、管理刪除 / 匯出) | FEATURE-PLAN §9 | P7 |
+| `services/tv.feature` | 電視看板(看板免登入、設定頁權限、圖片經 file-service) | FEATURE-PLAN §9 | P7 |
+| `services/iso.feature` | ISO 文件庫(唯讀、條文 / 關鍵字、文件明細,來源待確認) | FEATURE-PLAN §9 | P7 |
 
 ## 標籤慣例
 

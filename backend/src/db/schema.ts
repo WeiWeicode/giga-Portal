@@ -258,3 +258,56 @@ export const eshNotifyLog = portal.table(
   },
   (t) => [index('ix_esh_notify_log_run').on(t.runId)],
 );
+
+// ───────────── P7 臨時服務(FEATURE-PLAN §9、D-8;docs/Gherkin/services/*.feature)─────────────
+// 舊表(PortalSolar Consent* / EmployeeStock* / ContentX* / TV*、MisDb SendMailLog)不改結構;新站的設定與檔案登記放這裡。
+
+/**
+ * 編號版同意書(ConsentCInfo 指派名單 / ConsentBInfo 簽署紀錄)的期間與型式:舊站每個版本是一個 aspx 頁、期間寫在程式裡,
+ * 新站以此表決定開放期間(D-8「開放期間由資料決定」)。GUID 版(ConsentX)的期間在 ConsentX 本身,不登記在此。
+ * kind:account-survey = 集保帳號調查(GSMCConsent20260814 型式)
+ */
+export const consentDef = portal.table('consent_def', {
+  /** PortalSolar ConsentBInfo / ConsentCInfo.ConsentID */
+  consentId: int('consent_id').primaryKey(),
+  kind: varchar('kind', { length: 20 }).notNull(),
+  title: nvarchar('title', { length: 200 }).notNull(),
+  /** 起訖日(含);空白 = 不限 */
+  startDate: date('start_date', { mode: 'string' }),
+  endDate: date('end_date', { mode: 'string' }),
+  /** 是否需要線上簽名(舊 20260814 頁沒有簽名欄) */
+  requireSign: bit('require_sign').notNull().default(false),
+  active: bit('active').notNull().default(true),
+  updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+  updatedAt: ts('updated_at').notNull().default(utcNow),
+});
+
+/**
+ * 同意書線上簽名(file-service UUID;取代舊站寫入網站 SignFile 目錄、以工號命名覆寫的做法)。
+ * source:x = ConsentX(ref = GUID)、b = 編號版(ref = ConsentID);同一人同一份只有一筆(唯一鍵,配合後端擋重簽)
+ */
+export const consentSign = portal.table(
+  'consent_sign',
+  {
+    id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+    source: varchar('source', { length: 1 }).notNull(),
+    ref: varchar('ref', { length: 50 }).notNull(),
+    empNo: nvarchar('emp_no', { length: 20 }).notNull(),
+    fileId: fileId('file_id').notNull(),
+    signedAt: ts('signed_at').notNull().default(utcNow),
+  },
+  (t) => [uniqueIndex('ux_consent_sign').on(t.source, t.ref, t.empNo)],
+);
+
+/** 電視看板新站圖片(file-service UUID;舊圖 TVImgInfo 不改、唯讀顯示並可切換顯示 / 順序) */
+export const tvImage = portal.table('tv_image', {
+  id: bigint('id', { mode: 'number' }).identity().primaryKey(),
+  fileId: fileId('file_id').notNull(),
+  fileName: nvarchar('file_name', { length: 200 }).notNull(),
+  sort: int('sort').notNull().default(99),
+  active: bit('active').notNull().default(true),
+  createdBy: nvarchar('created_by', { length: 20 }).notNull(),
+  createdAt: ts('created_at').notNull().default(utcNow),
+  updatedBy: nvarchar('updated_by', { length: 20 }).notNull(),
+  updatedAt: ts('updated_at').notNull().default(utcNow),
+});

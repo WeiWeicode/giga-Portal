@@ -1,6 +1,6 @@
 # 專案地圖 — giga-Portal(員工入口網)
 
-> **最後更新: 2026-10-23**(P6 ESH 證照管理:`routes/esh.ts`、`modules/esh/`(公司範圍 LicenseManagerInfo、證照項目 / 需求 / 人員 / 管理員、下次複訓日計算、複訓通知排程 + dry-run / Gateway 寄送、化學品 BPM 同步整批交易)、migration `p6_esh`、`db/dba/05-bpm-readonly-p6.sql`、前端 `pages/esh/*` 與 `composables/esh.ts` 改真實資料;P5 主管專區:`routes/manager.ts`、`modules/manager/`(範圍、部屬課程 / 資產、訓練計畫、預算)、前端 `pages/manager/*` 與 `composables/manager.ts` 改真實資料;P4 待我簽核與表單下載:`routes/{bpm,forms}.ts`、`modules/bpm/`(已簽核、我送出的 state、申請人、D-29 `applies`)、`modules/forms/`、`db/dba/04-bpm-readonly-p4.sql`、前端 `pages/approval/*` 與 `composables/{bpm,forms}.ts` 改真實資料;P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
+> **最後更新: 2026-10-23**(P7 臨時服務(不在選單,D-8):`routes/services.ts`、`modules/services/`(同意書、員工持股、中華郵政、內部拍賣、電視看板、ISO 文件庫)、migration `p7_services`、`db/dba/06-bpm-readonly-p7.sql`、前端 `pages/services/*`、`components/services/SignaturePad.vue`、`composables/services.ts`、`router.ts` `service()` 隱藏路由與 `/tv` 免登入看板;P6 ESH 證照管理:`routes/esh.ts`、`modules/esh/`(公司範圍 LicenseManagerInfo、證照項目 / 需求 / 人員 / 管理員、下次複訓日計算、複訓通知排程 + dry-run / Gateway 寄送、化學品 BPM 同步整批交易)、migration `p6_esh`、`db/dba/05-bpm-readonly-p6.sql`、前端 `pages/esh/*` 與 `composables/esh.ts` 改真實資料;P5 主管專區:`routes/manager.ts`、`modules/manager/`(範圍、部屬課程 / 資產、訓練計畫、預算)、前端 `pages/manager/*` 與 `composables/manager.ts` 改真實資料;P4 待我簽核與表單下載:`routes/{bpm,forms}.ts`、`modules/bpm/`(已簽核、我送出的 state、申請人、D-29 `applies`)、`modules/forms/`、`db/dba/04-bpm-readonly-p4.sql`、前端 `pages/approval/*` 與 `composables/{bpm,forms}.ts` 改真實資料;P3 首頁聚合與集團公告:`routes/{home,calendar,links,talk}.ts`、`modules/{home,links,talk}/`(聚合、輪播 / 行事曆、舊公告與到職日、集團系統 / 常用連結、3691 作者加密)、前端 `components/home/`、`composables/{home,talk}.ts`、`pages/group/*` 與首頁改真實資料;P2-2b 問卷調查:`routes/qa.ts`、`modules/qa/`(規則、資料存取、HTML 白名單、Excel 匯出)、前端 `pages/resources/qa/`(我的問卷 / 問卷維護)與 `composables/qa.ts`;P2-2a 新人導覽;交接見 `docs/HANDOFF.md`)
 > 0. 2026-10-12:框架對齊 GigaItApp(`docs/FRAMEWORK-PLAN.md`):web-kit 改 npm Registry;側欄大項 `portal.group.*` 與名稱 / 排序 / 圖示以 BFF 為準(`composables/menu.ts`);每個 Tab 有權限代碼(`router.ts` `tabCode`);一頁一碼;移除隱藏的 M1 頁;`ui/icons.ts`;通知(`components/notify/`、`composables/notify.ts`)與首頁最新公告。
 > 0. 2026-10-05:每個功能頁都加上 menu 權限(PRD §6.5.1);主管專區、ESH 不再無權限開放,需 `portal-manager` / `portal-esh-admin` 角色;§1 目錄樹更正為實際檔案位置。
 > 1. 對齊舊版入口網站 `old_PortalSolar`，全面完成前端六大模組排版與路由整合：**個人資訊** (13 頁)、**表單與簽核** (2 頁)、**行政資源** (7 頁)、**集團與公告** (4 頁)、**主管專區** (11 頁)、**ESH證照管理** (6 頁)。
@@ -94,6 +94,7 @@ giga-Portal/
 │  │  │  │  ├─ property/          部門財產清冊 (部門固定資產清冊、保管人及原值)
 │  │  │  │  ├─ budget/            部門預算執行 (會計科目預算執行率長條圖、動支實績)
 │  │  │  │  └─ budgetApply/       新年度預算編列 (CAPEX / OPEX 預算提案申請與審批)
+│  │  │  ├─ services/             【臨時服務】(P7,D-8:有網址、不在選單 / 麵包屑;portal.svc.*.read)同意書 ConsentPage、持股 StockPage、郵政 PostPage、拍賣 AuctionPage、看板設定 TvSettingPage、ISO IsoPage;免登入看板 TvBoardPage(/tv)
 │  │  │  ├─ esh/                  【ESH證照管理】(6 頁,portal.esh.*.read,角色 portal-esh-admin;化學品 employee;P6 串接 /api/portal/esh/*,共用版面 esh.css)
 │  │  │  │  ├─ management/        證照管理儀表板(公司 × 證照應有 / 有效 / 符合度、有效持證人)
 │  │  │  │  ├─ itemEdit/          證照項目設定(名稱、有效期、描述 HTML、Logo 經 file-service)
@@ -116,14 +117,14 @@ giga-Portal/
 └─ backend/                       portal-api(Fastify,port 51271;以 Gateway 後端樣本與 file-api 為基礎;PORTAL-API-PLAN §3)
    ├─ src/                        server、app(內部 Token、錯誤格式、healthz / readyz)、config、errors、openapi、identity(Token → 員工)、
    │                              db/(client 連線池與 Drizzle、sources 舊庫前綴 copy / legacy、schema portal 新表、sql2012-guard)、
-   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk、forms、manager、esh)、modules/(courses、commute、notes、bpm NaNa 唯讀(待簽核 / 我送出的 / 已簽核,D-29 限碩禾系)、forms(表單下載分類與檔案登記)、geocode、onboarding 測驗題目與計分、
+   │                              routes/(me、courses、commute、notes、assets、bpm、directory、jobs、onboarding、qa、home、calendar、links、talk、forms、manager、esh、services)、modules/(courses、commute、notes、bpm NaNa 唯讀(待簽核 / 我送出的 / 已簽核,D-29 限碩禾系)、forms(表單下載分類與檔案登記)、geocode、onboarding 測驗題目與計分、
    │                              qa 問卷:rules 純邏輯、qa 服務(擁有者 / 代管範圍)、repo 舊表 QAAnnual*、html 白名單、export Excel)、
    │                              home(dashboard 聚合、content 輪播 / 行事曆、legacy-repo 舊公告 ContentX 與 LOS 到職日)、links(集團系統、個人常用連結)、
    │                              talk(author-cipher AES-256-GCM、talk 服務、repo 舊表 Talk3691* + portal.talk_author / talk_audit)、
    │                              manager(P5:scope 部門範圍 Token 含下層 / portal-manager-all、staff 部屬課程與資產備註、training* 年度訓練計畫 EL* 舊表與匯出、budget* Budget 庫預算與編列)、
-   │                              esh(P6:rules 下次複訓日 / 狀態、license 公司範圍與證照 CRUD、repo License* + LOS RankInfo、notify 通知規劃與 dry-run / Gateway 寄送、scheduler 程序內排程、chemical* 化學品查詢與 BPM 同步、drizzle-repo 檔案 / 工作紀錄)、migrate.ts
+   │                              services(P7:common 遮罩 / 期間 / 純文字、consent 同意書(ConsentX / consent_def)、stock 持股、post 郵政、auction 拍賣、tv 看板、iso NaNa 唯讀;寫入以 sp_getapplock 序列化)、esh(P6:rules 下次複訓日 / 狀態、license 公司範圍與證照 CRUD、repo License* + LOS RankInfo、notify 通知規劃與 dry-run / Gateway 寄送、scheduler 程序內排程、chemical* 化學品查詢與 BPM 同步、drizzle-repo 檔案 / 工作紀錄)、migrate.ts
    ├─ db/migrations/              Drizzle migration(schema portal;npm run db:migrate 以 portal_migrate 套用,紀錄表 portal.__portal_migrations)
-   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro、04 P4 補欄位並改回欄位層級授權、05 P6 化學品申報單檢視(使用者以 sa 執行)
+   ├─ db/dba/                     01 建 schema portal 與帳號、02 舊庫複製到 src_*、03 BPM NaNa 唯讀帳號 portal_bpm_ro、04 P4 補欄位並改回欄位層級授權、06 P7 ISO 文件庫唯讀授權、05 P6 化學品申報單檢視(使用者以 sa 執行)
    ├─ test/                       單元:OpenAPI 自我檢查、內部 Token、來源前綴;int/:連 giganexus_gw_test 檢查各來源可讀
    └─ Dockerfile、.env.example
 ```

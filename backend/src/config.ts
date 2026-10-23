@@ -62,7 +62,40 @@ export interface Config {
   /** 主管專區預算(FEATURE-PLAN §7.2;舊程式寫死的清單改為設定) */
   budget: BudgetSettings;
   esh: EshSettings;
+  /** P7 臨時服務 */
+  services: ServiceSettings;
   devSkipToken: boolean;
+}
+
+export interface ServiceSettings {
+  /** EmployeeStockLog.UserName 寫工號(舊版寫法,預設)或姓名(Q-F11,CONFIRM-NEEDED P7) */
+  stockLogUserName: 'empNo' | 'name';
+  /** ISO 文件檔網址根(舊版 http://10.10.130.190/ISO2;預設 http://<BPM_DB_HOST>/ISO2);null = 不提供連結 */
+  isoDocBaseUrl: string | null;
+}
+
+/** http(s) 網址根:不含帳密、查詢字串;去結尾 / */
+function baseUrl(name: string, raw: string | undefined): string | null {
+  const v = raw?.trim();
+  if (!v) return null;
+  let u: URL;
+  try {
+    u = new URL(v);
+  } catch {
+    throw new ConfigError(`${name} 格式錯誤:${v}`);
+  }
+  if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash)
+    throw new ConfigError(`${name} 必須為 http(s)://主機[/路徑],不含帳密與查詢字串:${v}`);
+  return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+}
+
+function serviceSettings(env: NodeJS.ProcessEnv, bpmHost: string | null): ServiceSettings {
+  const mode = env.STOCK_LOG_USERNAME?.trim() || 'empNo';
+  if (mode !== 'empNo' && mode !== 'name') throw new ConfigError(`STOCK_LOG_USERNAME 必須為 empNo 或 name:${mode}`);
+  return {
+    stockLogUserName: mode,
+    isoDocBaseUrl: baseUrl('ISO_DOC_BASE_URL', env.ISO_DOC_BASE_URL?.trim() || (bpmHost ? `http://${bpmHost}/ISO2` : undefined)),
+  };
 }
 
 export interface EshSettings {
@@ -315,6 +348,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd?: string): 
     legacyPortalUrl: legacyPortalUrl(env.LEGACY_PORTAL_URL),
     budget: budgetSettings(env),
     esh: eshSettings(env, gateway, bpm?.sql.server ?? null),
+    services: serviceSettings(env, bpm?.sql.server ?? null),
     devSkipToken,
   };
 }

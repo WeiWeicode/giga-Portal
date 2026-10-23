@@ -219,7 +219,7 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 
 ---
 
-## 9. 臨時服務(有 URL、不在選單,D-8)— P7 ⏳
+## 9. 臨時服務(有 URL、不在選單,D-8)— P7 🔨 已實作待驗收(待確認見 CONFIRM-NEEDED P7)
 
 共通:需登入、需權限、開放期間由資料決定(過期回「服務已結束」);資料只看自己的;個資欄位(身分證、集保帳號)只在確認畫面顯示末 4 碼。
 
@@ -231,7 +231,7 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 | 內部拍賣 | 出價 ≥ 目前最高 + 1,000;出價人姓名只對本人與管理員顯示;刪除出價需 `portal.svc.auction.admin` |
 | 電視看板 | 看板頁可匿名顯示(公共螢幕);**設定頁需登入 + 權限**,圖片經 file-service(只收圖片) |
 | 資安演練點擊紀錄 | ⛔ 入口網不做,改由資安平台處理(D-27) |
-| ISO 文件庫 | 唯讀查 EFGP / NaNa 檢視(來源待確認,PORTAL-API-PLAN P7) |
+| ISO 文件庫 | 唯讀查 EFGP / NaNa 檢視(來源待確認,PORTAL-API-PLAN P7;授權腳本 06 未實測,未授權時顯示「資料來源待確認」) |
 
 ---
 
@@ -251,7 +251,7 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 | Q-F8 | 3691 匿名作者的保存與解碼 | ✅ D-23 伺服器密鑰加密 + 授權解碼 + 稽核;**實作前需人資 / 法務確認** |
 | Q-F9 | 並行期舊站高風險頁 | ✅ D-27 不在 giga-Portal 範圍,另行通報 IT |
 | Q-F10 | 部門預算的可看範圍 | ✅ D-26 沿用 Budget 庫 `Competence` + 須具 `portal-manager` |
-| Q-F11 | 員工持股 `EmployeeStockLog.UserName` 舊版寫工號 | ⏳ P7 開工前先查 220 上是否有報表 / 程式讀此欄,再決定寫工號或姓名 |
+| Q-F11 | 員工持股 `EmployeeStockLog.UserName` 舊版寫工號 | 🔨 已查:測試區複本 293 筆全部 = 工號,repo 舊程式沒有讀此欄的報表(220 預存程序無權限查);**預設照舊寫工號**(設定 `STOCK_LOG_USERNAME=name` 可改姓名),待人資確認(CONFIRM-NEEDED P7) |
 | Q-F12 | 資安演練點擊紀錄 | ✅ D-27 入口網不做 |
 
 ---
@@ -268,4 +268,4 @@ Gateway 讀 `LoginData` 做首次登入遷移時,**只用加密欄位驗證後�
 4. **P4 待我簽核與表單下載**(§4)— 🔨 已實作待驗收(含 D-29 全部 BPM API;Q-D11 SP 定義取不到、Q-D12 待 BPM 管理者確認,皆列 CONFIRM-NEEDED P4)
 5. **P5 主管專區**(§7)— 🔨 已實作待驗收(Q-D10:只有晉升地圖用到 WPORTALZ,該頁 TIPTOP 轉移中,P5 不需要;待確認列 CONFIRM-NEEDED P5)
 6. **P6 ESH**(§8)— 🔨 已實作待驗收(複訓通知預設 dry-run;Gateway 範本 / API Key、NaNa 檢視、排程方式列 CONFIRM-NEEDED P6)
-7. **P7 臨時服務**(§9;先決 Q-F11 查舊報表)
+7. **P7 臨時服務**(§9)— 🔨 已實作待驗收(Q-F11 預設寫工號待確認;簽名檔可見範圍、匿名看板圖片、ISO 來源需跨 repo / 使用者確認,列 CONFIRM-NEEDED P7)

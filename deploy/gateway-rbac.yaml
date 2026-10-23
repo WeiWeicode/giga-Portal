@@ -24,6 +24,8 @@ permissions:
   - { code: portal.group.news, name: 集團與公告, kind: group, parent: portal.app.access, sort: 50, icon: megaphone }
   - { code: portal.group.manager, name: 主管專區, kind: group, parent: portal.app.access, sort: 60, icon: user-check }
   - { code: portal.group.esh, name: ESH證照管理, kind: group, parent: portal.app.access, sort: 70, icon: shield }
+  # P7 臨時服務(D-8:有網址、不在選單):前端路由沒有 group,入口網側欄與麵包屑不列;此目錄只用來登記權限與授予
+  - { code: portal.group.services, name: 臨時服務(不在選單), kind: group, parent: portal.app.access, sort: 90, icon: file }
   # 功能頁(kind menu,一頁一碼,FRAMEWORK-PLAN §3.2)與 Tab(kind tab,代碼 = 選單代碼去掉 .read + key;frontend/src/router.ts tabCode)
   - { code: portal.home.read, name: 首頁, kind: menu, parent: portal.group.home, sort: 10, includes: [portal.api.home.read, portal.api.personal-link.read] }
   - { code: portal.profile.read, name: 個人基本資料, kind: menu, parent: portal.group.personal, sort: 20 }
@@ -144,6 +146,13 @@ permissions:
   - { code: portal.esh.chemical.read, name: 危害性化學品資訊, kind: menu, parent: portal.group.esh, sort: 305 }
   - { code: portal.esh.chemical.regulated, name: 列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 10, includes: [portal.api.esh.chemical.read] }
   - { code: portal.esh.chemical.unregulated, name: 一般非列管化學品, kind: tab, parent: portal.esh.chemical.read, sort: 20, includes: [portal.api.esh.chemical.read] }
+  # P7 臨時服務頁(frontend/src/router.ts service();網址 /services/*,看板 /tv 為 public 不需權限)
+  - { code: portal.svc.consent.read, name: 同意書, kind: menu, parent: portal.group.services, sort: 10, includes: [portal.api.svc.consent.read] }
+  - { code: portal.svc.stock.read, name: 員工持股領回確認, kind: menu, parent: portal.group.services, sort: 20, includes: [portal.api.svc.stock.read] }
+  - { code: portal.svc.post.read, name: 中華郵政寄件登記, kind: menu, parent: portal.group.services, sort: 30, includes: [portal.api.svc.post.read] }
+  - { code: portal.svc.auction.read, name: 內部拍賣, kind: menu, parent: portal.group.services, sort: 40, includes: [portal.api.svc.auction.read] }
+  - { code: portal.svc.tv.read, name: 電視看板設定, kind: menu, parent: portal.group.services, sort: 50, includes: [portal.api.svc.tv.read] }
+  - { code: portal.svc.iso.read, name: ISO 文件庫, kind: menu, parent: portal.group.services, sort: 60, includes: [portal.api.svc.iso.read] }
   # 按鈕(按鈕 = 其呼叫的寫入 API 權限,PRD D4;其餘按鈕隨各 Tab 內容一起登記)
   - { code: portal.profile.edit, name: 編輯緊急聯絡人, kind: button, parent: portal.profile.basic, sort: 10 }
   - { code: portal.note.edit, name: 新增 / 編輯個人提醒, kind: button, parent: portal.note.list, sort: 10, includes: [portal.api.note.write] }
@@ -178,6 +187,13 @@ permissions:
   - { code: portal.esh.notify.send, name: 立即發送複訓通知, kind: button, parent: portal.esh.personal.list, sort: 20, includes: [portal.api.esh.notify.send] }
   - { code: portal.esh.manager.edit, name: 維護證照管理員, kind: button, parent: portal.esh.manager.list, sort: 10, includes: [portal.api.esh.manager.edit] }
   - { code: portal.esh.chemical.edit, name: 化學品由 BPM 同步 / 上傳 SDS, kind: button, parent: portal.esh.chemical.regulated, sort: 10, includes: [portal.api.esh.chemical.edit] }
+  # P7 臨時服務(資料只看本人;拍賣管理 / 看板維護取代舊系統寫死的工號與「設定頁不需登入」)
+  - { code: portal.svc.consent.sign, name: 簽署同意書, kind: button, parent: portal.svc.consent.read, sort: 10, includes: [portal.api.svc.consent.sign] }
+  - { code: portal.svc.stock.submit, name: 送出持股領回 / 不領回, kind: button, parent: portal.svc.stock.read, sort: 10, includes: [portal.api.svc.stock.write] }
+  - { code: portal.svc.post.edit, name: 新增 / 修改 / 作廢寄件登記, kind: button, parent: portal.svc.post.read, sort: 10, includes: [portal.api.svc.post.write] }
+  - { code: portal.svc.auction.bid, name: 拍賣出價, kind: button, parent: portal.svc.auction.read, sort: 10, includes: [portal.api.svc.auction.bid] }
+  - { code: portal.svc.auction.admin, name: 拍賣管理(出價人、刪除、匯出), kind: button, parent: portal.svc.auction.read, sort: 20, includes: [portal.api.svc.auction.admin] }
+  - { code: portal.svc.tv.edit, name: 維護看板跑馬燈與圖片, kind: button, parent: portal.svc.tv.read, sort: 10, includes: [portal.api.svc.tv.edit] }
 
 roles:
   - code: employee
@@ -269,6 +285,16 @@ roles:
       - portal.esh.chemical.regulated
       - portal.esh.chemical.unregulated
       - portal.profile.edit
+      # P7 臨時服務(不在選單;同意書 / 持股以資料決定對象與期間)
+      - portal.svc.consent.read
+      - portal.svc.consent.sign
+      - portal.svc.stock.read
+      - portal.svc.stock.submit
+      - portal.svc.post.read
+      - portal.svc.post.edit
+      - portal.svc.auction.read
+      - portal.svc.auction.bid
+      - portal.svc.iso.read
   # 簽核:BPM 簽核資訊與待我簽核(BPM API 上線前沿用原 portal-approver 的範圍)
   - code: portal-approver
     name: 入口網簽核主管
@@ -379,6 +405,10 @@ roles:
   - code: portal-talk-auditor
     name: 入口網 3691 作者調閱(需核准文號)
     permissions: [portal.talk.reveal]
+  # P7 臨時服務管理(行政 / 總務):內部拍賣管理、電視看板設定(成員由 IT 在 GigaItApp 指派)
+  - code: portal-service-admin
+    name: 入口網臨時服務管理(拍賣、電視看板)
+    permissions: [portal.svc.auction.read, portal.svc.auction.admin, portal.svc.tv.read, portal.svc.tv.edit]
   - code: it-app-user
     name: IT 管理系統使用者
     permissions: [it.app.access]

@@ -389,7 +389,7 @@ export const fileUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/conte
 /** file-service 下載(附件形式,Content-Disposition 帶原檔名;P4 表單下載) */
 export const fileDownloadUrl = (fileId: string) => `/api/file/files/${enc(fileId)}/content`;
 
-export type TodoKind = 'bpm-pending' | 'bpm-unclosed' | 'qa' | 'onboarding-read' | 'onboarding-quiz' | 'note';
+export type TodoKind = 'bpm-pending' | 'bpm-unclosed' | 'qa' | 'onboarding-read' | 'onboarding-quiz' | 'consent' | 'note';
 export interface TodoItem {
   kind: TodoKind;
   title: string;
@@ -940,3 +940,175 @@ export const syncEshChemicals = (b: { from?: string; to?: string }) => http.post
 export const eshChemicalSyncRuns = () => http.get<{ items: EshJobRun[] }>('/api/portal/esh/chemicals/sync/runs');
 export const setEshChemicalSds = (efId: string, f: EshFileRef) => http.put<EshChemical>(`/api/portal/esh/chemicals/${enc(efId)}/sds`, f);
 export const deleteEshChemicalSds = (efId: string) => http.delete<void>(`/api/portal/esh/chemicals/${enc(efId)}/sds`);
+
+// ───────────── P7 臨時服務(FEATURE-PLAN §9、D-8:有網址、不在選單;docs/Gherkin/services/*.feature)─────────────
+
+export type ConsentState = 'open' | 'not-started' | 'ended' | 'signed';
+export interface ConsentSummary {
+  id: string;
+  title: string;
+  endDate: string | null;
+}
+export interface ConsentDetail {
+  id: string;
+  source: 'x' | 'b';
+  kind: 'consent' | 'account-survey';
+  title: string;
+  /** 後端已白名單清洗並代入本人資料的 HTML;顯示前再以 web-kit sanitizeHtml 清洗 */
+  html: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  state: ConsentState;
+  signedAt: string | null;
+  requireSign: boolean;
+  agreeText: string;
+  /** 集保帳號調查:身分證只有末 4 碼 */
+  profile: { empNo: string; name: string | null; nationalIdLast4: string | null; birthDate: string | null } | null;
+}
+export interface ConsentFields {
+  phone: string;
+  homeAddress: string;
+  mailAddress: string;
+  account: string;
+}
+export const pendingConsents = () => http.get<{ items: ConsentSummary[] }>('/api/portal/services/consents');
+export const consentDetail = (id: string) => http.get<ConsentDetail>(`/api/portal/services/consents/${enc(id)}`);
+export const signConsent = (id: string, b: { agree: boolean; signatureFileId?: string | null; fields?: ConsentFields | null }) =>
+  http.post<{ signedAt: string; accountLast4: string | null }>(`/api/portal/services/consents/${enc(id)}/sign`, b);
+
+export interface StockRow {
+  annual: number;
+  userId: string;
+  userName: string | null;
+  stockType: string | null;
+  backStockNo: number | null;
+  totalStockNo: number | null;
+  joinDate: string | null;
+  backDate: string | null;
+  canBack: boolean;
+}
+export interface StockDecision {
+  annual: number;
+  doBack: string;
+  backStockNo: number | null;
+  confirmTime: string | null;
+  /** 集保帳號只有末 4 碼 */
+  accountLast4: string | null;
+}
+export interface StockView {
+  year: number;
+  open: boolean;
+  current: (StockRow & { selfProvided: boolean })[];
+  canDecide: boolean;
+  decision: StockDecision | null;
+  history: (StockRow & { decision: StockDecision | null })[];
+}
+export const stockView = () => http.get<StockView>('/api/portal/services/stock');
+export const decideStock = (b: { doBack: boolean; account?: string | null }) => http.post<StockView>('/api/portal/services/stock/decision', b);
+
+export interface PostItem {
+  sn: number;
+  senderId: string;
+  senderName: string | null;
+  sendDate: string | null;
+  dept: string | null;
+  receiver: string | null;
+  zip: string | null;
+  mailType: string | null;
+  callMailNo: string | null;
+  mailMoney: string | null;
+  mailReturnMoney: string | null;
+  /** 已有郵資,不可修改 / 作廢 */
+  locked: boolean;
+}
+export interface PostInput {
+  senderId: string;
+  dept: string;
+  receiver: string;
+  zip: string;
+  sendDate: string;
+  mailType: string;
+}
+export const listPosts = (from?: string, to?: string) =>
+  http.get<{ items: PostItem[]; mailTypes: string[] }>(`/api/portal/services/post${from || to ? `?from=${enc(from ?? '')}&to=${enc(to ?? '')}` : ''}`);
+export const postSenders = (q: string) =>
+  http.get<{ items: { empNo: string; name: string; dept: string | null }[] }>(`/api/portal/services/post/senders?q=${enc(q)}`);
+export const createPost = (b: PostInput) => http.post<{ sn: number }>('/api/portal/services/post', b);
+export const updatePost = (sn: number, b: PostInput) => http.put<void>(`/api/portal/services/post/${sn}`, b);
+export const voidPost = (sn: number) => http.delete<void>(`/api/portal/services/post/${sn}`);
+
+export interface AuctionBid {
+  /** 刪除用識別碼(只有管理清單有) */
+  key: string | null;
+  amount: number | null;
+  time: string | null;
+  mine: boolean;
+  /** 只有本人的出價或管理清單才有 */
+  empNo: string | null;
+  name: string | null;
+}
+export interface AuctionItem {
+  id: string;
+  title: string;
+  /** 後端已白名單清洗;顯示前再以 web-kit sanitizeHtml 清洗 */
+  html: string;
+  startDate: string | null;
+  endDate: string | null;
+  highest: number | null;
+  minBid: number;
+  bidCount: number;
+  bids: AuctionBid[];
+}
+export const listAuction = (admin = false) => http.get<{ step: number; items: AuctionItem[] }>(`/api/portal/services/auction${admin ? '/admin' : ''}`);
+export const placeBid = (id: string, amount: number) => http.post<void>(`/api/portal/services/auction/${enc(id)}/bids`, { amount });
+export const deleteBid = (id: string, key: string) => http.delete<void>(`/api/portal/services/auction/${enc(id)}/bids?key=${enc(key)}`);
+export const auctionExportUrl = (id: string) => `/api/portal/services/auction/${enc(id)}/export`;
+
+export type TvBoardImage = { source: 'legacy'; key: string; url: string | null; name: string } | { source: 'file'; key: string; fileId: string; name: string };
+export interface TvBoard {
+  message: string;
+  fontSize: number;
+  images: TvBoardImage[];
+}
+export interface TvSettings extends TvBoard {
+  legacy: { path: string; index: number | null; active: boolean; url: string | null }[];
+  uploaded: { id: number; fileId: string; fileName: string; sort: number; active: boolean }[];
+}
+export type TvImageUpdate = { source: 'legacy'; path: string; sort: number; active: boolean } | { source: 'file'; id: number; sort: number; active: boolean };
+/** 看板(public,公共螢幕免登入;401 不導向登入頁) */
+export const tvBoard = () => http.get<TvBoard>('/api/portal/tv/board', { redirectOnAuthFailure: false });
+export const tvSettings = () => http.get<TvSettings>('/api/portal/services/tv');
+export const setTvMessage = (b: { message: string; fontSize: number }) => http.put<void>('/api/portal/services/tv/message', b);
+export const addTvImage = (b: { fileId: string; fileName: string }) => http.post<TvSettings['uploaded'][number]>('/api/portal/services/tv/images', b);
+export const updateTvImages = (items: TvImageUpdate[]) => http.put<void>('/api/portal/services/tv/images', { items });
+export const deleteTvImage = (id: number) => http.delete<void>(`/api/portal/services/tv/images/${id}`);
+
+export interface IsoDoc {
+  docNo: string;
+  docName: string;
+  levelId: string | null;
+}
+export interface IsoLink {
+  docNo: string;
+  docName: string;
+  displayVersion: string | null;
+  url: string | null;
+}
+export interface IsoDetail {
+  docNo: string;
+  docName: string;
+  displayVersion: string | null;
+  version: string | null;
+  clauseName: string | null;
+  validFrom: string | null;
+  validTo: string | null;
+  levelId: string | null;
+  url: string | null;
+  references: IsoLink[];
+  uppers: IsoLink[];
+  lowers: IsoLink[];
+}
+export const isoClauses = () => http.get<{ items: string[] }>('/api/portal/services/iso/clauses');
+export const isoDocs = (o: { clause?: string; q?: string }) =>
+  http.get<{ items: IsoDoc[] }>(`/api/portal/services/iso/docs?${o.q ? `q=${enc(o.q)}` : `clause=${enc(o.clause ?? '')}`}`);
+export const isoDoc = (docNo: string) => http.get<IsoDetail>(`/api/portal/services/iso/docs/${enc(docNo)}`);

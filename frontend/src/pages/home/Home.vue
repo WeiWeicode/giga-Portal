@@ -58,7 +58,7 @@ const slideDialog = ref(false);
 
     <div class="grid">
       <!-- 待辦事項 -->
-      <GCard title="待辦事項" subtitle="BPM 簽核、問卷、新人導覽、今日提醒" icon="check-square" tone="primary">
+      <GCard title="待辦事項" subtitle="BPM 簽核、問卷、新人導覽、同意書、今日提醒" icon="check-square" tone="primary">
         <GSkeleton v-if="first" :lines="4" />
         <GEmpty v-else-if="!data" compact tone="danger" icon="alert" title="暫時無法取得" />
         <template v-else>
@@ -67,7 +67,7 @@ const slideDialog = ref(false);
               <GIcon name="chevron-right" />
               <RouterLink v-if="t.to" :to="t.to" class="ellipsis">{{ t.title }}</RouterLink>
               <span v-else class="ellipsis">{{ t.title }}</span>
-              <span v-if="t.date && t.kind === 'qa'" class="xs faint">截止 {{ t.date }}</span>
+              <span v-if="t.date && (t.kind === 'qa' || t.kind === 'consent')" class="xs faint">截止 {{ t.date }}</span>
               <a v-if="t.href" :href="t.href" target="_blank" rel="noopener noreferrer" class="xs go">前往簽核</a>
             </li>
           </ul>
