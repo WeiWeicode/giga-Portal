@@ -5,3 +5,6 @@ data/
 secrets/
 .DS_Store
 *.log
+
+# CodeGraph 本機索引
+.codegraph/
