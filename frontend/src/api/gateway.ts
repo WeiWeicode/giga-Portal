@@ -67,6 +67,10 @@ export function describeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** 註冊時此工號已有本機帳號(Gateway PRD §8.1.1 REGISTRATION_ACCOUNT_EXISTS):畫面引導回登入或忘記密碼 */
+export const REGISTRATION_ACCOUNT_EXISTS = 'REGISTRATION_ACCOUNT_EXISTS';
+export const isAccountExists = (e: unknown): boolean => e instanceof ApiError && e.code === REGISTRATION_ACCOUNT_EXISTS;
+
 /** 密碼政策錯誤的逐條說明(PASSWORD_POLICY_VIOLATION 的 details) */
 export function policyMessages(e: unknown): string[] {
   if (!(e instanceof ApiError) || !Array.isArray(e.details)) return [];
