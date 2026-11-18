@@ -66,7 +66,7 @@ function handleUpload() {
       </div>
 
       <div v-if="uploadSuccess" class="success-alert">
-        <GAlert tone="healthy" icon="check">
+        <GAlert tone="success" icon="check">
           檔案「2026年11月製造一課排班表.xlsx」解析驗證成功！共 45 名同仁排班資料無誤，可確認匯入。
         </GAlert>
       </div>
@@ -128,7 +128,7 @@ function handleUpload() {
             <td class="mono text-center text-danger">{{ p.d6 }}</td>
             <td class="mono text-center">{{ p.d7 }}</td>
             <td class="text-center">
-              <GBadge tone="healthy">{{ p.status }}</GBadge>
+              <GBadge tone="success">{{ p.status }}</GBadge>
             </td>
           </tr>
         </tbody>

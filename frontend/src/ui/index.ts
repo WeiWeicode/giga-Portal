@@ -74,6 +74,7 @@ export { default as GStyleToggle } from './components/GStyleToggle.vue';
 export { default as GSwitch } from './components/GSwitch.vue';
 export { default as GTable } from './components/GTable.vue';
 export { default as GTabs } from './components/GTabs.vue';
+export { default as GTextarea } from './components/GTextarea.vue';
 
 export { default as GAreaChart } from './charts/GAreaChart.vue';
 export { default as GBarList } from './charts/GBarList.vue';

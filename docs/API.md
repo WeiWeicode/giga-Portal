@@ -1,6 +1,6 @@
 # 員工入口網 — API 規格
 
-> **狀態:規劃中**。portal-api 端點為設計草案,實作時以 OpenAPI(`/openapi.json`,自動註冊到 Gateway)為準並回頭更新本文件。
+> **狀態:P0 骨架(2026-10-12)**。已實作的端點見 §3.0,其餘為設計草案;實作時以 OpenAPI(`/openapi.json`,自動註冊到 Gateway)為準並回頭更新本文件。分批見 [PORTAL-API-PLAN.md](PORTAL-API-PLAN.md)。
 > 對應 [PRD.md](PRD.md) v0.1.2;錯誤格式與內部 Token 依 Gateway BACKEND-GUIDE §4、§5.3。
 
 ---
@@ -39,7 +39,29 @@
 
 > 新增使用的 API 前先查 BFF 路由表(Gateway `AGENT.md` §10.4):`node ../giga-api-gateway-bff/sdk/node/dist/lookup-cli.js <關鍵字> --gherkin`。
 
-## 3. portal-api 端點一覽(草案)
+## 3. portal-api 端點一覽
+
+### 3.0 已實作
+
+| 方法 | 對外路徑 | 權限 | 說明 |
+| --- | --- | --- | --- |
+| GET | `/api/portal/me` | `authenticated` | 目前登入者:`{ empNo, name, dept, companies }`(內部 Token);系統對系統呼叫回 403 `PORTAL_DATA_ACCESS_DENIED` |
+| GET | `/api/portal/courses/required?year=` | `portal.api.course.read` | 本人年度必上課程:`{ year, eligible, inYear, deduction, courses[{ key, name, category, status: done/missing/na, hours?, minHours? }] }`(規則同舊入口網,PORTAL-API-PLAN D-9) |
+| GET | `/api/portal/commute` | `portal.api.commute.read` | 本人通勤調查最新一筆有效資料、通勤方式選項、`canSubmit`(Google 金鑰是否設定) |
+| PUT | `/api/portal/commute` | `portal.api.commute.write` | 送出通勤調查(與舊入口網共用 PortalSolar CpfExInfo);400 驗證、422 `PORTAL_ADDRESS_UNRESOLVED`、502 `PORTAL_GEOCODE_FAILED`、503 `PORTAL_GEOCODE_UNAVAILABLE` |
+| GET / POST | `/api/portal/notes` | `portal.api.note.read` / `.write` | 本人個人提醒清單(未完成在前、依到期日)/ 新增(每人上限 500,409 `PORTAL_NOTE_LIMIT`) |
+| PATCH / DELETE | `/api/portal/notes/:id` | `portal.api.note.write` | 修改、標記完成 / 刪除;別人的提醒回 404 `PORTAL_NOTE_NOT_FOUND` |
+| GET | `/api/portal/assets/notes` | `portal.api.asset.read` | 本人在舊入口網填寫的保管資產備註(PortalSolar PersonalPropertyInfo;唯讀) |
+| GET | `/api/portal/bpm/pending` | `portal.api.bpm.read` | 本人 BPM 待簽核 `{ total, abnormal, hasAccount, items[{ subject, serialNumber, workItemName, abnormal, performUrl, traceUrl… }] }`;未設定 BPM 回 503 `PORTAL_BPM_UNAVAILABLE` |
+| GET | `/api/portal/bpm/requested?page=&pageSize=` | `portal.api.bpm.read` | 本人申請、進行中的單據(分頁,pageSize ≤ 100)與目前關卡、追蹤連結 |
+| GET | `/api/portal/directory?q=` | `portal.api.directory.read` | 分機表查詢(1–2 個關鍵字、至少 2 字,最多 200 筆,`truncated`;不含 Email) |
+| GET | `/api/portal/hr/manager-agents` | `portal.api.hr.read` | 主管職務代理人名單 PDF(需登入) |
+| PUT | `/api/portal/directory/me/phone` | `portal.api.directory.write` | 更新本人分機(記錄 NotesPhoneTemp 後更新 NotesPhone);不在分機表回 404 `PORTAL_DIRECTORY_NOT_FOUND` |
+| GET | `/api/portal/jobs?all=` | `portal.api.job.read` | 內部職缺(預設開放中) |
+| POST / PUT / DELETE | `/api/portal/jobs`、`/jobs/:no` | `portal.api.job.write` | 維護職缺(按鈕 `portal.job.edit`,portal-editor);不存在回 404 `PORTAL_JOB_NOT_FOUND` |
+| GET | `/healthz`、`/readyz`、`/openapi.json` | 無(不經 BFF 對外) | `/readyz` 的 `checks` 含 `sql` 與每個舊庫來源 `src:<來源>` |
+
+### 3.1 草案
 
 | 方法 | 對外路徑 | 權限 | 說明 |
 | --- | --- | --- | --- |
@@ -75,7 +97,8 @@
 
 | code | HTTP | 情境 |
 | --- | --- | --- |
-| `PORTAL_VALIDATION_FAILED` | 400 | 參數錯誤(`details` 列出欄位) |
+| `PORTAL_INTERNAL_TOKEN_INVALID` | 401 | 缺少或無效的內部 Token(不經 BFF 直接呼叫) |
+| `VALIDATION_FAILED` | 400 | 參數錯誤(`details` 列出欄位;沿用 Gateway 共用代碼) |
 | `PORTAL_NOT_FOUND` | 404 | 公告、資源不存在 |
 | `PORTAL_DATA_ACCESS_DENIED` | 403 | 不在可見 / 可管理範圍(例:管理其他部門的公告) |
 | `PORTAL_CONFLICT` | 409 | 同時編輯(版本不符) |

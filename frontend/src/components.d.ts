@@ -27,6 +27,7 @@ declare module 'vue' {
     GSwitch: (typeof import('./ui/components/GSwitch.vue'))['default'];
     GTable: (typeof import('./ui/components/GTable.vue'))['default'];
     GTabs: (typeof import('./ui/components/GTabs.vue'))['default'];
+    GTextarea: (typeof import('./ui/components/GTextarea.vue'))['default'];
     GAreaChart: (typeof import('./ui/charts/GAreaChart.vue'))['default'];
     GBarList: (typeof import('./ui/charts/GBarList.vue'))['default'];
     GDonut: (typeof import('./ui/charts/GDonut.vue'))['default'];

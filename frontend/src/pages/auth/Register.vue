@@ -3,11 +3,12 @@
  * 自行註冊(PRD FR-1.4;Gateway PRD §8.2.4–§8.2.5):沒有 AD 網域的子公司員工以工號 + 姓名申請;
  * 沒有公司 Email 者另填到職日並在同一次申請設定密碼(Gateway 比對到職日後直接啟用)。
  * 帶 token(Email 驗證連結或 IT 代建的 /register/activate?token=)時改為設定密碼並啟用帳號。
- * 申請結果(寄出驗證連結 / 直接啟用 / 轉 IT 審核)以 Gateway 回傳的 message 為準;無法註冊時為統一訊息,不透露原因。
+ * 申請結果(寄出驗證連結 / 直接啟用 / 轉 IT 審核)以 Gateway 回傳的 message 為準;無法註冊時為統一訊息,不透露原因,
+ * 只有「此工號已有帳號」(REGISTRATION_ACCOUNT_EXISTS)另附回到登入 / 忘記密碼連結。
  */
 import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { describeError, policyMessages, register, verifyRegistration } from '@/api/gateway';
+import { describeError, isAccountExists, policyMessages, register, verifyRegistration } from '@/api/gateway';
 import AuthHeader from './AuthHeader.vue';
 import SetPasswordForm from './SetPasswordForm.vue';
 
@@ -18,11 +19,14 @@ const form = reactive({ employeeNo: '', name: '', hireDate: '', password: '', co
 const loading = ref(false);
 const error = ref<string | null>(null);
 const rules = ref<string[]>([]);
+/** 此工號已有帳號:錯誤訊息下方附回到登入 / 忘記密碼 */
+const accountExists = ref(false);
 const done = ref<string | null>(null);
 
 async function apply() {
   error.value = null;
   rules.value = [];
+  accountExists.value = false;
   if (form.hireDate && form.password !== form.confirm) return (error.value = '兩次輸入的密碼不一致');
   loading.value = true;
   try {
@@ -35,6 +39,7 @@ async function apply() {
   } catch (e) {
     error.value = describeError(e);
     rules.value = policyMessages(e);
+    accountExists.value = isAccountExists(e);
   } finally {
     loading.value = false;
   }
@@ -84,6 +89,9 @@ async function activate(password: string) {
         <ul v-if="rules.length">
           <li v-for="r in rules" :key="r">{{ r }}</li>
         </ul>
+        <template v-if="accountExists">
+          <br /><RouterLink to="/login">回到登入</RouterLink> 或 <RouterLink to="/reset-password">使用忘記密碼</RouterLink>
+        </template>
       </GAlert>
       <GButton type="submit" variant="primary" size="lg" block :loading="loading" icon-right="send">送出申請</GButton>
     </form>

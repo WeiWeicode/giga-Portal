@@ -29,7 +29,7 @@ const benefits = [
           <h4 class="m-0">理級主管職責授權與福利規章</h4>
           <span class="faint small">涵蓋經理、副理、資深經理之中階管理職權責與福利政策</span>
         </div>
-        <GBadge tone="healthy">中階主管管理職</GBadge>
+        <GBadge tone="success">中階主管管理職</GBadge>
       </div>
     </GCard>
 

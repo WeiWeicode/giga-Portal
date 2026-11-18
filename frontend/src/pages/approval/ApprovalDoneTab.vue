@@ -78,7 +78,7 @@ const doneList: DoneItem[] = [
               </td>
               <td>{{ item.comment }}</td>
               <td class="text-center">
-                <GButton variant="ghost" size="small" icon="file-text">查看內容</GButton>
+                <GButton variant="ghost" size="sm" icon="file-text">查看內容</GButton>
               </td>
             </tr>
           </tbody>

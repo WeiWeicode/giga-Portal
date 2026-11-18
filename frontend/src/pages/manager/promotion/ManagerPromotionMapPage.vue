@@ -162,7 +162,7 @@ const currentSteps = computed(() => tracks[selectedTrack.value] ?? []);
         <div class="courses-box">
           <span class="crit-label font-bold">📚 必要核心修習課程：</span>
           <div class="course-tags">
-            <GBadge v-for="c in step.courses" :key="c" tone="healthy">
+            <GBadge v-for="c in step.courses" :key="c" tone="success">
               {{ c }}
             </GBadge>
           </div>

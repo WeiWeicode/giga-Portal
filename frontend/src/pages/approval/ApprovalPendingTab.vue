@@ -118,8 +118,8 @@ function submitAction() {
               </td>
               <td class="text-center">
                 <div class="btn-row">
-                  <GButton variant="primary" size="small" icon="check" @click="handleApprove(item)">核准</GButton>
-                  <GButton variant="ghost" size="small" icon="x" @click="handleReject(item)">退回</GButton>
+                  <GButton variant="primary" size="sm" icon="check" @click="handleApprove(item)">核准</GButton>
+                  <GButton variant="ghost" size="sm" icon="x" @click="handleReject(item)">退回</GButton>
                 </div>
               </td>
             </tr>

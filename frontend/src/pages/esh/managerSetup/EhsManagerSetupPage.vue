@@ -23,15 +23,15 @@ const roleOptions = [
 ]
 
 const columns = [
-  { key: 'plant', title: '廠區' },
-  { key: 'dept', title: '部門' },
-  { key: 'role', title: '環安擔當角色' },
-  { key: 'primaryUser', title: '正擔當 (Primary)' },
-  { key: 'deputyUser', title: '職務代理人 (Deputy)' },
-  { key: 'contact', title: '聯絡分機 / 公務手機' },
-  { key: 'scope', title: '管轄作業區域' },
-  { key: 'status', title: '在任狀態' },
-  { key: 'action', title: '操作' },
+  { key: 'plant', label: '廠區' },
+  { key: 'dept', label: '部門' },
+  { key: 'role', label: '環安擔當角色' },
+  { key: 'primaryUser', label: '正擔當 (Primary)' },
+  { key: 'deputyUser', label: '職務代理人 (Deputy)' },
+  { key: 'contact', label: '聯絡分機 / 公務手機' },
+  { key: 'scope', label: '管轄作業區域' },
+  { key: 'status', label: '在任狀態' },
+  { key: 'action', label: '操作' },
 ]
 
 const managerList = ref([
@@ -152,7 +152,7 @@ const editForm = ref({
 
     <!-- 管理者清單 -->
     <GCard>
-      <GTable :columns="columns" :data="managerList">
+      <GTable :columns="columns" :rows="managerList" row-key="id">
         <template #cell-plant="{ row }">
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ row.plant }}</span>
         </template>
@@ -160,7 +160,7 @@ const editForm = ref({
           <span class="text-gray-700 dark:text-gray-300">{{ row.dept }}</span>
         </template>
         <template #cell-role="{ row }">
-          <GBadge variant="primary">{{ row.role }}</GBadge>
+          <GBadge tone="primary">{{ row.role }}</GBadge>
         </template>
         <template #cell-primaryUser="{ row }">
           <div class="font-bold text-gray-900 dark:text-gray-100">{{ row.primaryUser }}</div>
@@ -175,7 +175,7 @@ const editForm = ref({
           <span class="text-xs text-gray-600 dark:text-gray-400">{{ row.scope }}</span>
         </template>
         <template #cell-status="{ row }">
-          <GBadge variant="success">在任中</GBadge>
+          <GBadge tone="success">在任中</GBadge>
         </template>
         <template #cell-action="{ row }">
           <div class="flex gap-2">

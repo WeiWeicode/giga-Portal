@@ -2,9 +2,23 @@
  * Gateway BFF 呼叫(全站唯一入口,頁面不直接 fetch):一律經 Gateway web-kit(CSRF、401 自動 Refresh、useAuth / can)。
  * 登入相關 API 見 Gateway PRD §8.2.4;錯誤代碼見 §8.1.1。本專案不保存帳號、密碼、Token。
  */
-import { ApiError, http, setMe, type Me } from '@giganexus/web-kit';
+import { ApiError, http, setMe, useAuth, type Me } from '@giganexus/web-kit';
+import { hasIcon } from '@/ui/icons';
 
 export { ApiError, http, loadMe, logout, useAuth } from '@giganexus/web-kit';
+
+const kit = useAuth();
+export const can = (code: string): boolean => kit.can(code);
+/** 選單 / 目錄在 BFF 的設定(名稱、上層、排序、圖示) */
+export const menuOf = (code: string | undefined) => kit.menuOf(code);
+export const canAll = (codes: readonly string[] | undefined): boolean => !codes || codes.every((c) => kit.can(c));
+/** 選單 / 頁面 / Tab 名稱:以 BFF 的權限名稱為準(GigaItApp「選單管理」可改名),沒有時用前端預設文字 */
+export const menuTitle = (permission: string | undefined, fallback: string): string => kit.nameOf(permission) ?? fallback;
+/** 選單 / 頁面圖示:以 BFF 為準(須是 ui/icons.ts 登記的名稱),沒有或不認得時用前端預設 */
+export function menuIcon(permission: string | undefined, fallback: string): string {
+  const icon = kit.menuOf(permission)?.icon;
+  return hasIcon(icon) ? icon : fallback;
+}
 
 /** 應用登記(Gateway PRD §8.3.3);`/api/auth/me` 的 apps 由 Gateway G3 提供,尚未實作前為 undefined */
 export interface AppEntry {
@@ -52,6 +66,10 @@ export function describeError(e: unknown): string {
   if (e instanceof TypeError) return '無法連線伺服器,請確認網路';
   return e instanceof Error ? e.message : String(e);
 }
+
+/** 註冊時此工號已有本機帳號(Gateway PRD §8.1.1 REGISTRATION_ACCOUNT_EXISTS):畫面引導回登入或忘記密碼 */
+export const REGISTRATION_ACCOUNT_EXISTS = 'REGISTRATION_ACCOUNT_EXISTS';
+export const isAccountExists = (e: unknown): boolean => e instanceof ApiError && e.code === REGISTRATION_ACCOUNT_EXISTS;
 
 /** 密碼政策錯誤的逐條說明(PASSWORD_POLICY_VIOLATION 的 details) */
 export function policyMessages(e: unknown): string[] {

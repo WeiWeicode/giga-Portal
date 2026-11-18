@@ -28,16 +28,16 @@ const statusOptions = [
 ]
 
 const columns = [
-  { key: 'plant', title: '廠區' },
-  { key: 'dept', title: '所屬部門' },
-  { key: 'station', title: '作業站點 / 設備區域' },
-  { key: 'licenseName', title: '法定應具備證照名稱' },
-  { key: 'legalBasis', title: '法令規範依據' },
-  { key: 'reqHeadcount', title: '法定需求人數' },
-  { key: 'actHeadcount', title: '現況配置人數' },
-  { key: 'gap', title: '人力缺口' },
-  { key: 'status', title: '法令合規狀態' },
-  { key: 'action', title: '指派/調度' },
+  { key: 'plant', label: '廠區' },
+  { key: 'dept', label: '所屬部門' },
+  { key: 'station', label: '作業站點 / 設備區域' },
+  { key: 'licenseName', label: '法定應具備證照名稱' },
+  { key: 'legalBasis', label: '法令規範依據' },
+  { key: 'reqHeadcount', label: '法定需求人數' },
+  { key: 'actHeadcount', label: '現況配置人數' },
+  { key: 'gap', label: '人力缺口' },
+  { key: 'status', label: '法令合規狀態' },
+  { key: 'action', label: '指派/調度' },
 ]
 
 const needRecords = ref([
@@ -175,7 +175,7 @@ const needRecords = ref([
 
     <!-- 需求清單表格 -->
     <GCard>
-      <GTable :columns="columns" :data="needRecords">
+      <GTable :columns="columns" :rows="needRecords" row-key="id">
         <template #cell-plant="{ row }">
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ row.plant }}</span>
         </template>
@@ -204,9 +204,9 @@ const needRecords = ref([
           <span v-else class="text-emerald-600 font-bold">0 人 (足)</span>
         </template>
         <template #cell-status="{ row }">
-          <GBadge v-if="row.status === 'COMPLIANT'" variant="success">合規 (滿編)</GBadge>
-          <GBadge v-else-if="row.status === 'SURPLUS'" variant="primary">充足 (備用)</GBadge>
-          <GBadge v-else variant="danger">法定缺額 (警示)</GBadge>
+          <GBadge v-if="row.status === 'COMPLIANT'" tone="success">合規 (滿編)</GBadge>
+          <GBadge v-else-if="row.status === 'SURPLUS'" tone="primary">充足 (備用)</GBadge>
+          <GBadge v-else tone="danger">法定缺額 (警示)</GBadge>
         </template>
         <template #cell-action="{ row }">
           <GButton size="sm" variant="ghost">指派名單</GButton>

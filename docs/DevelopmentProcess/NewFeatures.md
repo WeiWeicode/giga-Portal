@@ -2,6 +2,21 @@
 
 > 新紀錄加在最上方;格式見 `AGENT.md` §11。
 
+## 2026-10-12 框架對齊測試區驗收、收尾文件
+- 內容:使用者執行 `deploy/sql/2026-10-12-portal-menu-realign.sql` 後,以 S112009(employee / gw-super-admin / it-admin)在測試區驗收:入口網大項 7、menu 44(全部在 `portal.group.*` 下)、tab 76、已移除代碼消失;首頁大項為直接連結;主管專區 11 頁可見、「主管權限說明」Tab 與麵包屑正確;首頁兩欄卡片、最新公告即時連線;giga-observe `portal-web` 健康。新增交接文件 `docs/HANDOFF.md`(下一階段 portal-api);FRAMEWORK-PLAN 標示完成並記錄驗收結果;PRD 記錄目前控管範圍(只到選單 / Tab,API 層待 portal-api)
+- 檔案:`docs/HANDOFF.md`(新增)、`docs/FRAMEWORK-PLAN.md`、`docs/PRD.md`、`docs/PROJECT-MAP.md`、`AGENT.md`
+- 驗證:瀏覽器(測試區,已登入的瀏覽器面板)讀取 `/api/auth/me` 與畫面;`/api/observe/topology` 的 `portal-web` 節點
+
+## 2026-10-12 首頁版面對齊舊入口網、首頁大項不摺疊、舊選單代碼整理 SQL
+- 內容:需求方驗收回饋。① 側欄「首頁」大項直接是連結,不再摺疊出「入口網首頁」(BFF 頁名與大項名稱不同時也成立,`AppLayout.vue isDirect`)。② 首頁移除「功能導覽」,版面改依 `old_PortalSolar/MainFormX.aspx`:問候橫幅 + 兩欄卡片(待辦事項、個人秘書、最新公告、公告輪播、集團動態);除最新公告(BFF 通知中心)外標示「待串接」,不放假資料。③ `deploy/sql/2026-10-12-portal-menu-realign.sql`:測試區 2026-10-12 前登記的 37 個代碼改為 yaml 的名稱 / 上層(`portal.group.*`)/ 排序,刪除已移除的 10 個代碼(`portal.leave.*`、`portal.attendance.read / punch`、`portal.resource.*`、舊 `bpm.approval.*` 畫面權限),寫 audit_log、遞增權限版本;由使用者以測試區 DB 帳號執行
+- 檔案:`frontend/src/layouts/AppLayout.vue`、`frontend/src/pages/home/Home.vue`、`deploy/sql/2026-10-12-portal-menu-realign.sql`、`docs/PROJECT-MAP.md`
+- 驗證:`npm run typecheck`(0)、`npm test`(35);本機注入 BFF 頁名「入口網首頁」確認首頁大項為直接連結、首頁五張卡片兩欄排列。SQL 未執行(待使用者)
+
+## 2026-10-12 框架對齊 GigaItApp(登入、選單、Tab、按鈕、通知;FRAMEWORK-PLAN P1–P3)
+- 內容:依 `docs/FRAMEWORK-PLAN.md`(需求方 2026-10-12 同意 F1–F3 與修改 GigaItApp)。① web-kit 改 GitLab npm Registry `^0.3.0`(`.npmrc`、Dockerfile secret、compose、CI 加 typecheck)。② 側欄大項登記為 BFF 選單目錄 `portal.group.*`,大項 / 頁名 / 圖示 / 順序 / 頁面歸屬以 `/api/auth/me` 的 menus 為準(`composables/menu.ts buildMenu`,同 GigaItApp `buildMenus`);頁首、Tab、麵包屑名稱同步。③ 每個 Tab 有權限代碼(`router.ts tabCode`);Tab 沒權限時轉到同頁第一個可看的 Tab,整頁沒有可看 Tab 時側欄隱藏、網址 403;支援 `meta.requires`。④ 一頁一碼:新增 10 個 menu 代碼(F3);移除隱藏的 M1 頁 `personal/leave`、`personal/attendance`、`resources/admin` 與其代碼(F1)。⑤ `deploy/gateway-rbac.yaml` 改寫:group 7、menu 44、tab 76、按鈕 3;角色 employee / portal-approver / portal-manager / portal-esh-admin / portal-editor / it-app-user。`it-admin` 可查看全部 menu + tab,登記在 GigaItApp(本檔需先套用)。⑥ 通知:`components/notify/`(NotifyHost、NotifyBell、LatestAnnouncements)與 `composables/notify.ts`(app = portal),頂列鈴鐺、公告閱讀對話框;首頁改為儀表板框架(問候、最新公告真實資料、待串接卡片位、功能導覽)。⑦ `ui/icons.ts`(含 GigaItApp 全部圖示並補上頁面用到的 23 個)、`GTextarea`、`GModal` 疊層、`installMonitor('portal-web')`、啟動載入畫面。⑧ mock 頁面型別錯誤修正(ESH 表格 `:data` → `:rows` + `row-key`,原本表格不顯示資料;按鈕 `size`、`GBadge tone`、`GInput` 數字)
+- 檔案:`frontend/`(`.npmrc`、`package.json`、`vite.config.ts`、`tsconfig.json`、`Dockerfile`、`src/router.ts`、`src/api/gateway.ts`、`src/composables/menu.ts`、`src/composables/notify.ts`、`src/components/notify/*`、`src/layouts/AppLayout.vue`、`src/layouts/TabbedPage.vue`、`src/ui/icons.ts`、`src/ui/components/{GIcon,GTabs,GModal,GInput,GTextarea}.vue`、`src/pages/home/Home.vue`、mock 頁面 25 個、`test/menu.test.ts`)、`deploy/gateway-rbac.yaml`、`deploy/docker-compose.yml`、`.gitlab-ci.yml`、`docs/FRAMEWORK-PLAN.md`、`docs/PRD.md`(v0.1.4)、`docs/ARCHITECTURE.md`、`docs/PROJECT-MAP.md`、`docs/Gherkin/*`、`AGENT.md`
+- 驗證:`npm run typecheck`(0 錯誤)、`npm test`(35 項)、`npm run build` 通過;本機 dev 以注入的 `/api/auth/me` 確認:BFF 改名 / 圖示 / 大項生效、`/manager/rights` 無 level1 權限轉到 `/manager/rights/level2`、無 Tab 權限的薪資頁側欄隱藏且 403、鈴鐺未讀數與最新公告卡、375px 無水平捲動。測試區驗收見 FRAMEWORK-PLAN §4 P4
+
 ## 2026-10-01 移除本機 Gateway 用的權限檔;前端開發改 proxy 到測試區
 - 內容:需求方決定不再使用家中開發環境(配合 giga-api-gateway-bff `0c9b5b8`)。刪除 `deploy/gateway-dev-rbac.yaml`、`deploy/apply-gateway-dev-rbac.sh`;`frontend/vite.config.ts` 的 `/api` proxy 預設改為測試區 `https://giganexus-test.gigasolar.com.tw`(公司憑證,改回驗證憑證;`GATEWAY_TARGET` 可改);AGENT.md、README、ARCHITECTURE、PROJECT-MAP、UI-GUIDE、PRD、Gherkin README 的本機 Gateway 說明改為測試區(測試帳號改為假工號自行註冊的本機帳號)。修正紀錄與 PRD 修訂紀錄為歷史,不修改
 - 檔案:`deploy/gateway-dev-rbac.yaml`、`deploy/apply-gateway-dev-rbac.sh`(刪除)、`deploy/gateway-rbac.yaml`、`deploy/apply-gateway-rbac.sh`、`frontend/vite.config.ts`、`frontend/Dockerfile`、`AGENT.md`、`README.md`、`docs/ARCHITECTURE.md`、`docs/PROJECT-MAP.md`、`docs/UI-GUIDE.md`、`docs/PRD.md`、`docs/Gherkin/README.md`

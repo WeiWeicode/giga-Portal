@@ -13,7 +13,6 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@giganexus/web-kit": ["../../giga-api-gateway-bff/web-kit/src/index.ts"],
       "vue": ["./node_modules/vue"],
       "vue-router": ["./node_modules/vue-router"]
     }

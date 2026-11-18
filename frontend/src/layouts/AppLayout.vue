@@ -2,14 +2,17 @@
 /**
  * 主框架(PRD FR-6.1、UI-GUIDE §4):左側兩層選單(群組 → 功能,依權限過濾)、頂列(麵包屑、風格 / 明暗、應用切換、帳號)、內容區。
  * 頁面內的第三層切換使用 Tab(TabbedPage.vue)。≤ 960px 選單改為抽屜(FR-6.6)。
+ * 通知(Gateway NOTIFY-PLAN,同 GigaItApp):NotifyHost 連 /ws/notify?app=portal,新公告以 Toast / 對話框提示;鈴鐺顯示未讀數。
  * 側欄收合時只顯示群組圖示,滑鼠移上(或鍵盤聚焦、點擊)在右側浮出該群組的功能清單。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuth, type PortalMe } from '@/api/gateway';
+import { menuTitle, useAuth, type PortalMe } from '@/api/gateway';
+import NotifyBell from '@/components/notify/NotifyBell.vue';
+import NotifyHost from '@/components/notify/NotifyHost.vue';
 import { CURRENT_APP, deniedMessage, resolveApps } from '@/composables/apps';
-import { buildMenu, findActive } from '@/composables/menu';
-import { MENU_GROUPS, MENU_PAGES } from '@/router';
+import { findActive } from '@/composables/menu';
+import { portalMenus } from '@/router';
 import { toast } from '@/ui';
 import ChangePasswordModal from './ChangePasswordModal.vue';
 
@@ -18,10 +21,11 @@ const me = computed(() => auth.me.me as PortalMe | null);
 const route = useRoute();
 const router = useRouter();
 
-const menus = computed(() => buildMenu(MENU_GROUPS, MENU_PAGES, auth.can));
+const menus = computed(portalMenus);
 const apps = computed(() => resolveApps(me.value));
-/** 只有一個功能且名稱與群組相同(首頁)時,群組直接是連結 */
-const isDirect = (g: { title: string; children: { title: string }[] }) => g.children.length === 1 && g.children[0]!.title === g.title;
+/** 首頁大項(或只有一個功能且名稱與大項相同)直接是連結,不摺疊;BFF 的頁名可能與大項不同(例「入口網首頁」) */
+const isDirect = (g: { key: string; title: string; children: { path: string; title: string }[] }) =>
+  g.children.length === 1 && (g.key === 'home' || g.children[0]!.path === '/' || g.children[0]!.title === g.title);
 
 const COLLAPSE_KEY = 'portal.sidebar.collapsed';
 const collapsed = ref(readCollapsed());
@@ -51,11 +55,12 @@ const crumbs = computed(() => {
   if (activeItem.value) {
     if (!isDirect(activeItem.value.group)) out.push(activeItem.value.group.title);
     out.push(activeItem.value.item.title);
-    // 不在選單的子頁(例 /resources/admin)附上自己的標題
-    const own = route.matched[1]?.meta.title;
-    if (own && own !== activeItem.value.item.title) out.push(own);
+    // 不在選單的子頁(權限與選單項目不同)附上自己的標題
+    const own = route.matched[1]?.meta;
+    if (own?.title && own.permission !== activeItem.value.item.permission) out.push(menuTitle(own.permission, own.title));
   } else if (route.meta.title) out.push(route.meta.title);
-  if (route.meta.tab) out.push(route.meta.tab);
+  // Tab 名稱以 BFF 為準(與頁籤一致)
+  if (route.meta.tab) out.push(menuTitle(route.meta.permission, route.meta.tab));
   return out;
 });
 
@@ -205,6 +210,7 @@ async function doLogout() {
           <li v-for="(c, i) in crumbs" :key="i" :class="{ last: i === crumbs.length - 1 }">{{ c }}</li>
         </ol>
         <div class="spacer" />
+        <NotifyBell />
         <GStyleToggle />
         <GAppSwitcher :apps="apps.apps" :current="CURRENT_APP" :derived="apps.derived" />
         <div class="user" @keydown.esc="userMenu = false">
@@ -251,6 +257,7 @@ async function doLogout() {
         </RouterView>
       </main>
     </div>
+    <NotifyHost />
     <ChangePasswordModal v-model:open="pwdOpen" />
 
     <Teleport to="body">

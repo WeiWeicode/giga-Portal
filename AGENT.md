@@ -11,16 +11,28 @@
 
 同 `../giga-api-gateway-bff/AGENT.md` §10.8(有出入時以該節為準)。
 
-寫程式、寫測試、寫文件由 **Claude** 負責;**Gemini** 只負責執行測試、撰寫測試報告,以及非邏輯性的修改。Gemini 開始動手前,先確認工作在下表 Gemini 欄是 ✅。
+**Claude** 負責前後端,著重在邏輯、框架、架構規劃與寫計畫:後端全部、前端的邏輯層、測試、技術文件。**Gemini** 負責前端的頁面與元件、寫需求企劃,以及執行測試、撰寫測試報告。Gemini 開始動手前,先確認工作在下表 Gemini 欄是 ✅。
 
 | 工作 | Claude | Gemini |
 | --- | --- | --- |
-| 寫程式(新功能、業務邏輯、API、權限、資料存取、狀態管理、修 bug、重構) | ✅ | ❌ |
-| 寫測試(單元 / 整合 / E2E 測試碼、測試用 fixture 的邏輯) | ✅ | ❌ |
-| 寫文件(`AGENT.md`、`README.md`、`docs/`、`PROJECT-MAP.md`、架構 JSON、修正紀錄) | ✅ | ❌(測試報告除外) |
+| 後端程式(API、業務邏輯、權限、資料存取、排程、修 bug、重構) | ✅ | ❌ |
+| 前端邏輯層:`composables/`(狀態與邏輯)、`api/`(HTTP)、store、路由與路由守衛、權限判斷、`@giganexus/*` 共用套件 | ✅ | ❌ |
+| 前端頁面與元件:`pages/`、`components/` / `ui/` 的畫面組合、版面、樣式、互動、文案、mock / 假資料 | ✅ | ✅ |
+| 架構與框架:新模組、目錄慣例、選用套件、共用元件與 composable 的介面設計 | ✅ | ❌ |
+| 寫計畫與技術文件:`ARCHITECTURE.md`、`IMPL-PLAN.md`、`HANDOFF.md`、`PROJECT-MAP.md`、`AGENT.md`、`README.md`、架構 JSON、修正紀錄 | ✅ | ❌ |
+| 寫需求企劃:`docs/PRD.md`、功能企劃、`docs/Gherkin/*.feature` 驗收場景 | ✅ | ✅ |
+| 後端測試、前端邏輯層測試、整合 / E2E 測試、測試用 fixture 的邏輯 | ✅ | ❌ |
+| 前端元件測試(Gemini 負責的頁面 / 元件) | ✅ | ✅ |
 | 執行測試(既有的 `npm test`、`test:int`、E2E、`cargo test` 等)並撰寫測試報告 | ✅ | ✅ |
-| 非邏輯性修改:前端 mock / 假資料、版面與樣式(CSS、間距、顏色、排版)、畫面文案錯字 | ✅ | ✅ |
 | CI/CD 與容器、部署設定 | ✅ | ❌ **禁止** |
+
+**Gemini 寫前端頁面與元件**:
+
+- 資料與狀態一律用既有的 `composables/`、`api/`;頁面不直接 `fetch`、不自己寫權限判斷(Gateway `AGENT.md` §10.7.2)。需要新的 API 呼叫、狀態、權限代碼或路由時,寫在 MR 說明交給 Claude。
+- 權限代碼、路由、錯誤代碼以 Gateway `docs/` 為準,不自創。
+- 新增頁面或元件時,可在 `docs/PROJECT-MAP.md` 補上該頁面 / 元件那一行;其他段落由 Claude 維護。
+
+**Gemini 寫需求企劃**:只描述需求、畫面與驗收行為。API 介面、權限代碼、錯誤代碼、資料表屬技術設計,企劃中需要時列為「待決事項」交給 Claude,不直接定案。
 
 **Gemini 禁止修改**(即使只改一行):
 
@@ -28,7 +40,8 @@
 - 容器與部署:`Dockerfile*`、`docker-compose*`、`.dockerignore`、`deploy/`、`nginx/`、部署腳本、`.env*`、`Web.config` / 發佈設定。
 - 相依與建置設定:`package.json`(含 scripts)、lock 檔、`Cargo.toml`、`tsconfig*.json`、`vite.config.*`。
 - 資料庫:schema、migration、seed。
-- 測試程式碼:測試失敗時**不得**為了讓測試通過而修改測試或程式、跳過測試、調整門檻;把失敗寫進報告,交給 Claude 處理。
+- 後端程式與前端邏輯層(見上表)。
+- 測試:只能新增 / 修改自己負責頁面的元件測試。測試失敗時**不得**為了讓測試通過而修改測試或程式、跳過測試、調整門檻;把失敗寫進報告,交給 Claude 處理。
 
 **測試報告**(Gemini 執行測試後必寫):
 
@@ -36,7 +49,17 @@
 - 內容:1. 環境(分支 / commit、部署區、執行的指令)2. 結果(通過 / 失敗 / 略過數量)3. 失敗項目(測試名稱、錯誤訊息摘錄)4. **可能問題**:推測原因、相關檔案與行號、重現步驟、影響範圍 5. 建議交給 Claude 處理的項目。
 - 測試全部通過也要寫,並列出觀察到的潛在風險(警告訊息、偶發失敗、執行過慢等)。
 
-**判斷不了是否屬於「非邏輯性」時,一律視為邏輯修改**:不動程式,寫進報告交給 Claude。
+**判斷不了屬於頁面 / 元件還是邏輯時,一律視為邏輯**:不動程式,寫進 MR 說明或報告交給 Claude。
+
+---
+
+## 找程式碼:CodeGraph 優先 — 必讀
+
+同 `../giga-api-gateway-bff/AGENT.md` §10.7(有出入時以該節為準)。
+
+- repo 根目錄有 `.codegraph/`(CodeGraph 索引)時,找檔案、符號、呼叫關係與修改的影響範圍**先用 CodeGraph**:Claude Code 用 MCP 工具 `codegraph_explore`;其他 AI 或人在 repo 根目錄執行 `codegraph explore "<符號名稱或問題>"`。
+- CodeGraph 找不到(剛新增尚未索引的檔案、設定檔與文件不在索引內),或要看目錄職責與「要改 X → 看哪裡」時,再看 `docs/PROJECT-MAP.md`。
+- 沒有 `.codegraph/` 時直接看專案地圖;是否建立索引由使用者決定。`.codegraph/` 是本機索引,不進版控(列在 `.gitignore`)。
 
 ---
 
@@ -88,6 +111,18 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 
 ---
 
+## Git 分支與推送 — 必讀
+
+同 `../giga-api-gateway-bff/AGENT.md` §10.10(有出入時以該節為準);同仁操作步驟見工作區 `../BackToNas/同仁開發指南.md`。
+
+- 開發在工作分支(`feature/*`、`fix/*`、`docs/*`、`refactor/*`),從最新的 `origin/develop` 開。目前在 `develop` / `main` 而任務要改檔時,**先詢問使用者要開哪個分支**,不要直接提交。
+- 只推送工作分支;`develop`、`main` **只透過 GitLab Merge Request 由 Maintainer 合併**。AI 不得推送 `develop` / `main`(使用者在本次對話明確指示且為 Maintainer 除外),不得 force push 或改寫已推送的提交;推送被拒時不找繞過方式。
+- **多人協作**:開發新功能前先 `git fetch`,從最新的基準分支開分支;合併遇到衝突時 **AI 先停下**,不自行解衝突,列出衝突檔案與影響的功能 / 邏輯,由開發者告知專案擁有者討論後再處理;開 MR 用 `.gitlab/merge_request_templates/Default.md` 範本(工作區 `../AGENT.md` §9)。以 GitLab 為準,GitHub 只是專案擁有者個人備份。
+- **本 repo 部署**:合併到 `develop` → CI 自動部署測試區(主機 2);`main` 尚未設定正式區部署。測試區共用,合併前提醒使用者在群組告知。
+- 提交前確認 diff 只含本次任務的檔案,不提交 `.env*` 與任何機密;提交訊息用 `<type>(<scope>): <中文說明>`。
+
+---
+
 ## 0. 專案定位(先讀)
 
 | 項目 | 內容 |
@@ -100,7 +135,7 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 | 權限 | **Gateway BFF 是唯一來源**:應用 / 選單 / Tab / 按鈕權限依角色、部門(含下層)、職級(職稱選配)由 BFF 計算,**由 GigaItApp 設定**(Gateway PRD §8.3.1–§8.3.3);按鈕權限代碼 = 其呼叫的 API 權限代碼 |
 | 開發專案名稱 | `giga-Portal`(`backend/package.json` 的 `gateway.project`,自動註冊時寫入 `x-gateway.project`) |
 | 風格 | 淺綠 / 科技綠(綠能:太陽能、儲能);使用者可切換**玻璃 / 扁平**與**明亮 / 黑暗**(PRD §6.6、UI-GUIDE) |
-| 狀態 | **M1 進行中**:`frontend/` 框架已建立(登入 / 註冊 / 忘記密碼頁、兩層選單與 Tab、權限過濾、應用切換、玻璃 / 扁平 × 明亮 / 黑暗);`backend/`(portal-api)自 M4 開始;需求見 `docs/PRD.md` |
+| 狀態 | **前端框架完成(2026-10-12 測試區驗收)**:對齊 GigaItApp 的登入、選單目錄、Tab / 按鈕權限、通知、前端監控(`docs/FRAMEWORK-PLAN.md`);各頁 Tab 內容為 mock;`backend/`(portal-api)為下一階段;**接手先讀 `docs/HANDOFF.md`**,需求見 `docs/PRD.md` |
 | 目錄 | `frontend/`(Vue 3 + Vite,已建立)、`deploy/`(`spa-portal` 發佈、Gateway 權限設定 `gateway-rbac.yaml`)、`docs/`;`backend/`(portal-api,Fastify)自 M4 建立;各目錄職責見 `docs/PROJECT-MAP.md` |
 
 ### 0.1 工作區與相依
@@ -233,7 +268,7 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 
 | 位置 | 指令 | 說明 |
 | --- | --- | --- |
-| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 到測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`,`GATEWAY_TARGET` 可改);web-kit 以 alias 取自 `../giga-api-gateway-bff/web-kit/src` |
+| `frontend/` | `npm run dev` | http://localhost:5179/,proxy `/api` 到測試區 Gateway(`https://giganexus-test.gigasolar.com.tw`,`GATEWAY_TARGET` 可改);`@giganexus/web-kit` 取自 GitLab npm Registry(安裝需環境變數 `GITLAB_NPM_TOKEN`) |
 | `frontend/` | `npm run typecheck` / `npm test` / `npm run build` | 型別 / Vitest / 建置 |
 | 根目錄 | `sh deploy/apply-gateway-rbac.sh test <Gateway test.env>` | 公司測試區 / 正式區套用權限(`deploy/gateway-rbac.yaml`,AD 群組 DN 由 IT 填);流程見 Gateway `docs/TEST-DEPLOY-RUNBOOK.md` |
 | `backend/`(M4 起) | `npm run dev` / `npm test` / `npm run typecheck` | portal-api 開發 / 測試 / 型別 |
@@ -246,6 +281,8 @@ Claude 把搜尋、審查、資安檢查、除錯、測試、重構交給子代�
 
 | 文件 | 路徑 | 說明 |
 | --- | --- | --- |
+| **交接** | `docs/HANDOFF.md` | 目前狀態、下一階段(portal-api)起點與待決 |
+| 框架對齊計畫 | `docs/FRAMEWORK-PLAN.md` | 選單 / Tab / 按鈕代碼規則與完整代碼表(附錄 A) |
 | **產品需求** | `docs/PRD.md` | 已定決策、需求編號 FR-x.y、配合修改(Gateway G1–G7、GigaItApp I1–I5)、待決事項 |
 | 專案地圖 | `docs/PROJECT-MAP.md` | 目錄與檔案職責、主要流程;**開發新功能後必須更新** |
 | 架構 | `docs/ARCHITECTURE.md` | 決策、請求流程、權限流程、風格切換、部署 |

@@ -111,7 +111,7 @@ function viewDetail(rec: BonusRecord) {
               <td class="text-right mono text-danger">- $ {{ b.nhi2.toLocaleString() }}</td>
               <td class="text-right mono font-bold text-primary">$ {{ b.net.toLocaleString() }}</td>
               <td class="text-center">
-                <GButton variant="ghost" size="small" icon="file-text" @click="viewDetail(b)">明細</GButton>
+                <GButton variant="ghost" size="sm" icon="file-text" @click="viewDetail(b)">明細</GButton>
               </td>
             </tr>
           </tbody>

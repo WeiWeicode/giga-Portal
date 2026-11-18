@@ -23,16 +23,16 @@ const statusOptions = [
 ]
 
 const columns = [
-  { key: 'empNo', title: '工號/姓名' },
-  { key: 'dept', title: '部門' },
-  { key: 'category', title: '證照類別' },
-  { key: 'licenseName', title: '證照名稱' },
-  { key: 'certNo', title: '證書字號' },
-  { key: 'issueDate', title: '發證日期' },
-  { key: 'expireDate', title: '有效期限' },
-  { key: 'reTrainDate', title: '下次複訓日' },
-  { key: 'status', title: '狀態' },
-  { key: 'action', title: '操作' },
+  { key: 'empNo', label: '工號/姓名' },
+  { key: 'dept', label: '部門' },
+  { key: 'category', label: '證照類別' },
+  { key: 'licenseName', label: '證照名稱' },
+  { key: 'certNo', label: '證書字號' },
+  { key: 'issueDate', label: '發證日期' },
+  { key: 'expireDate', label: '有效期限' },
+  { key: 'reTrainDate', label: '下次複訓日' },
+  { key: 'status', label: '狀態' },
+  { key: 'action', label: '操作' },
 ]
 
 const personalLicenses = ref([
@@ -203,7 +203,7 @@ const newCert = ref({
 
     <!-- 證照清單 -->
     <GCard>
-      <GTable :columns="columns" :data="personalLicenses">
+      <GTable :columns="columns" :rows="personalLicenses" row-key="id">
         <template #cell-empNo="{ row }">
           <div class="font-bold text-gray-900 dark:text-gray-100">{{ row.name }}</div>
           <div class="text-xs text-gray-400 font-mono">{{ row.empNo }}</div>
@@ -234,9 +234,9 @@ const newCert = ref({
           <span class="text-xs text-gray-500">{{ row.reTrainDate }}</span>
         </template>
         <template #cell-status="{ row }">
-          <GBadge v-if="row.status === 'VALID'" variant="success">有效持有</GBadge>
-          <GBadge v-else-if="row.status === 'EXPIRING'" variant="warning">即將屆期</GBadge>
-          <GBadge v-else variant="info">待環安審核</GBadge>
+          <GBadge v-if="row.status === 'VALID'" tone="success">有效持有</GBadge>
+          <GBadge v-else-if="row.status === 'EXPIRING'" tone="warning">即將屆期</GBadge>
+          <GBadge v-else tone="info">待環安審核</GBadge>
         </template>
         <template #cell-action="{ row }">
           <div class="flex gap-2">

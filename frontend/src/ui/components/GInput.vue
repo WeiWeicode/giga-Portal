@@ -18,7 +18,8 @@ const props = withDefaults(
   }>(),
   { type: 'text', size: 'md' },
 );
-const model = defineModel<string>({ default: '' });
+// type="number" 搭配 v-model.number 時為數字
+const model = defineModel<string | number>({ default: '' });
 const id = useId();
 const reveal = ref(false);
 const inputType = computed(() => (props.type === 'password' && reveal.value ? 'text' : props.type));
